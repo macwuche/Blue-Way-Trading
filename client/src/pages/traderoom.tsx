@@ -164,20 +164,6 @@ export default function TradeRoom() {
         </div>
       </aside>
 
-      {activeSidebar === "portfolio" && (
-        <div className="w-48 border-r border-white/10 p-3 glass-dark">
-          <div className="mb-4">
-            <div className="text-xs text-muted-foreground mb-1">HIGHER</div>
-            <div className="text-xl font-bold text-success">24%</div>
-          </div>
-          <div className="h-32 glass-light rounded-lg mb-4" />
-          <div className="mb-4">
-            <div className="text-xs text-muted-foreground mb-1">LOWER</div>
-            <div className="text-xl font-bold text-muted-foreground">76%</div>
-          </div>
-        </div>
-      )}
-
       <div className="flex-1 flex flex-col">
         <header className="flex items-center gap-2 px-2 h-14 border-b border-white/10">
           <div className="flex items-center gap-1 overflow-x-auto">
