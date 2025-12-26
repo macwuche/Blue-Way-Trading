@@ -66,10 +66,10 @@ export function MarketModal({ open, onOpenChange, onSelectAsset }: MarketModalPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-dark border-border/50 max-w-lg p-0 gap-0 animate-slide-up">
-        <DialogHeader className="p-6 pb-4 border-b border-border/30">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-semibold">Select Market</DialogTitle>
+      <DialogContent className="glass-dark border-border/50 p-0 gap-0 animate-slide-up w-full h-full max-h-full max-w-full md:max-w-lg md:h-auto md:max-h-[85vh] md:rounded-lg rounded-none flex flex-col">
+        <DialogHeader className="p-4 md:p-6 pb-3 md:pb-4 border-b border-border/30 shrink-0">
+          <div className="flex items-center justify-between gap-2">
+            <DialogTitle className="text-lg md:text-xl font-semibold">Select Market</DialogTitle>
             <DialogDescription className="sr-only">
               Choose an asset to trade from the available markets
             </DialogDescription>
@@ -82,7 +82,7 @@ export function MarketModal({ open, onOpenChange, onSelectAsset }: MarketModalPr
             </button>
           </div>
           
-          <div className="relative mt-4">
+          <div className="relative mt-3 md:mt-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search markets..."
@@ -93,14 +93,14 @@ export function MarketModal({ open, onOpenChange, onSelectAsset }: MarketModalPr
             />
           </div>
 
-          <div className="flex gap-2 mt-4 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-2 mt-3 md:mt-4 overflow-x-auto scrollbar-hide pb-1">
             {categories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setCategory(cat.id)}
                 data-testid={`button-category-${cat.id}`}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all duration-200",
+                  "flex items-center gap-2 px-3 md:px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all duration-200",
                   category === cat.id
                     ? "bg-primary text-primary-foreground"
                     : "glass-light text-muted-foreground hover-elevate"
@@ -113,8 +113,8 @@ export function MarketModal({ open, onOpenChange, onSelectAsset }: MarketModalPr
           </div>
         </DialogHeader>
 
-        <ScrollArea className="h-[400px]">
-          <div className="p-4 space-y-1">
+        <ScrollArea className="flex-1 min-h-0 md:h-[400px] md:flex-none">
+          <div className="p-3 md:p-4 space-y-1">
             {filteredAssets.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <Search className="w-12 h-12 mb-4 opacity-50" />
