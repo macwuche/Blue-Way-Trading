@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
+import TradeRoom from "@/pages/traderoom";
 import NotFound from "@/pages/not-found";
 
 function AppRouter() {
@@ -32,7 +33,8 @@ function AppRouter() {
 
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
+      <Route path="/" component={TradeRoom} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route component={NotFound} />
     </Switch>
   );

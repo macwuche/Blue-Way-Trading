@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Search, X, Bitcoin, DollarSign, TrendingUp, BarChart3 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AssetRow } from "./asset-row";
@@ -70,6 +70,9 @@ export function MarketModal({ open, onOpenChange, onSelectAsset }: MarketModalPr
         <DialogHeader className="p-6 pb-4 border-b border-border/30">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-semibold">Select Market</DialogTitle>
+            <DialogDescription className="sr-only">
+              Choose an asset to trade from the available markets
+            </DialogDescription>
             <button
               onClick={() => onOpenChange(false)}
               data-testid="button-close-modal"
