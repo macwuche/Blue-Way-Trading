@@ -1,0 +1,16 @@
+A comprehensive web-based brokerage trading platform that enables users to trade cryptocurrencies, forex, stocks, and ETFs with real-time market data integration from multiple financial data providers (CoinGecko, AlphaVantage, Massive.com, TwelveData, FinancialModelingPrep, EODHD) via their APIs. The platform features user authentication through Google OAuth, Facebook OAuth, or manual registration (email, phone, password, country) with automated welcome emails. Users can view and manage their portfolio through an intuitive dashboard displaying balance, total profits, today's profits, and profile information. The trading interface includes a central chart area with a left sidebar menu for portfolio management, trade history, education, and chat support, plus a right panel for trade execution (timing, investment amount, profit margin, buy/sell buttons). An admin panel allows toggling API providers on/off. The platform supports multi-market asset selection through animated popups showing available assets per market category.
+
+**Note: This project requests Next.js which is not available on Replit. The application will be built using React with a Node.js/Express backend instead to meet the same functional requirements.**
+
+Core Features:
+- User authentication system with Google/Facebook OAuth and manual registration with welcome email notifications
+- Multi-provider market data integration with admin controls to enable/disable API sources (CoinGecko, AlphaVantage, Massive.com, TwelveData, FinancialModelingPrep, EODHD)
+- Real-time trading dashboard with balance tracking, profit displays, portfolio overview, trade history, and multi-asset charts
+- Interactive trading interface with market/asset selection, animated popups, configurable trade parameters (timing, amount, profit margin), and buy/sell execution
+
+Visual References:
+Inspired by Robinhood, Coinbase Pro, and Apple's design language, combining sleek financial interfaces with iOS-style smooth interactions and glassmorphism effects.
+
+Style Guide:
+- Colors: Primary #007AFF (iOS blue), Secondary #5856D6 (purple), Success #34C759 (green), Danger #FF3B30 (red), Background #000000 to #1C1C1E gradient (dark), Surface #2C2C2E with 80% opacity (frosted glass), Text #FFFFFF (white), Secondary Text #98989D (grey)
+- Design: SF Pro Display/Inter fonts, glassmorphism UI with backdrop-filter blur(20px), 16px border radius on cards, 24px spacing, smooth transitions (0.3s ease), floating panels with subtle shadows, responsive grid layout, animated market selection modals, gradient accents, translucent backgrounds with 70-85% opacity
