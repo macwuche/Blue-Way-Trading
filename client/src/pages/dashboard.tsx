@@ -214,12 +214,12 @@ export default function Dashboard() {
                 </div>
               )}
               
-              <div className="flex-1 p-1 md:p-4 min-h-[200px]">
+              <div className="flex-1 p-1 md:p-4">
                 {selectedAsset ? (
                   <CandlestickChart
                     symbol={selectedAsset.symbol}
                     currentPrice={selectedAsset.price}
-                    className="w-full h-full min-h-[200px] relative"
+                    className="w-full h-full relative"
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -314,7 +314,7 @@ export default function Dashboard() {
       </div>
       
       {showPanel === "chart" && (
-        <div className="md:hidden fixed bottom-12 left-0 right-0 z-40">
+        <div className="md:hidden fixed bottom-14 left-0 right-0 z-40">
           <MobileTradingControls
             asset={selectedAsset}
             balance={balance}
@@ -327,7 +327,6 @@ export default function Dashboard() {
       <MobileBottomNav
         activeItem={activeNav}
         onItemClick={handleNavClick}
-        onAddAsset={() => setMarketModalOpen(true)}
       />
 
       <MarketModal

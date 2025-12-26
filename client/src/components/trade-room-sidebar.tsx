@@ -6,11 +6,7 @@ import {
   Trophy, 
   MoreHorizontal,
   LogOut,
-  User,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Calendar
+  User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -92,58 +88,32 @@ export function TradeRoomSidebar({ activeItem, onItemClick, onLogout, className 
   );
 }
 
-interface MobileBottomNavProps {
-  activeItem: NavItem;
-  onItemClick: (item: NavItem) => void;
-  onAddAsset?: () => void;
-}
+const mobileNavItems: { id: NavItem; label: string; icon: typeof Wallet }[] = [
+  { id: "dashboard", label: "Trade", icon: LayoutDashboard },
+  { id: "portfolio", label: "Portfolio", icon: Wallet },
+  { id: "leaderboard", label: "Tournament", icon: Trophy },
+];
 
-export function MobileBottomNav({ activeItem, onItemClick, onAddAsset }: MobileBottomNavProps) {
-  const today = new Date().getDate();
-  
+export function MobileBottomNav({ activeItem, onItemClick }: { activeItem: NavItem; onItemClick: (item: NavItem) => void }) {
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#1c1c1e]/95 border-t border-white/10 backdrop-blur-xl">
-      <div className="flex justify-between items-center h-12 px-6 gap-4">
-        <button
-          onClick={() => window.history.back()}
-          data-testid="mobile-nav-back"
-          className="p-2 text-muted-foreground"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-        
-        <button
-          onClick={() => window.history.forward()}
-          data-testid="mobile-nav-forward"
-          className="p-2 text-muted-foreground"
-        >
-          <ChevronRight className="w-6 h-6" />
-        </button>
-        
-        <button
-          onClick={onAddAsset}
-          data-testid="mobile-nav-add"
-          className="w-10 h-10 rounded-full bg-[#3a3a3c] flex items-center justify-center text-muted-foreground"
-        >
-          <Plus className="w-5 h-5" />
-        </button>
-        
-        <button
-          onClick={() => onItemClick("history")}
-          data-testid="mobile-nav-calendar"
-          className="p-2 text-muted-foreground relative"
-        >
-          <Calendar className="w-6 h-6" />
-          <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-bold">{today}</span>
-        </button>
-        
-        <button
-          onClick={() => onItemClick("more")}
-          data-testid="mobile-nav-more"
-          className="p-2 text-muted-foreground"
-        >
-          <MoreHorizontal className="w-6 h-6" />
-        </button>
+      <div className="flex justify-around items-center h-14 px-4">
+        {mobileNavItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onItemClick(item.id)}
+            data-testid={`mobile-nav-${item.id}`}
+            className={cn(
+              "flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-lg transition-colors",
+              activeItem === item.id
+                ? "text-primary"
+                : "text-muted-foreground"
+            )}
+          >
+            <item.icon className="w-5 h-5" />
+            <span className="text-[10px] font-medium">{item.label}</span>
+          </button>
+        ))}
       </div>
     </nav>
   );
