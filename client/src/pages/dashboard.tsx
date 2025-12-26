@@ -214,12 +214,12 @@ export default function Dashboard() {
                 </div>
               )}
               
-              <div className="flex-1 p-1 md:p-4">
+              <div className="flex-1 p-1 md:p-4 min-h-[200px]">
                 {selectedAsset ? (
                   <CandlestickChart
                     symbol={selectedAsset.symbol}
                     currentPrice={selectedAsset.price}
-                    className="w-full h-full relative"
+                    className="w-full h-full min-h-[200px] relative"
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
