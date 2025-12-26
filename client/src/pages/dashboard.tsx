@@ -314,7 +314,7 @@ export default function Dashboard() {
       </div>
       
       {showPanel === "chart" && (
-        <div className="md:hidden fixed bottom-14 left-0 right-0 z-40">
+        <div className="md:hidden fixed bottom-12 left-0 right-0 z-40">
           <MobileTradingControls
             asset={selectedAsset}
             balance={balance}
@@ -327,6 +327,7 @@ export default function Dashboard() {
       <MobileBottomNav
         activeItem={activeNav}
         onItemClick={handleNavClick}
+        onAddAsset={() => setMarketModalOpen(true)}
       />
 
       <MarketModal
