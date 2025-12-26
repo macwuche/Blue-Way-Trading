@@ -88,26 +88,30 @@ export function TradeRoomSidebar({ activeItem, onItemClick, onLogout, className 
   );
 }
 
+const mobileNavItems: { id: NavItem; label: string; icon: typeof Wallet }[] = [
+  { id: "dashboard", label: "Trade", icon: LayoutDashboard },
+  { id: "portfolio", label: "Portfolio", icon: Wallet },
+  { id: "leaderboard", label: "Tournament", icon: Trophy },
+];
+
 export function MobileBottomNav({ activeItem, onItemClick }: { activeItem: NavItem; onItemClick: (item: NavItem) => void }) {
-  const mobileItems = navItems.slice(0, 5);
-  
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/95 border-t border-white/10 backdrop-blur-xl">
-      <div className="flex justify-around items-center h-16 px-2">
-        {mobileItems.map((item) => (
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#1c1c1e]/95 border-t border-white/10 backdrop-blur-xl">
+      <div className="flex justify-around items-center h-14 px-4">
+        {mobileNavItems.map((item) => (
           <button
             key={item.id}
             onClick={() => onItemClick(item.id)}
             data-testid={`mobile-nav-${item.id}`}
             className={cn(
-              "flex flex-col items-center gap-1 p-2 rounded-lg transition-colors",
+              "flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-lg transition-colors",
               activeItem === item.id
                 ? "text-primary"
                 : "text-muted-foreground"
             )}
           >
             <item.icon className="w-5 h-5" />
-            <span className="text-[10px] font-medium">{item.label.split(" ")[0]}</span>
+            <span className="text-[10px] font-medium">{item.label}</span>
           </button>
         ))}
       </div>

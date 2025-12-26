@@ -7,6 +7,7 @@ import { TradeRoomSidebar, MobileBottomNav } from "@/components/trade-room-sideb
 import { TradingTabs } from "@/components/trading-tabs";
 import { CandlestickChart } from "@/components/candlestick-chart";
 import { BinaryTradingPanel, TradingInfoPanel } from "@/components/binary-trading-panel";
+import { MobileTradingControls } from "@/components/mobile-trading-controls";
 import { MarketModal } from "@/components/market-modal";
 import { TradeHistory, type TradeRecord } from "@/components/trade-history";
 import { PortfolioCard, HoldingRow } from "@/components/portfolio-card";
@@ -189,9 +190,9 @@ export default function Dashboard() {
           <>
             <TradingInfoPanel asset={selectedAsset} />
             
-            <main className="flex-1 flex flex-col overflow-hidden relative">
+            <main className="flex-1 flex flex-col overflow-hidden relative pb-[200px] md:pb-0">
               {selectedAsset && (
-                <div className="absolute top-4 left-4 z-10 flex items-center gap-3 bg-black/60 backdrop-blur-lg rounded-lg px-4 py-2 border border-white/10">
+                <div className="hidden md:flex absolute top-4 left-4 z-10 items-center gap-3 bg-black/60 backdrop-blur-lg rounded-lg px-4 py-2 border border-white/10">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-xs font-bold text-white">
                     {selectedAsset.symbol.slice(0, 2)}
                   </div>
@@ -213,7 +214,7 @@ export default function Dashboard() {
                 </div>
               )}
               
-              <div className="flex-1 p-2 md:p-4">
+              <div className="flex-1 p-1 md:p-4">
                 {selectedAsset ? (
                   <CandlestickChart
                     symbol={selectedAsset.symbol}
@@ -313,25 +314,13 @@ export default function Dashboard() {
       </div>
       
       {showPanel === "chart" && (
-        <div className="md:hidden fixed bottom-16 left-0 right-0 z-40 p-3 bg-black/95 border-t border-white/10 backdrop-blur-xl">
-          <div className="flex gap-2">
-            <Button
-              onClick={() => handleExecuteTrade({ type: "buy", quantity: 1, price: selectedAsset?.price || 0 })}
-              disabled={executeTradeMutation.isPending || !selectedAsset}
-              data-testid="mobile-button-higher"
-              className="flex-1 h-14 bg-success hover:bg-success/90 text-white font-bold text-lg"
-            >
-              HIGHER
-            </Button>
-            <Button
-              onClick={() => handleExecuteTrade({ type: "sell", quantity: 1, price: selectedAsset?.price || 0 })}
-              disabled={executeTradeMutation.isPending || !selectedAsset}
-              data-testid="mobile-button-lower"
-              className="flex-1 h-14 bg-destructive hover:bg-destructive/90 text-white font-bold text-lg"
-            >
-              LOWER
-            </Button>
-          </div>
+        <div className="md:hidden fixed bottom-14 left-0 right-0 z-40">
+          <MobileTradingControls
+            asset={selectedAsset}
+            balance={balance}
+            onTrade={handleExecuteTrade}
+            isLoading={executeTradeMutation.isPending}
+          />
         </div>
       )}
       
