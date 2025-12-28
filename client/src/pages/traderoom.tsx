@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { 
   Wallet, History, BarChart3, MessageCircle, Trophy, 
   Settings, Plus, ArrowUp, ArrowDown, Clock, ChevronDown,
@@ -29,23 +30,23 @@ type TimeFrame = "5s" | "10s" | "15s" | "30s" | "1m" | "5m";
 const timeFrames: TimeFrame[] = ["5s", "10s", "15s", "30s", "1m", "5m"];
 
 const sidebarItems = [
-  { id: "trade", icon: BarChart3, label: "Trade" },
-  { id: "portfolio", icon: Wallet, label: "Portfolio" },
-  { id: "history", icon: History, label: "History" },
-  { id: "chat", icon: MessageCircle, label: "Support" },
-  { id: "leaderboard", icon: Trophy, label: "Tournament" },
-  { id: "more", icon: Settings, label: "More" },
+  { id: "trade", icon: BarChart3, label: "Trade", route: "/" },
+  { id: "portfolio", icon: Wallet, label: "Portfolio", route: "/portfolio" },
+  { id: "history", icon: History, label: "History", route: "/history" },
+  { id: "chat", icon: MessageCircle, label: "Support", route: "/support" },
+  { id: "leaderboard", icon: Trophy, label: "Tournament", route: "/tournament" },
+  { id: "more", icon: Settings, label: "More", route: "/more" },
 ];
 
 export default function TradeRoom() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [openAssets, setOpenAssets] = useState<Asset[]>([cryptoAssets[0]]);
   const [selectedAsset, setSelectedAsset] = useState<Asset>(cryptoAssets[0]);
   const [marketModalOpen, setMarketModalOpen] = useState(false);
   const [expiration, setExpiration] = useState<TimeFrame>("30s");
   const [amount, setAmount] = useState("1");
-  const [activeSidebar, setActiveSidebar] = useState("trade");
 
   const { data: dashboardData } = useQuery<DashboardData>({
     queryKey: ["/api/dashboard"],
@@ -161,11 +162,11 @@ export default function TradeRoom() {
           {sidebarItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => setActiveSidebar(item.id)}
+              onClick={() => setLocation(item.route)}
               data-testid={`sidebar-${item.id}`}
               className={cn(
                 "w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200",
-                activeSidebar === item.id
+                item.id === "trade"
                   ? "bg-white/10 text-white"
                   : "text-muted-foreground hover-elevate"
               )}
@@ -536,11 +537,11 @@ export default function TradeRoom() {
           {sidebarItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => setActiveSidebar(item.id)}
+              onClick={() => setLocation(item.route)}
               data-testid={`mobile-nav-${item.id}`}
               className={cn(
                 "flex flex-col items-center gap-1 px-2 py-1 rounded-lg transition-all min-w-0",
-                activeSidebar === item.id
+                item.id === "trade"
                   ? "text-primary"
                   : "text-muted-foreground"
               )}

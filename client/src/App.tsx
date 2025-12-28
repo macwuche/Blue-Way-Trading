@@ -7,6 +7,11 @@ import { useAuth } from "@/hooks/use-auth";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import TradeRoom from "@/pages/traderoom";
+import Portfolio from "@/pages/portfolio";
+import History from "@/pages/history";
+import Support from "@/pages/support";
+import Tournament from "@/pages/tournament";
+import More from "@/pages/more";
 import NotFound from "@/pages/not-found";
 
 function AppRouter() {
@@ -35,6 +40,11 @@ function AppRouter() {
     <Switch>
       <Route path="/" component={TradeRoom} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/portfolio" component={Portfolio} />
+      <Route path="/history" component={History} />
+      <Route path="/support" component={Support} />
+      <Route path="/tournament" component={Tournament} />
+      <Route path="/more" component={More} />
       <Route component={NotFound} />
     </Switch>
   );
