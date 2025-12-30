@@ -1,21 +1,45 @@
+import { useState, useEffect } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
+import { Onboarding } from "@/components/onboarding";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import TradeRoom from "@/pages/traderoom";
 import Portfolio from "@/pages/portfolio";
 import History from "@/pages/history";
 import Support from "@/pages/support";
-import Tournament from "@/pages/tournament";
+import News from "@/pages/news";
+import Vip from "@/pages/vip";
+import Deposit from "@/pages/deposit";
+import Withdrawal from "@/pages/withdrawal";
+import Verification from "@/pages/verification";
 import More from "@/pages/more";
+import AdminDashboard from "@/pages/admin/dashboard";
 import NotFound from "@/pages/not-found";
 
 function AppRouter() {
   const { user, isLoading } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      const hasSeenOnboarding = localStorage.getItem(`onboarding_${user.id}`);
+      if (!hasSeenOnboarding) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [user]);
+
+  const handleOnboardingComplete = () => {
+    if (user) {
+      localStorage.setItem(`onboarding_${user.id}`, "true");
+    }
+    setShowOnboarding(false);
+  };
 
   if (isLoading) {
     return (
@@ -37,16 +61,25 @@ function AppRouter() {
   }
 
   return (
-    <Switch>
-      <Route path="/" component={TradeRoom} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/portfolio" component={Portfolio} />
-      <Route path="/history" component={History} />
-      <Route path="/support" component={Support} />
-      <Route path="/tournament" component={Tournament} />
-      <Route path="/more" component={More} />
-      <Route component={NotFound} />
-    </Switch>
+    <>
+      <Onboarding open={showOnboarding} onComplete={handleOnboardingComplete} />
+      <Switch>
+        <Route path="/" component={TradeRoom} />
+        <Route path="/dashboard" component={Dashboard} />
+        <Route path="/portfolio" component={Portfolio} />
+        <Route path="/history" component={History} />
+        <Route path="/support" component={Support} />
+        <Route path="/news" component={News} />
+        <Route path="/vip" component={Vip} />
+        <Route path="/deposit" component={Deposit} />
+        <Route path="/withdrawal" component={Withdrawal} />
+        <Route path="/verification" component={Verification} />
+        <Route path="/more" component={More} />
+        <Route path="/admin" component={AdminDashboard} />
+        <Route path="/admin/:page" component={AdminDashboard} />
+        <Route component={NotFound} />
+      </Switch>
+    </>
   );
 }
 

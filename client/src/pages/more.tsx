@@ -1,14 +1,14 @@
 import { 
   Settings, ArrowLeft, User, Bell, Shield, 
-  HelpCircle, LogOut, Moon, Sun, ChevronRight,
-  Smartphone, Globe, CreditCard, FileText, Star
+  HelpCircle, LogOut, Moon, Smartphone, Globe, 
+  CreditCard, FileText, Star, Wallet, Send, Crown, ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -20,15 +20,25 @@ interface SettingItem {
   description?: string;
   type: "link" | "toggle" | "action";
   value?: boolean;
+  route?: string;
+  badge?: string;
 }
 
 const settingsSections = [
   {
+    title: "Funds",
+    items: [
+      { id: "deposit", icon: Wallet, label: "Deposit", description: "Add funds to your account", type: "link" as const, route: "/deposit" },
+      { id: "withdrawal", icon: Send, label: "Withdrawal", description: "Withdraw your funds", type: "link" as const, route: "/withdrawal" },
+      { id: "vip", icon: Crown, label: "VIP Program", description: "Unlock premium benefits", type: "link" as const, route: "/vip", badge: "NEW" },
+    ]
+  },
+  {
     title: "Account",
     items: [
       { id: "profile", icon: User, label: "Profile Settings", description: "Manage your account details", type: "link" as const },
+      { id: "verification", icon: Shield, label: "Account Verification", description: "Verify your identity for higher limits", type: "link" as const, route: "/verification" },
       { id: "notifications", icon: Bell, label: "Notifications", description: "Configure alerts and updates", type: "toggle" as const, value: true },
-      { id: "security", icon: Shield, label: "Security", description: "Password and 2FA settings", type: "link" as const },
     ]
   },
   {
@@ -40,16 +50,9 @@ const settingsSections = [
     ]
   },
   {
-    title: "Trading",
-    items: [
-      { id: "payment", icon: CreditCard, label: "Payment Methods", description: "Manage deposits and withdrawals", type: "link" as const },
-      { id: "limits", icon: Shield, label: "Trading Limits", description: "Set your risk preferences", type: "link" as const },
-    ]
-  },
-  {
     title: "Support",
     items: [
-      { id: "help", icon: HelpCircle, label: "Help Center", description: "FAQs and guides", type: "link" as const },
+      { id: "help", icon: HelpCircle, label: "Help Center", description: "FAQs and guides", type: "link" as const, route: "/support" },
       { id: "terms", icon: FileText, label: "Terms of Service", description: "Legal information", type: "link" as const },
       { id: "rate", icon: Star, label: "Rate the App", description: "Share your feedback", type: "link" as const },
     ]
@@ -66,6 +69,12 @@ export default function More() {
       setLocation("/");
     } catch (error) {
       console.error("Logout failed:", error);
+    }
+  };
+
+  const handleItemClick = (item: SettingItem) => {
+    if (item.route) {
+      setLocation(item.route);
     }
   };
 
@@ -105,6 +114,7 @@ export default function More() {
                 <p className="text-sm text-muted-foreground">
                   {user?.email || "trader@example.com"}
                 </p>
+                <Badge className="mt-1 text-xs bg-success/20 text-success">Verified</Badge>
               </div>
               <Button variant="outline" size="sm" data-testid="button-edit-profile">
                 Edit
@@ -121,6 +131,7 @@ export default function More() {
                 {section.items.map((item) => (
                   <div
                     key={item.id}
+                    onClick={() => item.type === "link" && handleItemClick(item)}
                     className={cn(
                       "flex items-center gap-3 p-4",
                       item.type === "link" && "hover-elevate cursor-pointer"
@@ -131,7 +142,12 @@ export default function More() {
                       <item.icon className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium">{item.label}</div>
+                      <div className="font-medium flex items-center gap-2">
+                        {item.label}
+                        {"badge" in item && item.badge && (
+                          <Badge className="text-xs bg-primary/20 text-primary">{item.badge}</Badge>
+                        )}
+                      </div>
                       {item.description && (
                         <div className="text-sm text-muted-foreground truncate">
                           {item.description}
