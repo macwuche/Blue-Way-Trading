@@ -46,7 +46,7 @@ export default function Landing() {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                 <BarChart3 className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold">TradeFlow</span>
+              <span className="text-xl font-bold">Blue Way Trading</span>
             </div>
             <a href="/api/login" data-testid="link-header-login">
               <Button variant="default" className="bg-gradient-to-r from-primary to-secondary">
@@ -68,7 +68,7 @@ export default function Landing() {
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
                 Trade Smarter with{" "}
                 <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  TradeFlow
+                  Blue Way Trading
                 </span>
               </h1>
               <p className="text-lg sm:text-xl text-muted-foreground mb-8">
@@ -144,7 +144,7 @@ export default function Landing() {
                 Ready to Start Trading?
               </h2>
               <p className="text-lg text-muted-foreground mb-8">
-                Join thousands of traders on TradeFlow. Get started with a demo account today.
+                Join thousands of traders on Blue Way Trading. Get started today.
               </p>
               <a href="/api/login" data-testid="link-cta-login">
                 <Button size="lg" className="h-14 px-8 text-lg bg-gradient-to-r from-primary to-secondary">
@@ -163,7 +163,7 @@ export default function Landing() {
             <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
               <BarChart3 className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold">TradeFlow</span>
+            <span className="font-semibold">Blue Way Trading</span>
           </div>
           <p className="text-sm text-muted-foreground">
             Trading involves risk. This is a demo platform for educational purposes.

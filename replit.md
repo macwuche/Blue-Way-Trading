@@ -1,8 +1,8 @@
-# TradeFlow - Multi-Asset Trading Platform
+# Blue Way Trading - Multi-Asset Trading Platform
 
 ## Overview
 
-TradeFlow is a comprehensive web-based brokerage trading platform that enables users to trade cryptocurrencies, forex, stocks, and ETFs. The platform features a React frontend with a Node.js/Express backend, using PostgreSQL for data persistence. It provides real-time market data integration, interactive trading dashboards, portfolio management, and trade execution capabilities with a sleek, iOS-inspired glassmorphism design.
+Blue Way Trading is a comprehensive web-based binary options trading platform that enables users to trade cryptocurrencies, forex, stocks, and ETFs. The platform features a React frontend with a Node.js/Express backend, using PostgreSQL for data persistence. It provides real-time market data integration, interactive trading dashboards, portfolio management, and trade execution capabilities with a sleek, iOS-inspired glassmorphism design.
 
 ## User Preferences
 

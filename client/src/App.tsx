@@ -50,7 +50,7 @@ function AppRouter() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
           </div>
-          <p className="text-muted-foreground animate-pulse">Loading TradeFlow...</p>
+          <p className="text-muted-foreground animate-pulse">Loading Blue Way Trading...</p>
         </div>
       </div>
     );

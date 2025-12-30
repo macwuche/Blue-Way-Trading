@@ -167,7 +167,7 @@ export default function Dashboard() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
               <BarChart3 className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold">TradeFlow</span>
+            <span className="text-xl font-bold">Blue Way Trading</span>
           </div>
 
           <nav className="flex-1 p-4">
