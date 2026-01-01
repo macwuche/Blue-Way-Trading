@@ -20,7 +20,7 @@ interface OnboardingStep {
 
 const onboardingSteps: OnboardingStep[] = [
   {
-    title: "Welcome to TradeFlow",
+    title: "Welcome to Blue Way Trading",
     description: "Your gateway to binary options trading. Trade cryptocurrencies, forex, stocks, and ETFs with ease.",
     icon: TrendingUp,
     color: "text-primary"

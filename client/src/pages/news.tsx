@@ -78,7 +78,7 @@ const platformNews: NewsArticle[] = [
     category: "platform",
     sentiment: "neutral",
     timestamp: "1 day ago",
-    source: "TradeFlow"
+    source: "Blue Way Trading"
   },
   { 
     id: 102, 
@@ -87,7 +87,7 @@ const platformNews: NewsArticle[] = [
     category: "platform",
     sentiment: "neutral",
     timestamp: "2 days ago",
-    source: "TradeFlow"
+    source: "Blue Way Trading"
   },
   { 
     id: 103, 
@@ -96,7 +96,7 @@ const platformNews: NewsArticle[] = [
     category: "platform",
     sentiment: "neutral",
     timestamp: "3 days ago",
-    source: "TradeFlow"
+    source: "Blue Way Trading"
   },
   { 
     id: 104, 
@@ -105,7 +105,7 @@ const platformNews: NewsArticle[] = [
     category: "platform",
     sentiment: "neutral",
     timestamp: "5 days ago",
-    source: "TradeFlow"
+    source: "Blue Way Trading"
   },
 ];
 
