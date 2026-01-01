@@ -13,6 +13,7 @@ import Portfolio from "@/pages/portfolio";
 import History from "@/pages/history";
 import Support from "@/pages/support";
 import News from "@/pages/news";
+import NewsDetail from "@/pages/news-detail";
 import Vip from "@/pages/vip";
 import Deposit from "@/pages/deposit";
 import Withdrawal from "@/pages/withdrawal";
@@ -70,6 +71,7 @@ function AppRouter() {
         <Route path="/history" component={History} />
         <Route path="/support" component={Support} />
         <Route path="/news" component={News} />
+        <Route path="/news/:id" component={NewsDetail} />
         <Route path="/vip" component={Vip} />
         <Route path="/deposit" component={Deposit} />
         <Route path="/withdrawal" component={Withdrawal} />
