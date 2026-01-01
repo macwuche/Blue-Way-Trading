@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from "@/lib/utils";
 
 interface OnboardingStep {
@@ -84,7 +86,10 @@ export function Onboarding({ open, onComplete }: OnboardingProps) {
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onComplete()}>
-      <DialogContent className="glass-dark border-white/10 max-w-md p-0 overflow-hidden">
+      <DialogContent className="glass-dark border-white/10 max-w-md p-0 overflow-hidden" aria-describedby={undefined}>
+        <VisuallyHidden>
+          <DialogTitle>Welcome to Blue Way Trading</DialogTitle>
+        </VisuallyHidden>
         {/* Skip button */}
         <button
           onClick={handleSkip}

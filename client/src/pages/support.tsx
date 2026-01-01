@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { 
-  MessageCircle, ArrowLeft, ChevronDown, Mail, 
-  Phone, Globe, FileText, HelpCircle, Shield,
-  CreditCard, BarChart3, Users
+  MessageCircle, ArrowLeft, Mail, 
+  Globe, HelpCircle, Shield,
+  CreditCard, BarChart3, Users, Send, MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,11 +17,12 @@ import {
 } from "@/components/ui/accordion";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 const faqCategories = [
   { id: "trading", label: "Trading", icon: BarChart3 },
   { id: "account", label: "Account", icon: Users },
-  { id: "deposits", label: "Deposits", icon: CreditCard },
+  { id: "deposits", label: "Payments", icon: CreditCard },
   { id: "security", label: "Security", icon: Shield },
 ];
 
@@ -29,47 +30,77 @@ const faqs = [
   {
     category: "trading",
     question: "How do I place a trade?",
-    answer: "Select an asset from the market list, choose your trade amount, set the expiration time, and click either HIGHER if you think the price will go up, or LOWER if you think it will go down."
+    answer: "Select an asset from the market list, choose your trade amount using the slider, set your expiration time (from 30 seconds to 1 year), and click HIGHER if you think the price will go up, or LOWER if you think it will go down."
   },
   {
     category: "trading",
     question: "What is the minimum trade amount?",
-    answer: "The minimum trade amount is $1. You can trade any amount from $1 up to your available balance."
+    answer: "The minimum trade amount is $1. You can trade any amount from $1 up to your available balance, depending on your VIP tier."
   },
   {
     category: "trading",
     question: "What expiration times are available?",
-    answer: "We offer expiration times ranging from 5 seconds to 5 minutes, giving you flexibility in your trading strategy."
+    answer: "We offer expiration times ranging from 30 seconds to 1 year, giving you flexibility in your trading strategy. Short-term options include 30s, 1min, 5min, while long-term options extend to days, weeks, and months."
+  },
+  {
+    category: "trading",
+    question: "What is the Double Up feature?",
+    answer: "Double Up allows you to duplicate your current trade with the same direction and remaining time. This is useful when you're confident in your prediction and want to increase your potential profit."
+  },
+  {
+    category: "trading",
+    question: "What is Sell Early?",
+    answer: "Sell Early lets you close your trade before the expiration time. You'll receive a partial payout based on the current market conditions. This helps you secure profits or minimize losses."
   },
   {
     category: "account",
     question: "How do I verify my account?",
-    answer: "Account verification is done through your Replit account. Simply log in with your Replit credentials and your account will be automatically verified."
+    answer: "Go to the Verification page in your account. You'll need to submit a valid government ID (passport, driver's license, or national ID) and proof of address (utility bill or bank statement dated within 3 months). Verification is processed within 24-48 hours."
   },
   {
     category: "account",
-    question: "Can I change my username?",
-    answer: "Your username is linked to your Replit account. To change it, you would need to update your Replit profile."
+    question: "What are VIP tiers and how do I upgrade?",
+    answer: "We offer 5 VIP tiers: Bronze, Silver, Gold, Platinum, and Diamond. Each tier provides higher payout rates, faster withdrawals, and exclusive benefits. You upgrade by increasing your trading volume and account balance."
+  },
+  {
+    category: "account",
+    question: "How do I become a VIP member?",
+    answer: "VIP status is automatically assigned based on your trading activity and deposit amount. Visit the VIP page to see current requirements and benefits for each tier."
   },
   {
     category: "deposits",
     question: "What payment methods are accepted?",
-    answer: "This is a demo platform with virtual currency. No real deposits or withdrawals are required."
+    answer: "We accept Bitcoin (BTC), Ethereum (ETH), Tether (USDT), USD Coin (USDC), PayPal, and bank transfers. Crypto deposits are processed after network confirmations, while other methods may take 1-3 business days."
   },
   {
     category: "deposits",
-    question: "How do I add funds to my account?",
-    answer: "Your demo account starts with $10,000 in virtual funds. Contact support if you need your balance reset."
+    question: "How do I deposit funds?",
+    answer: "Go to the Deposit page, select your preferred payment method, enter the amount, and follow the instructions. Crypto deposits require sending funds to your unique wallet address. All deposits require admin approval for security."
+  },
+  {
+    category: "deposits",
+    question: "How do I withdraw my funds?",
+    answer: "Go to the Withdrawal page, select your payment method, enter the amount (minimum $10), and submit your request. Withdrawals are processed after admin approval, typically within 24-48 hours for verified accounts."
+  },
+  {
+    category: "deposits",
+    question: "Why do deposits and withdrawals need admin approval?",
+    answer: "Admin approval is a security measure to protect your funds and prevent fraud. This ensures all transactions are legitimate and comply with anti-money laundering regulations."
   },
   {
     category: "security",
     question: "Is my account secure?",
-    answer: "Yes, we use industry-standard security measures including encrypted connections and secure authentication through Replit."
+    answer: "Yes, we use industry-standard security measures including encrypted connections, secure authentication through Replit, and two-factor authentication. All transactions require admin approval for added security."
   },
   {
     category: "security",
-    question: "What happens if I forget my password?",
-    answer: "Since we use Replit authentication, you can reset your password through your Replit account settings."
+    question: "How is my personal data protected?",
+    answer: "Your personal data is encrypted and stored securely. We never share your information with third parties. Verification documents are stored separately and handled according to data protection regulations."
+  },
+  {
+    category: "security",
+    question: "What should I do if I notice suspicious activity?",
+    answer: "Contact our support team immediately through the contact form below or email us at support@bluewaytrading.com. We'll investigate and take necessary action to protect your account."
   },
 ];
 
@@ -77,15 +108,45 @@ export default function Support() {
   const [, setLocation] = useLocation();
   const [selectedCategory, setSelectedCategory] = useState<string>("trading");
   const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
   const [contactMessage, setContactMessage] = useState("");
+  const { toast } = useToast();
 
   const filteredFaqs = faqs.filter(faq => faq.category === selectedCategory);
 
   const handleSubmitContact = () => {
-    if (contactName && contactMessage) {
-      setContactName("");
-      setContactMessage("");
+    if (!contactName.trim()) {
+      toast({
+        title: "Name Required",
+        description: "Please enter your name",
+        variant: "destructive"
+      });
+      return;
     }
+    if (!contactEmail.trim()) {
+      toast({
+        title: "Email Required", 
+        description: "Please enter your email address",
+        variant: "destructive"
+      });
+      return;
+    }
+    if (!contactMessage.trim()) {
+      toast({
+        title: "Message Required",
+        description: "Please enter your message",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Message Sent",
+      description: "We'll get back to you within 24 hours"
+    });
+    setContactName("");
+    setContactEmail("");
+    setContactMessage("");
   };
 
   return (
@@ -108,30 +169,30 @@ export default function Support() {
       </header>
 
       <ScrollArea className="h-[calc(100vh-60px)]">
-        <div className="p-4 space-y-6 pb-24 md:pb-4">
-          <Card className="glass-card p-4 md:p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                <HelpCircle className="w-6 h-6 text-primary" />
+        <div className="p-4 space-y-6 pb-24 md:pb-8">
+          <Card className="glass-card p-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-blue-500/20 flex items-center justify-center flex-shrink-0">
+                <HelpCircle className="w-7 h-7 text-primary" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h2 className="font-semibold text-lg">How can we help?</h2>
-                <p className="text-sm text-muted-foreground">Find answers to common questions</p>
+                <p className="text-sm text-muted-foreground">Find answers or contact our support team</p>
               </div>
             </div>
           </Card>
 
           <div>
-            <h2 className="text-lg font-semibold mb-3">FAQ</h2>
+            <h2 className="text-lg font-semibold mb-3">Frequently Asked Questions</h2>
             
-            <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-1">
+            <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
               {faqCategories.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
                   data-testid={`button-faq-${cat.id}`}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all duration-200",
+                    "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 min-h-[44px]",
                     selectedCategory === cat.id
                       ? "bg-primary text-primary-foreground"
                       : "glass-light text-muted-foreground hover-elevate"
@@ -151,12 +212,12 @@ export default function Support() {
                   className="glass-card border-none rounded-lg overflow-hidden"
                 >
                   <AccordionTrigger 
-                    className="px-4 py-3 text-left hover:no-underline"
+                    className="px-4 py-4 text-left hover:no-underline min-h-[56px]"
                     data-testid={`accordion-faq-${index}`}
                   >
-                    <span className="text-sm font-medium">{faq.question}</span>
+                    <span className="text-sm font-medium pr-4">{faq.question}</span>
                   </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4 text-sm text-muted-foreground">
+                  <AccordionContent className="px-4 pb-4 text-sm text-muted-foreground leading-relaxed">
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>
@@ -174,7 +235,18 @@ export default function Support() {
                   value={contactName}
                   onChange={(e) => setContactName(e.target.value)}
                   data-testid="input-contact-name"
-                  className="glass-light border-border/30"
+                  className="glass-light border-border/30 min-h-[44px]"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground mb-2 block">Email Address</label>
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  data-testid="input-contact-email"
+                  className="glass-light border-border/30 min-h-[44px]"
                 />
               </div>
               <div>
@@ -184,15 +256,15 @@ export default function Support() {
                   value={contactMessage}
                   onChange={(e) => setContactMessage(e.target.value)}
                   data-testid="input-contact-message"
-                  className="glass-light border-border/30 min-h-[120px]"
+                  className="glass-light border-border/30 min-h-[120px] text-base"
                 />
               </div>
               <Button 
-                className="w-full" 
+                className="w-full min-h-[48px]" 
                 onClick={handleSubmitContact}
                 data-testid="button-submit-contact"
               >
-                <Mail className="w-4 h-4 mr-2" />
+                <Send className="w-4 h-4 mr-2" />
                 Send Message
               </Button>
             </Card>
@@ -200,26 +272,37 @@ export default function Support() {
 
           <div>
             <h2 className="text-lg font-semibold mb-3">Other Ways to Reach Us</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-3">
               <Card className="glass-card p-4 hover-elevate cursor-pointer" data-testid="link-email-support">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Mail className="w-5 h-5 text-primary" />
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-6 h-6 text-primary" />
                   </div>
-                  <div>
-                    <div className="font-medium">Email</div>
-                    <div className="text-sm text-muted-foreground">support@tradeflow.com</div>
+                  <div className="min-w-0">
+                    <div className="font-medium">Email Support</div>
+                    <div className="text-sm text-muted-foreground truncate">support@bluewaytrading.com</div>
+                  </div>
+                </div>
+              </Card>
+              <Card className="glass-card p-4 hover-elevate cursor-pointer" data-testid="link-live-chat">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="w-6 h-6 text-success" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-medium">Live Chat</div>
+                    <div className="text-sm text-muted-foreground">Available 24/7 for VIP members</div>
                   </div>
                 </div>
               </Card>
               <Card className="glass-card p-4 hover-elevate cursor-pointer" data-testid="link-help-center">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Globe className="w-5 h-5 text-primary" />
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                    <Globe className="w-6 h-6 text-blue-500" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <div className="font-medium">Help Center</div>
-                    <div className="text-sm text-muted-foreground">docs.tradeflow.com</div>
+                    <div className="text-sm text-muted-foreground truncate">help.bluewaytrading.com</div>
                   </div>
                 </div>
               </Card>
