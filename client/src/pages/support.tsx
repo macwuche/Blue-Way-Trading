@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -183,9 +182,9 @@ export default function Support() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
-      <header className="sticky top-0 z-50 glass-dark border-b border-border/30 px-4 py-3">
-        <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-gradient-to-b from-background to-background/95 flex flex-col">
+      <header className="sticky top-0 z-50 glass-dark border-b border-border/30 px-3 sm:px-4 py-3 flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Button 
             variant="ghost" 
             size="icon" 
@@ -196,48 +195,54 @@ export default function Support() {
           </Button>
           <div className="flex items-center gap-2">
             <MessageCircle className="w-5 h-5 text-primary" />
-            <h1 className="text-lg font-semibold">Support</h1>
+            <h1 className="text-base sm:text-lg font-semibold">Support</h1>
           </div>
         </div>
       </header>
 
-      <ScrollArea className="h-[calc(100vh-60px)]">
-        <div className="p-4 space-y-6 pb-24 md:pb-8">
-          <Card className="glass-card p-4">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-blue-500/20 flex items-center justify-center flex-shrink-0">
-                <HelpCircle className="w-7 h-7 text-primary" />
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 pb-24 md:pb-8 max-w-3xl mx-auto w-full">
+          <Card className="glass-card p-3 sm:p-4">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-primary/20 to-blue-500/20 flex items-center justify-center flex-shrink-0">
+                <HelpCircle className="w-5 h-5 sm:w-7 sm:h-7 text-primary" />
               </div>
-              <div className="min-w-0">
-                <h2 className="font-semibold text-lg">How can we help?</h2>
-                <p className="text-sm text-muted-foreground">Find answers or contact our support team</p>
+              <div className="min-w-0 flex-1">
+                <h2 className="font-semibold text-base sm:text-lg">How can we help?</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground">Find answers or contact our support team</p>
               </div>
             </div>
           </Card>
 
           <div>
-            <h2 className="text-lg font-semibold mb-3">Frequently Asked Questions</h2>
+            <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">Frequently Asked Questions</h2>
             
-            <div 
-              className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4"
-              style={{ WebkitOverflowScrolling: 'touch' }}
-            >
-              {faqCategories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  data-testid={`button-faq-${cat.id}`}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 min-h-[44px] flex-shrink-0",
-                    selectedCategory === cat.id
-                      ? "bg-primary text-primary-foreground"
-                      : "glass-light text-muted-foreground hover-elevate"
-                  )}
-                >
-                  <cat.icon className="w-4 h-4 flex-shrink-0" />
-                  {cat.label}
-                </button>
-              ))}
+            <div className="relative mb-3 sm:mb-4">
+              <div 
+                className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide touch-pan-x"
+                style={{ 
+                  WebkitOverflowScrolling: 'touch',
+                  scrollSnapType: 'x mandatory'
+                }}
+              >
+                {faqCategories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    data-testid={`button-faq-${cat.id}`}
+                    style={{ scrollSnapAlign: 'start' }}
+                    className={cn(
+                      "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-200 min-h-[40px] sm:min-h-[44px] flex-shrink-0",
+                      selectedCategory === cat.id
+                        ? "bg-primary text-primary-foreground"
+                        : "glass-light text-muted-foreground hover-elevate"
+                    )}
+                  >
+                    <cat.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                    <span>{cat.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             <Accordion type="single" collapsible className="space-y-2">
@@ -248,12 +253,12 @@ export default function Support() {
                   className="glass-card border-none rounded-lg overflow-hidden"
                 >
                   <AccordionTrigger 
-                    className="px-4 py-4 text-left hover:no-underline min-h-[56px]"
+                    className="px-3 sm:px-4 py-3 sm:py-4 text-left hover:no-underline min-h-[48px] sm:min-h-[56px]"
                     data-testid={`accordion-faq-${index}`}
                   >
-                    <span className="text-sm font-medium pr-4">{faq.question}</span>
+                    <span className="text-xs sm:text-sm font-medium pr-2 sm:pr-4">{faq.question}</span>
                   </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4 text-sm text-muted-foreground leading-relaxed">
+                  <AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4 text-xs sm:text-sm text-muted-foreground leading-relaxed">
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>
@@ -262,90 +267,90 @@ export default function Support() {
           </div>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3">Contact Us</h2>
-            <Card className="glass-card p-5 md:p-6 space-y-5">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Your Name</label>
+            <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">Contact Us</h2>
+            <Card className="glass-card p-3 sm:p-5 md:p-6 space-y-3 sm:space-y-4">
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground">Your Name</label>
                 <Input
                   placeholder="Enter your name"
                   value={contactName}
                   onChange={(e) => setContactName(e.target.value)}
                   data-testid="input-contact-name"
-                  className="glass-light border-border/30 min-h-[48px] text-base"
+                  className="glass-light border-border/30 min-h-[44px] sm:min-h-[48px] text-sm sm:text-base"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Email Address</label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground">Email Address</label>
                 <Input
                   type="email"
                   placeholder="Enter your email"
                   value={contactEmail}
                   onChange={(e) => setContactEmail(e.target.value)}
                   data-testid="input-contact-email"
-                  className="glass-light border-border/30 min-h-[48px] text-base"
+                  className="glass-light border-border/30 min-h-[44px] sm:min-h-[48px] text-sm sm:text-base"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Message</label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground">Message</label>
                 <Textarea
                   placeholder="How can we help you?"
                   value={contactMessage}
                   onChange={(e) => setContactMessage(e.target.value)}
                   data-testid="input-contact-message"
-                  className="glass-light border-border/30 min-h-[140px] text-base resize-none"
+                  className="glass-light border-border/30 min-h-[100px] sm:min-h-[140px] text-sm sm:text-base resize-none"
                 />
               </div>
               <Button 
-                className="w-full min-h-[52px] text-base font-medium" 
+                className="w-full min-h-[48px] sm:min-h-[52px] text-sm sm:text-base font-medium" 
                 onClick={handleSubmitContact}
                 data-testid="button-submit-contact"
               >
-                <Send className="w-5 h-5 mr-2" />
+                <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 Send Message
               </Button>
             </Card>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold mb-3">Other Ways to Reach Us</h2>
-            <div className="space-y-3">
-              <Card className="glass-card p-4 min-h-[72px] hover-elevate cursor-pointer active:scale-[0.98] transition-transform" data-testid="link-email-support">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-7 h-7 text-primary" />
+            <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">Other Ways to Reach Us</h2>
+            <div className="space-y-2 sm:space-y-3">
+              <Card className="glass-card p-3 sm:p-4 min-h-[64px] sm:min-h-[72px] hover-elevate cursor-pointer active:scale-[0.98] transition-transform" data-testid="link-email-support">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-5 h-5 sm:w-7 sm:h-7 text-primary" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-base">Email Support</div>
-                    <div className="text-sm text-muted-foreground break-all">support@bluewaytrading.com</div>
+                    <div className="font-semibold text-sm sm:text-base">Email Support</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground break-all">support@bluewaytrading.com</div>
                   </div>
                 </div>
               </Card>
-              <Card className="glass-card p-4 min-h-[72px] hover-elevate cursor-pointer active:scale-[0.98] transition-transform" data-testid="link-live-chat">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-success/10 flex items-center justify-center flex-shrink-0">
-                    <MessageSquare className="w-7 h-7 text-success" />
+              <Card className="glass-card p-3 sm:p-4 min-h-[64px] sm:min-h-[72px] hover-elevate cursor-pointer active:scale-[0.98] transition-transform" data-testid="link-live-chat">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-success/10 flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="w-5 h-5 sm:w-7 sm:h-7 text-success" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-base">Live Chat</div>
-                    <div className="text-sm text-muted-foreground">Available 24/7 for VIP members</div>
+                    <div className="font-semibold text-sm sm:text-base">Live Chat</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Available 24/7 for VIP members</div>
                   </div>
                 </div>
               </Card>
-              <Card className="glass-card p-4 min-h-[72px] hover-elevate cursor-pointer active:scale-[0.98] transition-transform" data-testid="link-help-center">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                    <Globe className="w-7 h-7 text-blue-500" />
+              <Card className="glass-card p-3 sm:p-4 min-h-[64px] sm:min-h-[72px] hover-elevate cursor-pointer active:scale-[0.98] transition-transform" data-testid="link-help-center">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                    <Globe className="w-5 h-5 sm:w-7 sm:h-7 text-blue-500" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-base">Help Center</div>
-                    <div className="text-sm text-muted-foreground break-all">help.bluewaytrading.com</div>
+                    <div className="font-semibold text-sm sm:text-base">Help Center</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground break-all">help.bluewaytrading.com</div>
                   </div>
                 </div>
               </Card>
             </div>
           </section>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }
