@@ -185,20 +185,23 @@ export default function Support() {
           <div>
             <h2 className="text-lg font-semibold mb-3">Frequently Asked Questions</h2>
             
-            <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
+            <div 
+              className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
               {faqCategories.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
                   data-testid={`button-faq-${cat.id}`}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 min-h-[44px]",
+                    "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 min-h-[44px] flex-shrink-0",
                     selectedCategory === cat.id
                       ? "bg-primary text-primary-foreground"
                       : "glass-light text-muted-foreground hover-elevate"
                   )}
                 >
-                  <cat.icon className="w-4 h-4" />
+                  <cat.icon className="w-4 h-4 flex-shrink-0" />
                   {cat.label}
                 </button>
               ))}
@@ -225,89 +228,89 @@ export default function Support() {
             </Accordion>
           </div>
 
-          <div>
+          <section>
             <h2 className="text-lg font-semibold mb-3">Contact Us</h2>
-            <Card className="glass-card p-4 space-y-4">
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">Your Name</label>
+            <Card className="glass-card p-5 md:p-6 space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Your Name</label>
                 <Input
                   placeholder="Enter your name"
                   value={contactName}
                   onChange={(e) => setContactName(e.target.value)}
                   data-testid="input-contact-name"
-                  className="glass-light border-border/30 min-h-[44px]"
+                  className="glass-light border-border/30 min-h-[48px] text-base"
                 />
               </div>
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">Email Address</label>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Email Address</label>
                 <Input
                   type="email"
                   placeholder="Enter your email"
                   value={contactEmail}
                   onChange={(e) => setContactEmail(e.target.value)}
                   data-testid="input-contact-email"
-                  className="glass-light border-border/30 min-h-[44px]"
+                  className="glass-light border-border/30 min-h-[48px] text-base"
                 />
               </div>
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">Message</label>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Message</label>
                 <Textarea
                   placeholder="How can we help you?"
                   value={contactMessage}
                   onChange={(e) => setContactMessage(e.target.value)}
                   data-testid="input-contact-message"
-                  className="glass-light border-border/30 min-h-[120px] text-base"
+                  className="glass-light border-border/30 min-h-[140px] text-base resize-none"
                 />
               </div>
               <Button 
-                className="w-full min-h-[48px]" 
+                className="w-full min-h-[52px] text-base font-medium" 
                 onClick={handleSubmitContact}
                 data-testid="button-submit-contact"
               >
-                <Send className="w-4 h-4 mr-2" />
+                <Send className="w-5 h-5 mr-2" />
                 Send Message
               </Button>
             </Card>
-          </div>
+          </section>
 
-          <div>
+          <section>
             <h2 className="text-lg font-semibold mb-3">Other Ways to Reach Us</h2>
             <div className="space-y-3">
-              <Card className="glass-card p-4 hover-elevate cursor-pointer" data-testid="link-email-support">
+              <Card className="glass-card p-4 min-h-[72px] hover-elevate cursor-pointer active:scale-[0.98] transition-transform" data-testid="link-email-support">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-6 h-6 text-primary" />
+                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-7 h-7 text-primary" />
                   </div>
-                  <div className="min-w-0">
-                    <div className="font-medium">Email Support</div>
-                    <div className="text-sm text-muted-foreground truncate">support@bluewaytrading.com</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-base">Email Support</div>
+                    <div className="text-sm text-muted-foreground break-all">support@bluewaytrading.com</div>
                   </div>
                 </div>
               </Card>
-              <Card className="glass-card p-4 hover-elevate cursor-pointer" data-testid="link-live-chat">
+              <Card className="glass-card p-4 min-h-[72px] hover-elevate cursor-pointer active:scale-[0.98] transition-transform" data-testid="link-live-chat">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center flex-shrink-0">
-                    <MessageSquare className="w-6 h-6 text-success" />
+                  <div className="w-14 h-14 rounded-xl bg-success/10 flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="w-7 h-7 text-success" />
                   </div>
-                  <div className="min-w-0">
-                    <div className="font-medium">Live Chat</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-base">Live Chat</div>
                     <div className="text-sm text-muted-foreground">Available 24/7 for VIP members</div>
                   </div>
                 </div>
               </Card>
-              <Card className="glass-card p-4 hover-elevate cursor-pointer" data-testid="link-help-center">
+              <Card className="glass-card p-4 min-h-[72px] hover-elevate cursor-pointer active:scale-[0.98] transition-transform" data-testid="link-help-center">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                    <Globe className="w-6 h-6 text-blue-500" />
+                  <div className="w-14 h-14 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                    <Globe className="w-7 h-7 text-blue-500" />
                   </div>
-                  <div className="min-w-0">
-                    <div className="font-medium">Help Center</div>
-                    <div className="text-sm text-muted-foreground truncate">help.bluewaytrading.com</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-base">Help Center</div>
+                    <div className="text-sm text-muted-foreground break-all">help.bluewaytrading.com</div>
                   </div>
                 </div>
               </Card>
             </div>
-          </div>
+          </section>
         </div>
       </ScrollArea>
     </div>
