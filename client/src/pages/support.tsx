@@ -2,7 +2,8 @@ import { useState } from "react";
 import { 
   MessageCircle, ArrowLeft, Mail, 
   Globe, HelpCircle, Shield,
-  CreditCard, BarChart3, Users, Send, MessageSquare
+  CreditCard, BarChart3, Users, Send, MessageSquare,
+  Wallet, FileCheck, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,7 +23,9 @@ import { useToast } from "@/hooks/use-toast";
 const faqCategories = [
   { id: "trading", label: "Trading", icon: BarChart3 },
   { id: "account", label: "Account", icon: Users },
-  { id: "deposits", label: "Payments", icon: CreditCard },
+  { id: "deposits", label: "Deposits & Withdrawals", icon: Wallet },
+  { id: "verification", label: "Verification", icon: FileCheck },
+  { id: "vip", label: "VIP Program", icon: Sparkles },
   { id: "security", label: "Security", icon: Shield },
 ];
 
@@ -86,6 +89,36 @@ const faqs = [
     category: "deposits",
     question: "Why do deposits and withdrawals need admin approval?",
     answer: "Admin approval is a security measure to protect your funds and prevent fraud. This ensures all transactions are legitimate and comply with anti-money laundering regulations."
+  },
+  {
+    category: "verification",
+    question: "Why do I need to verify my account?",
+    answer: "Account verification is required to comply with financial regulations and protect your funds. Verified accounts have access to higher withdrawal limits and faster processing times."
+  },
+  {
+    category: "verification",
+    question: "What documents are required for verification?",
+    answer: "You'll need a valid government-issued ID (passport, driver's license, or national ID) and proof of address (utility bill or bank statement dated within 3 months). Documents must be clear and readable."
+  },
+  {
+    category: "verification",
+    question: "How long does verification take?",
+    answer: "Verification is typically processed within 24-48 hours. During peak times, it may take up to 72 hours. You'll receive an email notification once your account is verified."
+  },
+  {
+    category: "vip",
+    question: "What are the VIP membership tiers?",
+    answer: "We offer 5 VIP tiers: Bronze, Silver, Gold, Platinum, and Diamond. Each tier provides increasing benefits including higher payout rates, faster withdrawals, personal account managers, and exclusive trading signals."
+  },
+  {
+    category: "vip",
+    question: "How do I upgrade my VIP status?",
+    answer: "VIP status is automatically upgraded based on your trading volume and account balance. Visit the VIP page to see the current requirements for each tier and track your progress."
+  },
+  {
+    category: "vip",
+    question: "What benefits do VIP members receive?",
+    answer: "VIP benefits include: higher payout percentages (up to 95%), priority withdrawals, dedicated account manager, exclusive market analysis, reduced fees, and access to premium trading tools."
   },
   {
     category: "security",
