@@ -47,6 +47,37 @@ export const watchlist = pgTable("watchlist", {
   assetType: varchar("asset_type", { length: 20 }).notNull(),
 });
 
+export const deposits = pgTable("deposits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 20 }).notNull().default("USD"),
+  method: varchar("method", { length: 50 }).notNull(),
+  transactionId: varchar("transaction_id"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  processedBy: varchar("processed_by"),
+  processedAt: timestamp("processed_at"),
+});
+
+export const withdrawals = pgTable("withdrawals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 20 }).notNull().default("USD"),
+  method: varchar("method", { length: 50 }).notNull(),
+  destination: varchar("destination").notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  note: text("note"),
+  rejectionReason: text("rejection_reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  processedBy: varchar("processed_by"),
+  processedAt: timestamp("processed_at"),
+});
+
 export const portfolioRelations = relations(portfolios, ({ many }) => ({
   holdings: many(holdings),
   trades: many(trades),
@@ -70,6 +101,8 @@ export const insertPortfolioSchema = createInsertSchema(portfolios).omit({ id: t
 export const insertHoldingSchema = createInsertSchema(holdings).omit({ id: true });
 export const insertTradeSchema = createInsertSchema(trades).omit({ id: true, createdAt: true });
 export const insertWatchlistSchema = createInsertSchema(watchlist).omit({ id: true });
+export const insertDepositSchema = createInsertSchema(deposits).omit({ id: true, createdAt: true, updatedAt: true, processedBy: true, processedAt: true });
+export const insertWithdrawalSchema = createInsertSchema(withdrawals).omit({ id: true, createdAt: true, updatedAt: true, processedBy: true, processedAt: true, rejectionReason: true });
 
 export type Portfolio = typeof portfolios.$inferSelect;
 export type InsertPortfolio = z.infer<typeof insertPortfolioSchema>;
@@ -79,6 +112,10 @@ export type Trade = typeof trades.$inferSelect;
 export type InsertTrade = z.infer<typeof insertTradeSchema>;
 export type WatchlistItem = typeof watchlist.$inferSelect;
 export type InsertWatchlistItem = z.infer<typeof insertWatchlistSchema>;
+export type Deposit = typeof deposits.$inferSelect;
+export type InsertDeposit = z.infer<typeof insertDepositSchema>;
+export type Withdrawal = typeof withdrawals.$inferSelect;
+export type InsertWithdrawal = z.infer<typeof insertWithdrawalSchema>;
 
 export const tradeExecutionSchema = z.object({
   symbol: z.string().min(1),

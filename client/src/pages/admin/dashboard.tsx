@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { 
   LayoutDashboard, Users, Shield, CreditCard, Wallet, 
   Send, Newspaper, Crown, Settings, ArrowLeft, Menu,
-  TrendingUp, TrendingDown, DollarSign, Activity
+  TrendingUp, TrendingDown, DollarSign, Activity, RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 import AdminUsers from "./users";
@@ -19,10 +21,12 @@ import AdminDeposits from "./deposits";
 import AdminWithdrawals from "./withdrawals";
 import AdminNews from "./news";
 import AdminVip from "./vip";
+import TradeForUsers from "./trade-for-users";
 
 const adminNavItems = [
   { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { id: "users", icon: Users, label: "Users" },
+  { id: "trade-for-users", icon: Activity, label: "Trade for Users" },
   { id: "kyc", icon: Shield, label: "KYC Verification" },
   { id: "payment-methods", icon: CreditCard, label: "Payment Methods" },
   { id: "deposits", icon: Wallet, label: "Deposits" },
@@ -31,113 +35,159 @@ const adminNavItems = [
   { id: "vip", icon: Crown, label: "VIP Levels" },
 ];
 
-interface StatCard {
-  label: string;
-  value: string;
-  change: string;
-  changeType: "positive" | "negative" | "neutral";
-  icon: typeof TrendingUp;
+interface AdminStats {
+  totalUsers: number;
+  activeUsers: number;
+  totalDeposits: string;
+  pendingWithdrawals: string;
+  totalTrades: number;
+  totalProfit: string;
 }
 
-const statsData: StatCard[] = [
-  { label: "Total Users", value: "12,458", change: "+12.5%", changeType: "positive", icon: Users },
-  { label: "Active Traders", value: "3,241", change: "+8.2%", changeType: "positive", icon: Activity },
-  { label: "Total Deposits", value: "$2.4M", change: "+15.3%", changeType: "positive", icon: Wallet },
-  { label: "Pending Withdrawals", value: "$45,230", change: "-5.1%", changeType: "negative", icon: Send },
-];
+interface PendingCounts {
+  pendingDeposits: number;
+  pendingWithdrawals: number;
+  pendingKyc: number;
+}
 
 function DashboardOverview() {
+  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useQuery<AdminStats>({
+    queryKey: ["/api/admin/stats"],
+  });
+
+  const { data: pendingDeposits } = useQuery<any[]>({
+    queryKey: ["/api/admin/deposits", { status: "pending" }],
+  });
+
+  const { data: pendingWithdrawals } = useQuery<any[]>({
+    queryKey: ["/api/admin/withdrawals", { status: "pending" }],
+  });
+
+  const pendingCounts: PendingCounts = {
+    pendingDeposits: pendingDeposits?.length || 0,
+    pendingWithdrawals: pendingWithdrawals?.length || 0,
+    pendingKyc: 0,
+  };
+
+  const formatCurrency = (value: string | number) => {
+    const num = typeof value === "string" ? parseFloat(value) : value;
+    if (num >= 1000000) return `$${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `$${(num / 1000).toFixed(1)}K`;
+    return `$${num.toFixed(2)}`;
+  };
+
+  const statsData = [
+    { label: "Total Users", value: stats?.totalUsers?.toLocaleString() || "0", icon: Users, color: "primary" },
+    { label: "Active Traders", value: stats?.activeUsers?.toLocaleString() || "0", icon: Activity, color: "success" },
+    { label: "Total Deposits", value: formatCurrency(stats?.totalDeposits || "0"), icon: Wallet, color: "primary" },
+    { label: "Pending Withdrawals", value: formatCurrency(stats?.pendingWithdrawals || "0"), icon: Send, color: "destructive" },
+    { label: "Total Trades", value: stats?.totalTrades?.toLocaleString() || "0", icon: TrendingUp, color: "primary" },
+    { label: "Platform Profit", value: formatCurrency(stats?.totalProfit || "0"), icon: DollarSign, color: "success" },
+  ];
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-2">Dashboard Overview</h2>
-        <p className="text-muted-foreground">Welcome to the Blue Way Trading Admin Panel</p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold mb-1">Dashboard Overview</h2>
+          <p className="text-sm text-muted-foreground">Welcome to the Blue Way Trading Admin Panel</p>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => refetchStats()}
+          disabled={statsLoading}
+          data-testid="button-refresh-stats"
+        >
+          <RefreshCw className={cn("w-4 h-4 mr-2", statsLoading && "animate-spin")} />
+          Refresh
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         {statsData.map((stat) => (
-          <Card key={stat.label} className="glass-card p-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className="text-2xl font-bold mt-1">{stat.value}</p>
+          <Card key={stat.label} className="glass-card p-3 sm:p-4">
+            {statsLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-7 w-16" />
               </div>
-              <div className={cn(
-                "w-10 h-10 rounded-lg flex items-center justify-center",
-                stat.changeType === "positive" ? "bg-success/20" : 
-                stat.changeType === "negative" ? "bg-destructive/20" : "bg-muted/20"
-              )}>
-                <stat.icon className={cn(
-                  "w-5 h-5",
-                  stat.changeType === "positive" ? "text-success" : 
-                  stat.changeType === "negative" ? "text-destructive" : "text-muted-foreground"
-                )} />
-              </div>
-            </div>
-            <div className="mt-2 flex items-center gap-1">
-              {stat.changeType === "positive" ? (
-                <TrendingUp className="w-4 h-4 text-success" />
-              ) : stat.changeType === "negative" ? (
-                <TrendingDown className="w-4 h-4 text-destructive" />
-              ) : null}
-              <span className={cn(
-                "text-sm font-medium",
-                stat.changeType === "positive" ? "text-success" : 
-                stat.changeType === "negative" ? "text-destructive" : "text-muted-foreground"
-              )}>
-                {stat.change}
-              </span>
-              <span className="text-sm text-muted-foreground">vs last month</span>
-            </div>
+            ) : (
+              <>
+                <div className="flex items-start justify-between">
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground truncate">{stat.label}</p>
+                    <p className="text-lg sm:text-xl font-bold mt-1">{stat.value}</p>
+                  </div>
+                  <div className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ml-2",
+                    stat.color === "success" ? "bg-success/20" : 
+                    stat.color === "destructive" ? "bg-destructive/20" : "bg-primary/20"
+                  )}>
+                    <stat.icon className={cn(
+                      "w-4 h-4",
+                      stat.color === "success" ? "text-success" : 
+                      stat.color === "destructive" ? "text-destructive" : "text-primary"
+                    )} />
+                  </div>
+                </div>
+              </>
+            )}
           </Card>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="glass-card p-4">
-          <h3 className="font-semibold mb-4">Recent Activities</h3>
-          <div className="space-y-3">
-            {[
-              { action: "New user registered", user: "john_trader", time: "2 mins ago" },
-              { action: "Deposit confirmed", user: "crypto_master", time: "5 mins ago" },
-              { action: "Withdrawal approved", user: "forex_pro", time: "12 mins ago" },
-              { action: "KYC verified", user: "new_investor", time: "25 mins ago" },
-              { action: "VIP upgrade", user: "premium_user", time: "1 hour ago" },
-            ].map((activity, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-border/20 last:border-0">
-                <div>
-                  <p className="text-sm font-medium">{activity.action}</p>
-                  <p className="text-xs text-muted-foreground">{activity.user}</p>
-                </div>
-                <span className="text-xs text-muted-foreground">{activity.time}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <Card className="glass-card p-4">
           <h3 className="font-semibold mb-4">Pending Actions</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 glass-light rounded-lg">
               <div className="flex items-center gap-3">
                 <Shield className="w-5 h-5 text-yellow-500" />
-                <span>KYC Reviews</span>
+                <span className="text-sm sm:text-base">KYC Reviews</span>
               </div>
-              <Badge className="bg-yellow-500/20 text-yellow-500">23</Badge>
+              <Badge className="bg-yellow-500/20 text-yellow-500">{pendingCounts.pendingKyc}</Badge>
             </div>
             <div className="flex items-center justify-between p-3 glass-light rounded-lg">
               <div className="flex items-center gap-3">
                 <Wallet className="w-5 h-5 text-primary" />
-                <span>Pending Deposits</span>
+                <span className="text-sm sm:text-base">Pending Deposits</span>
               </div>
-              <Badge className="bg-primary/20 text-primary">8</Badge>
+              <Badge className="bg-primary/20 text-primary">{pendingCounts.pendingDeposits}</Badge>
             </div>
             <div className="flex items-center justify-between p-3 glass-light rounded-lg">
               <div className="flex items-center gap-3">
                 <Send className="w-5 h-5 text-destructive" />
-                <span>Pending Withdrawals</span>
+                <span className="text-sm sm:text-base">Pending Withdrawals</span>
               </div>
-              <Badge className="bg-destructive/20 text-destructive">15</Badge>
+              <Badge className="bg-destructive/20 text-destructive">{pendingCounts.pendingWithdrawals}</Badge>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="glass-card p-4">
+          <h3 className="font-semibold mb-4">Quick Stats</h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 glass-light rounded-lg">
+              <div className="flex items-center gap-3">
+                <TrendingUp className="w-5 h-5 text-success" />
+                <span className="text-sm sm:text-base">Total Trades</span>
+              </div>
+              <span className="font-semibold">{stats?.totalTrades?.toLocaleString() || "0"}</span>
+            </div>
+            <div className="flex items-center justify-between p-3 glass-light rounded-lg">
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5 text-primary" />
+                <span className="text-sm sm:text-base">Active Users</span>
+              </div>
+              <span className="font-semibold">{stats?.activeUsers?.toLocaleString() || "0"}</span>
+            </div>
+            <div className="flex items-center justify-between p-3 glass-light rounded-lg">
+              <div className="flex items-center gap-3">
+                <DollarSign className="w-5 h-5 text-success" />
+                <span className="text-sm sm:text-base">Platform Profit</span>
+              </div>
+              <span className="font-semibold text-success">{formatCurrency(stats?.totalProfit || "0")}</span>
             </div>
           </div>
         </Card>
@@ -165,6 +215,8 @@ export default function AdminDashboard() {
     switch (currentPage) {
       case "users":
         return <AdminUsers />;
+      case "trade-for-users":
+        return <TradeForUsers />;
       case "kyc":
         return <AdminKyc />;
       case "payment-methods":
