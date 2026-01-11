@@ -430,8 +430,11 @@ export default function TradeRoom() {
                 ${formatPrice(Math.abs(parseFloat(dashboardData?.portfolio?.totalProfit || "0")))}
               </span>
             </div>
-            <div className="text-xl font-bold text-success" data-testid="text-balance-desktop">
-              ${formatPrice(balance)}
+            <div className="glass-light rounded-lg px-3 py-2 flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Balance:</span>
+              <span className="text-sm font-extrabold text-success" data-testid="text-balance-desktop">
+                ${formatPrice(balance)}
+              </span>
             </div>
             <Button 
               size="sm" 
