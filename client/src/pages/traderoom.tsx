@@ -420,6 +420,16 @@ export default function TradeRoom() {
               </Avatar>
               <span className="text-sm text-muted-foreground">REAL ACCOUNT</span>
             </div>
+            <div className="glass-light rounded-lg px-3 py-2 flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Profit:</span>
+              <span 
+                className={`text-sm font-bold ${parseFloat(dashboardData?.portfolio?.totalProfit || "0") >= 0 ? "text-success" : "text-destructive"}`}
+                data-testid="text-profit-desktop"
+              >
+                {parseFloat(dashboardData?.portfolio?.totalProfit || "0") >= 0 ? "+" : ""}
+                ${formatPrice(Math.abs(parseFloat(dashboardData?.portfolio?.totalProfit || "0")))}
+              </span>
+            </div>
             <div className="text-xl font-bold text-success" data-testid="text-balance-desktop">
               ${formatPrice(balance)}
             </div>
