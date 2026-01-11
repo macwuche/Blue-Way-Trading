@@ -412,15 +412,6 @@ export default function TradeRoom() {
 
           <div className="ml-auto flex items-center gap-3">
             <div className="glass-light rounded-lg px-3 py-2 flex items-center gap-2">
-              <Avatar className="w-6 h-6">
-                <AvatarImage src={user?.profileImageUrl || undefined} />
-                <AvatarFallback className="bg-primary/20 text-primary text-xs">
-                  {user?.firstName?.[0] || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm text-muted-foreground">REAL ACCOUNT</span>
-            </div>
-            <div className="glass-light rounded-lg px-3 py-2 flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Profit:</span>
               <span 
                 className={`text-sm font-bold ${parseFloat(dashboardData?.portfolio?.totalProfit || "0") >= 0 ? "text-success" : "text-destructive"}`}
