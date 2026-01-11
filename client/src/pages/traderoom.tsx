@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { CandlestickChart } from "@/components/candlestick-chart";
 import { MarketModal } from "@/components/market-modal";
+import { AssetInfoPanel } from "@/components/asset-info-panel";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -622,16 +623,6 @@ export default function TradeRoom() {
               </div>
             </div>
 
-            <div className="mb-6">
-              <div className="flex items-center justify-between text-sm mb-2">
-                <span className="text-muted-foreground">Profit</span>
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold text-success">+{profitPercent}%</div>
-                <div className="text-success text-lg">+${potentialProfit}</div>
-              </div>
-            </div>
-
             <div className="mt-auto space-y-3">
               <Button
                 onClick={() => handleTrade("higher")}
@@ -653,6 +644,8 @@ export default function TradeRoom() {
                 LOWER
               </Button>
             </div>
+
+            <AssetInfoPanel asset={selectedAsset} className="mt-4" />
           </div>
         </div>
 
