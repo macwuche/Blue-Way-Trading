@@ -782,13 +782,6 @@ export default function TradeRoom() {
             </Button>
           </div>
 
-          {/* Mobile Asset Info Panel */}
-          <AssetInfoPanel 
-            asset={selectedAsset} 
-            profitPercent={profitPercent}
-            potentialProfit={potentialProfit}
-            className="mt-1" 
-          />
         </div>
 
         {/* Mobile Bottom Navigation */}
