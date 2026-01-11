@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 import { type Asset, formatPrice, formatLargeNumber } from "@/lib/market-data";
 import { cn } from "@/lib/utils";
 
 interface AssetInfoPanelProps {
   asset: Asset;
+  profitPercent?: number;
+  potentialProfit?: string;
   className?: string;
 }
 
@@ -53,23 +55,36 @@ const getCurrencyUnit = (type: Asset["type"]) => {
   }
 };
 
-const generatePerformanceData = (changePercent: number) => {
+const seededRandom = (seed: number) => {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
+const generatePerformanceData = (changePercent: number, symbol: string) => {
   const baseChange = changePercent;
+  const symbolSeed = symbol.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  
   return [
-    { label: "1W", value: (baseChange * 0.5 + (Math.random() - 0.5) * 2).toFixed(2) },
-    { label: "1M", value: (baseChange * 1.5 + (Math.random() - 0.5) * 5).toFixed(2) },
-    { label: "3M", value: (baseChange * 3 + (Math.random() - 0.5) * 15).toFixed(2) },
-    { label: "6M", value: (baseChange * 5 + (Math.random() - 0.5) * 20).toFixed(2) },
-    { label: "YTD", value: (baseChange * 2 + (Math.random() - 0.5) * 10).toFixed(2) },
-    { label: "1Y", value: (baseChange * 8 + (Math.random() - 0.5) * 25).toFixed(2) },
+    { label: "1W", value: (baseChange * 0.5 + (seededRandom(symbolSeed + 1) - 0.5) * 2).toFixed(2) },
+    { label: "1M", value: (baseChange * 1.5 + (seededRandom(symbolSeed + 2) - 0.5) * 5).toFixed(2) },
+    { label: "3M", value: (baseChange * 3 + (seededRandom(symbolSeed + 3) - 0.5) * 15).toFixed(2) },
+    { label: "6M", value: (baseChange * 5 + (seededRandom(symbolSeed + 4) - 0.5) * 20).toFixed(2) },
+    { label: "YTD", value: (baseChange * 2 + (seededRandom(symbolSeed + 5) - 0.5) * 10).toFixed(2) },
+    { label: "1Y", value: (baseChange * 8 + (seededRandom(symbolSeed + 6) - 0.5) * 25).toFixed(2) },
   ];
 };
 
-export function AssetInfoPanel({ asset, className }: AssetInfoPanelProps) {
+export function AssetInfoPanel({ asset, profitPercent, potentialProfit, className }: AssetInfoPanelProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const performanceData = generatePerformanceData(asset.changePercent24h);
+  const performanceData = useMemo(
+    () => generatePerformanceData(asset.changePercent24h, asset.symbol),
+    [asset.changePercent24h, asset.symbol]
+  );
   const isPositive = asset.changePercent24h >= 0;
-  const avgVolume30d = asset.volume24h * (0.8 + Math.random() * 0.4);
+  const avgVolume30d = useMemo(() => {
+    const symbolSeed = asset.symbol.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return asset.volume24h * (0.8 + seededRandom(symbolSeed + 100) * 0.4);
+  }, [asset.volume24h, asset.symbol]);
   
   const slides = [
     { id: "overview", label: "Overview" },
@@ -159,6 +174,18 @@ export function AssetInfoPanel({ asset, className }: AssetInfoPanelProps) {
                   <span className="text-success">Market open</span>
                 </div>
               </div>
+              
+              {(profitPercent !== undefined && potentialProfit !== undefined) && (
+                <div className="pt-2 border-t border-white/10">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Expected return</span>
+                    <div className="text-right">
+                      <span className="text-success font-bold">+{profitPercent}%</span>
+                      <span className="text-success text-sm ml-2">+${potentialProfit}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="w-full flex-shrink-0 p-3 space-y-3">

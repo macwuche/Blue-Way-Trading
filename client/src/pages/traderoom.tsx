@@ -645,7 +645,12 @@ export default function TradeRoom() {
               </Button>
             </div>
 
-            <AssetInfoPanel asset={selectedAsset} className="mt-4" />
+            <AssetInfoPanel 
+              asset={selectedAsset} 
+              profitPercent={profitPercent}
+              potentialProfit={potentialProfit}
+              className="mt-4" 
+            />
           </div>
         </div>
 
@@ -777,12 +782,13 @@ export default function TradeRoom() {
             </Button>
           </div>
 
-          {/* Expected Return */}
-          <div className="text-center text-sm">
-            <span className="text-muted-foreground">Expected return </span>
-            <span className="text-success font-semibold">+${potentialProfit}</span>
-            <span className="text-success ml-1">+{profitPercent}%</span>
-          </div>
+          {/* Mobile Asset Info Panel */}
+          <AssetInfoPanel 
+            asset={selectedAsset} 
+            profitPercent={profitPercent}
+            potentialProfit={potentialProfit}
+            className="mt-1" 
+          />
         </div>
 
         {/* Mobile Bottom Navigation */}
