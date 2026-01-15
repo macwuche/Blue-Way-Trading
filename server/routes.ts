@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { setupCustomAuth, registerCustomAuthRoutes, isAuthenticated } from "./auth";
 import { tradeExecutionSchema, insertWatchlistSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -21,8 +21,8 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  await setupAuth(app);
-  registerAuthRoutes(app);
+  setupCustomAuth(app);
+  registerCustomAuthRoutes(app);
 
   app.get("/api/dashboard", isAuthenticated, async (req: any, res: Response) => {
     try {

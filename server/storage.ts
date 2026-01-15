@@ -30,6 +30,10 @@ export interface IStorage {
   addToWatchlist(data: InsertWatchlistItem): Promise<WatchlistItem>;
   removeFromWatchlist(userId: string, symbol: string): Promise<void>;
 
+  // User authentication
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(data: Partial<User>): Promise<User>;
+
   // Admin user management
   getAllUsers(search?: string): Promise<User[]>;
   getUserById(id: string): Promise<User | undefined>;
@@ -143,6 +147,17 @@ export class DatabaseStorage implements IStorage {
 
   async getAllTrades(): Promise<Trade[]> {
     return db.select().from(trades).orderBy(desc(trades.createdAt));
+  }
+
+  // User authentication methods
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(data: Partial<User>): Promise<User> {
+    const [user] = await db.insert(users).values(data as any).returning();
+    return user;
   }
 
   // Admin user management
