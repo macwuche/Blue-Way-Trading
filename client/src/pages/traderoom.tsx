@@ -587,7 +587,7 @@ export default function TradeRoom() {
                 </div>
                 <div>
                   <div className="font-semibold flex items-center gap-1">
-                    {selectedAsset.symbol} (OTC)
+                    {selectedAsset.symbol}
                     <ChevronDown className="w-4 h-4" />
                   </div>
                   <div className="text-xs text-muted-foreground">{selectedAsset.type}</div>
