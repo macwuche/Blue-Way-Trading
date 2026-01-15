@@ -93,6 +93,14 @@ const sidebarItems = [
   { id: "more", icon: Settings, label: "More", route: "/more" },
 ];
 
+const getSymbolInitials = (symbol: string): string => {
+  if (symbol.includes("/")) {
+    const parts = symbol.split("/");
+    return parts[0].slice(0, 2);
+  }
+  return symbol.slice(0, 2);
+};
+
 export default function TradeRoom() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -472,7 +480,7 @@ export default function TradeRoom() {
                 )}
               >
                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-xs text-white">
-                  {asset.symbol.slice(0, 2)}
+                  {getSymbolInitials(asset.symbol)}
                 </div>
                 <span>{asset.symbol}</span>
                 <span className="text-xs opacity-70">{asset.type}</span>
@@ -540,7 +548,7 @@ export default function TradeRoom() {
               )}
             >
               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-xs text-white">
-                {asset.symbol.slice(0, 2)}
+                {getSymbolInitials(asset.symbol)}
               </div>
               <span>{asset.symbol}</span>
               {openAssets.length > 1 && (
@@ -575,7 +583,7 @@ export default function TradeRoom() {
                 className="flex items-center gap-2 hover-elevate rounded-lg px-3 py-2"
               >
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-sm text-white font-bold">
-                  {selectedAsset.symbol.slice(0, 2)}
+                  {getSymbolInitials(selectedAsset.symbol)}
                 </div>
                 <div>
                   <div className="font-semibold flex items-center gap-1">

@@ -11,14 +11,18 @@ export interface Asset {
 }
 
 export const cryptoAssets: Asset[] = [
-  { symbol: "BTC", name: "Bitcoin", price: 43250.82, change24h: 1250.50, changePercent24h: 2.98, volume24h: 28500000000, marketCap: 847000000000, type: "crypto" },
-  { symbol: "ETH", name: "Ethereum", price: 2285.45, change24h: -45.20, changePercent24h: -1.94, volume24h: 15200000000, marketCap: 274000000000, type: "crypto" },
-  { symbol: "SOL", name: "Solana", price: 98.76, change24h: 5.32, changePercent24h: 5.69, volume24h: 2800000000, marketCap: 42000000000, type: "crypto" },
-  { symbol: "BNB", name: "Binance Coin", price: 312.45, change24h: 8.90, changePercent24h: 2.93, volume24h: 1200000000, marketCap: 48000000000, type: "crypto" },
-  { symbol: "XRP", name: "Ripple", price: 0.6245, change24h: -0.0125, changePercent24h: -1.96, volume24h: 1500000000, marketCap: 34000000000, type: "crypto" },
-  { symbol: "ADA", name: "Cardano", price: 0.5823, change24h: 0.0245, changePercent24h: 4.39, volume24h: 650000000, marketCap: 20000000000, type: "crypto" },
-  { symbol: "DOGE", name: "Dogecoin", price: 0.0892, change24h: 0.0034, changePercent24h: 3.96, volume24h: 890000000, marketCap: 12500000000, type: "crypto" },
-  { symbol: "DOT", name: "Polkadot", price: 7.45, change24h: -0.23, changePercent24h: -2.99, volume24h: 320000000, marketCap: 9500000000, type: "crypto" },
+  { symbol: "BTC/USDT", name: "Bitcoin / Tether", price: 43250.82, change24h: 1250.50, changePercent24h: 2.98, volume24h: 28500000000, marketCap: 847000000000, type: "crypto" },
+  { symbol: "ETH/USDT", name: "Ethereum / Tether", price: 2285.45, change24h: -45.20, changePercent24h: -1.94, volume24h: 15200000000, marketCap: 274000000000, type: "crypto" },
+  { symbol: "SOL/USDT", name: "Solana / Tether", price: 98.76, change24h: 5.32, changePercent24h: 5.69, volume24h: 2800000000, marketCap: 42000000000, type: "crypto" },
+  { symbol: "BNB/USDT", name: "Binance Coin / Tether", price: 312.45, change24h: 8.90, changePercent24h: 2.93, volume24h: 1200000000, marketCap: 48000000000, type: "crypto" },
+  { symbol: "ETH/BTC", name: "Ethereum / Bitcoin", price: 0.0528, change24h: -0.0012, changePercent24h: -2.22, volume24h: 1500000000, marketCap: 0, type: "crypto" },
+  { symbol: "SOL/ETH", name: "Solana / Ethereum", price: 0.0432, change24h: 0.0018, changePercent24h: 4.35, volume24h: 650000000, marketCap: 0, type: "crypto" },
+  { symbol: "XRP/USDT", name: "Ripple / Tether", price: 0.6245, change24h: -0.0125, changePercent24h: -1.96, volume24h: 1500000000, marketCap: 34000000000, type: "crypto" },
+  { symbol: "ADA/USDT", name: "Cardano / Tether", price: 0.5823, change24h: 0.0245, changePercent24h: 4.39, volume24h: 650000000, marketCap: 20000000000, type: "crypto" },
+  { symbol: "DOGE/USDT", name: "Dogecoin / Tether", price: 0.0892, change24h: 0.0034, changePercent24h: 3.96, volume24h: 890000000, marketCap: 12500000000, type: "crypto" },
+  { symbol: "DOT/USDT", name: "Polkadot / Tether", price: 7.45, change24h: -0.23, changePercent24h: -2.99, volume24h: 320000000, marketCap: 9500000000, type: "crypto" },
+  { symbol: "BTC/ETH", name: "Bitcoin / Ethereum", price: 18.93, change24h: 0.45, changePercent24h: 2.44, volume24h: 980000000, marketCap: 0, type: "crypto" },
+  { symbol: "BNB/BTC", name: "Binance Coin / Bitcoin", price: 0.00723, change24h: -0.00012, changePercent24h: -1.63, volume24h: 420000000, marketCap: 0, type: "crypto" },
 ];
 
 export const forexAssets: Asset[] = [

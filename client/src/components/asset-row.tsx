@@ -24,6 +24,14 @@ export function AssetRow({ asset, onClick, showChart = true }: AssetRowProps) {
     etf: "bg-chart-5/20 text-chart-5",
   };
 
+  const getSymbolInitials = (symbol: string): string => {
+    if (symbol.includes("/")) {
+      const parts = symbol.split("/");
+      return parts[0].slice(0, 2);
+    }
+    return symbol.slice(0, 2);
+  };
+
   return (
     <div
       onClick={onClick}
@@ -38,7 +46,7 @@ export function AssetRow({ asset, onClick, showChart = true }: AssetRowProps) {
           "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold",
           typeColors[asset.type] || "bg-muted text-muted-foreground"
         )}>
-          {asset.symbol.slice(0, 2)}
+          {getSymbolInitials(asset.symbol)}
         </div>
         <div className="min-w-0">
           <p className="font-semibold text-foreground truncate">{asset.symbol}</p>
