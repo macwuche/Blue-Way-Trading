@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import { Onboarding } from "@/components/onboarding";
-import Landing from "@/pages/landing";
+import Login from "@/pages/login";
+import Signup from "@/pages/signup";
 import Dashboard from "@/pages/dashboard";
 import TradeRoom from "@/pages/traderoom";
 import Portfolio from "@/pages/portfolio";
@@ -58,7 +59,13 @@ function AppRouter() {
   }
 
   if (!user) {
-    return <Landing />;
+    return (
+      <Switch>
+        <Route path="/login" component={Login} />
+        <Route path="/signup" component={Signup} />
+        <Route component={Login} />
+      </Switch>
+    );
   }
 
   return (
@@ -66,6 +73,7 @@ function AppRouter() {
       <Onboarding open={showOnboarding} onComplete={handleOnboardingComplete} />
       <Switch>
         <Route path="/" component={TradeRoom} />
+        <Route path="/trade" component={TradeRoom} />
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/portfolio" component={Portfolio} />
         <Route path="/history" component={History} />
