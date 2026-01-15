@@ -5,11 +5,13 @@ import {
   Wallet, History, BarChart3, MessageCircle, Newspaper, 
   Settings, Plus, ArrowUp, ArrowDown, Clock, ChevronDown,
   ChevronLeft, ChevronRight, Minus, TrendingUp, TrendingDown,
-  Copy, X, Crown
+  Copy, X, Crown, Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -23,7 +25,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CandlestickChart } from "@/components/candlestick-chart";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CandlestickChart, type IndicatorSettings } from "@/components/candlestick-chart";
 import { MarketModal } from "@/components/market-modal";
 import { AssetInfoPanel } from "@/components/asset-info-panel";
 import { useAuth } from "@/hooks/use-auth";
@@ -99,6 +106,13 @@ export default function TradeRoom() {
   const [countdown, setCountdown] = useState(0);
   const [tradeResult, setTradeResult] = useState<TradeResult | null>(null);
   const [showResultDialog, setShowResultDialog] = useState(false);
+  const [indicators, setIndicators] = useState<IndicatorSettings>({
+    alligator: false,
+    movingAverage: false,
+    ema: false,
+    maPeriod: 20,
+    emaPeriod: 12,
+  });
 
   const { data: dashboardData } = useQuery<DashboardData>({
     queryKey: ["/api/dashboard"],
@@ -328,6 +342,79 @@ export default function TradeRoom() {
               <item.icon className="w-5 h-5" />
             </button>
           ))}
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                data-testid="sidebar-indicators"
+                className={cn(
+                  "w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200",
+                  (indicators.alligator || indicators.movingAverage || indicators.ema)
+                    ? "bg-primary/20 text-primary"
+                    : "text-muted-foreground hover-elevate"
+                )}
+                title="Trading Indicators"
+              >
+                <Activity className="w-5 h-5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="right" className="w-64 glass-dark border-white/10 p-4">
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm">Trading Indicators</h3>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ background: "linear-gradient(to right, #007AFF, #FF3B30, #34C759)" }} />
+                    <Label htmlFor="alligator" className="text-sm">Alligator</Label>
+                  </div>
+                  <Switch
+                    id="alligator"
+                    checked={indicators.alligator}
+                    onCheckedChange={(checked) => setIndicators(prev => ({ ...prev, alligator: checked }))}
+                    data-testid="switch-alligator"
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-[#FF9500]" />
+                    <Label htmlFor="ma" className="text-sm">Moving Average</Label>
+                  </div>
+                  <Switch
+                    id="ma"
+                    checked={indicators.movingAverage}
+                    onCheckedChange={(checked) => setIndicators(prev => ({ ...prev, movingAverage: checked }))}
+                    data-testid="switch-ma"
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-[#AF52DE]" />
+                    <Label htmlFor="ema" className="text-sm">Exponential MA</Label>
+                  </div>
+                  <Switch
+                    id="ema"
+                    checked={indicators.ema}
+                    onCheckedChange={(checked) => setIndicators(prev => ({ ...prev, ema: checked }))}
+                    data-testid="switch-ema"
+                  />
+                </div>
+                
+                <div className="text-xs text-muted-foreground pt-2 border-t border-white/10">
+                  {indicators.alligator && (
+                    <div className="flex gap-2 mb-1">
+                      <span className="text-[#007AFF]">Jaw (13)</span>
+                      <span className="text-[#FF3B30]">Teeth (8)</span>
+                      <span className="text-[#34C759]">Lips (5)</span>
+                    </div>
+                  )}
+                  {indicators.movingAverage && <div>MA Period: {indicators.maPeriod}</div>}
+                  {indicators.ema && <div>EMA Period: {indicators.emaPeriod}</div>}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </nav>
 
         <div className="mt-auto flex flex-col items-center gap-3">
@@ -499,6 +586,72 @@ export default function TradeRoom() {
                 </div>
               </button>
             </div>
+            
+            {/* Mobile Indicator Button */}
+            <div className="md:hidden flex items-center justify-end px-2 py-1 border-b border-white/10">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    data-testid="button-indicators-mobile"
+                    className={cn(
+                      "gap-2",
+                      (indicators.alligator || indicators.movingAverage || indicators.ema)
+                        ? "text-primary"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    <Activity className="w-4 h-4" />
+                    Indicators
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 glass-dark border-white/10 p-4">
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-sm">Trading Indicators</h3>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ background: "linear-gradient(to right, #007AFF, #FF3B30, #34C759)" }} />
+                        <Label htmlFor="alligator-mobile" className="text-sm">Alligator</Label>
+                      </div>
+                      <Switch
+                        id="alligator-mobile"
+                        checked={indicators.alligator}
+                        onCheckedChange={(checked) => setIndicators(prev => ({ ...prev, alligator: checked }))}
+                        data-testid="switch-alligator-mobile"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-[#FF9500]" />
+                        <Label htmlFor="ma-mobile" className="text-sm">Moving Average</Label>
+                      </div>
+                      <Switch
+                        id="ma-mobile"
+                        checked={indicators.movingAverage}
+                        onCheckedChange={(checked) => setIndicators(prev => ({ ...prev, movingAverage: checked }))}
+                        data-testid="switch-ma-mobile"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-[#AF52DE]" />
+                        <Label htmlFor="ema-mobile" className="text-sm">Exponential MA</Label>
+                      </div>
+                      <Switch
+                        id="ema-mobile"
+                        checked={indicators.ema}
+                        onCheckedChange={(checked) => setIndicators(prev => ({ ...prev, ema: checked }))}
+                        data-testid="switch-ema-mobile"
+                      />
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
 
             {/* Chart */}
             <div className="flex-1 relative p-2 min-h-[200px]">
@@ -506,6 +659,7 @@ export default function TradeRoom() {
                 symbol={selectedAsset.symbol}
                 currentPrice={selectedAsset.price}
                 isPositive={selectedAsset.changePercent24h >= 0}
+                indicators={indicators}
               />
 
               {/* Active Trade Countdown Overlay */}
