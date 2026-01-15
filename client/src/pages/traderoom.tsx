@@ -803,6 +803,30 @@ export default function TradeRoom() {
               </Button>
             </div>
 
+            {/* Account Margin Section */}
+            <div className="glass-light rounded-lg p-3 mt-4">
+              <div className="grid grid-cols-1 gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Equity</span>
+                  <span className="text-sm font-semibold" data-testid="text-equity">
+                    ${formatPrice(balance)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Orders Margin</span>
+                  <span className="text-sm font-semibold text-warning" data-testid="text-orders-margin">
+                    ${formatPrice(activeTrade ? activeTrade.amount : 0)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Account Margin</span>
+                  <span className="text-sm font-semibold text-success" data-testid="text-account-margin">
+                    ${formatPrice(balance - (activeTrade ? activeTrade.amount : 0))}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <AssetInfoPanel 
               asset={selectedAsset} 
               profitPercent={profitPercent}
@@ -938,6 +962,30 @@ export default function TradeRoom() {
               Higher
               <TrendingUp className="w-5 h-5" />
             </Button>
+          </div>
+
+          {/* Account Margin Section - Mobile */}
+          <div className="glass-light rounded-lg p-2">
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div>
+                <div className="text-[10px] text-muted-foreground">Equity</div>
+                <div className="text-xs font-semibold" data-testid="text-equity-mobile">
+                  ${formatPrice(balance)}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] text-muted-foreground">Orders Margin</div>
+                <div className="text-xs font-semibold text-warning" data-testid="text-orders-margin-mobile">
+                  ${formatPrice(activeTrade ? activeTrade.amount : 0)}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] text-muted-foreground">Account Margin</div>
+                <div className="text-xs font-semibold text-success" data-testid="text-account-margin-mobile">
+                  ${formatPrice(balance - (activeTrade ? activeTrade.amount : 0))}
+                </div>
+              </div>
+            </div>
           </div>
 
         </div>
