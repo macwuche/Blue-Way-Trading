@@ -197,6 +197,64 @@ export function registerCustomAuthRoutes(app: Express) {
     });
   });
 
+  // Demo login - creates or retrieves demo user and logs them in
+  app.post("/api/auth/demo-login", async (req: Request, res: Response) => {
+    try {
+      const demoEmail = "demo@bluewaytrading.com";
+      
+      // Check if demo user exists
+      let user = await storage.getUserByEmail(demoEmail);
+      
+      if (!user) {
+        // Create demo user
+        user = await storage.createUser({
+          email: demoEmail,
+          password: null,
+          firstName: "Demo",
+          lastName: "Trader",
+          authProvider: "demo",
+          status: "active",
+          isVerified: true,
+          isAdmin: false,
+        });
+
+        // Create portfolio for demo user
+        await storage.createPortfolio({
+          userId: user.id,
+          balance: "10000.00",
+          totalProfit: "0.00",
+          totalProfitPercent: "0.00",
+        });
+      }
+
+      // Set session
+      req.session.userId = user.id;
+      req.session.user = {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isAdmin: user.isAdmin,
+        profileImageUrl: user.profileImageUrl,
+      };
+
+      res.json({
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          isAdmin: user.isAdmin,
+          profileImageUrl: user.profileImageUrl,
+        },
+      });
+    } catch (error) {
+      console.error("Demo login error:", error);
+      res.status(500).json({ message: "Failed to login with demo account" });
+    }
+  });
+
   // Get current user
   app.get("/api/auth/user", (req: Request, res: Response) => {
     if (!req.session.userId) {

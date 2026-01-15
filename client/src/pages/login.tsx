@@ -36,8 +36,9 @@ export default function LoginPage() {
   });
 
   const loginMutation = useMutation({
-    mutationFn: async (data: LoginFormData) => {
-      const response = await apiRequest("POST", "/api/auth/login", data);
+    mutationFn: async () => {
+      // Use demo login for now - bypasses authentication
+      const response = await apiRequest("POST", "/api/auth/demo-login", {});
       return response.json();
     },
     onSuccess: () => {
@@ -48,14 +49,14 @@ export default function LoginPage() {
     onError: (error: any) => {
       toast({
         title: "Login Failed",
-        description: error.message || "Invalid email or password",
+        description: error.message || "Unable to login",
         variant: "destructive",
       });
     },
   });
 
-  const onSubmit = (data: LoginFormData) => {
-    loginMutation.mutate(data);
+  const onSubmit = () => {
+    loginMutation.mutate();
   };
 
   return (
@@ -151,7 +152,8 @@ export default function LoginPage() {
               </div>
 
               <Button
-                type="submit"
+                type="button"
+                onClick={() => loginMutation.mutate()}
                 disabled={loginMutation.isPending}
                 data-testid="button-signin"
                 className="w-full h-12 bg-[#34C759] hover:bg-[#2db84e] text-white font-semibold text-lg rounded-full"
