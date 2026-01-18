@@ -127,3 +127,42 @@ export const tradeExecutionSchema = z.object({
 });
 
 export type TradeExecution = z.infer<typeof tradeExecutionSchema>;
+
+// Admin trade sessions for tracking trade-for-users feature
+export const adminTradeSessions = pgTable("admin_trade_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  adminId: varchar("admin_id").notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("active"),
+  createdAt: timestamp("created_at").defaultNow(),
+  closedAt: timestamp("closed_at"),
+});
+
+export const adminTradeSessionUsers = pgTable("admin_trade_session_users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  tradeAmount: decimal("trade_amount", { precision: 18, scale: 2 }).notNull().default("100.00"),
+});
+
+export const adminTrades = pgTable("admin_trades", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull(),
+  adminId: varchar("admin_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  symbol: varchar("symbol", { length: 20 }).notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  assetType: varchar("asset_type", { length: 20 }).notNull(),
+  direction: varchar("direction", { length: 10 }).notNull(),
+  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(),
+  entryPrice: decimal("entry_price", { precision: 18, scale: 8 }).notNull(),
+  exitPrice: decimal("exit_price", { precision: 18, scale: 8 }),
+  profit: decimal("profit", { precision: 18, scale: 2 }),
+  status: varchar("status", { length: 20 }).notNull().default("active"),
+  expiryTime: timestamp("expiry_time"),
+  createdAt: timestamp("created_at").defaultNow(),
+  closedAt: timestamp("closed_at"),
+});
+
+export type AdminTradeSession = typeof adminTradeSessions.$inferSelect;
+export type AdminTradeSessionUser = typeof adminTradeSessionUsers.$inferSelect;
+export type AdminTrade = typeof adminTrades.$inferSelect;

@@ -1,0 +1,20 @@
+No, I want use to to rebuild the (/admin/trade-for-users) page. i want the ui of the /admin/trade-for-users to look just exactly like the user trade room and all the features it has; the only clear differenc will be that the admin can select the user or users they want to trade for.
+
+The new UI will require you to build an additional 2 pages and modify the current page. 
+
+So I'll just give you a brief description of what the page should do, and then you can create them later on, and we will modify them together 
+
+page 1: 
+When the admin clicks on trade for users," a smooth sliding page animation (slide left) will appear. On that page, the admin will be asked to select a user or select a list of users they want to trade for; once the admin is done with his seclection and presses next. 
+
+page 2 
+The next page that will appear will be the admin trade room for the user or users (please note this trade room will be the same as the user trade room; the only difference will be that the admin can click to view the user or list of users they will be trading for).  also note that any action the admin does on his trade room screen will be replicated on the user or list of users he is trading for.  And finally, on this page, the admin can add profit to the user's or list of users' accounts and also subtract profit from the user or list of users' accounts, so make an option so that it will be possible. 
+
+The admin can also go back to the previous page to make a new group or single thread (this will have a right-side animation).
+
+page 3 
+
+The admin can click to view a list of active trades and completed trades. The active trades will be in a list format and will be separated by time (date and time the trades where iniciated ), the same thing applies to the completed trades. This list will show data like name of users, the amount traded, the assets traded, the indicators used, equity, etc. (We will work more on them later.)
+
+
+now when the admin logs out and logs in again to his dashboard and clicks on the trade-for-users, the admin will be shown page 3. One of the option page 3 will be to create a new trade, which will link him to page 1

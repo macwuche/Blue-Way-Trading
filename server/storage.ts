@@ -1,12 +1,13 @@
 import { 
   portfolios, holdings, trades, watchlist, deposits, withdrawals,
-  users,
+  users, adminTradeSessions, adminTradeSessionUsers, adminTrades,
   type Portfolio, type InsertPortfolio,
   type Holding, type InsertHolding,
   type Trade, type InsertTrade,
   type WatchlistItem, type InsertWatchlistItem,
   type User, type Deposit, type InsertDeposit,
-  type Withdrawal, type InsertWithdrawal
+  type Withdrawal, type InsertWithdrawal,
+  type AdminTradeSession, type AdminTradeSessionUser, type AdminTrade
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, or, sql } from "drizzle-orm";
@@ -425,6 +426,121 @@ export class DatabaseStorage implements IStorage {
     }
     
     return updated;
+  }
+
+  // Admin Trade Sessions
+  async createAdminTradeSession(adminId: string): Promise<AdminTradeSession> {
+    const [session] = await db.insert(adminTradeSessions).values({ adminId }).returning();
+    return session;
+  }
+
+  async getAdminTradeSession(id: string): Promise<AdminTradeSession | undefined> {
+    const [session] = await db.select().from(adminTradeSessions).where(eq(adminTradeSessions.id, id));
+    return session;
+  }
+
+  async getActiveAdminTradeSessions(adminId: string): Promise<AdminTradeSession[]> {
+    return db.select().from(adminTradeSessions)
+      .where(and(eq(adminTradeSessions.adminId, adminId), eq(adminTradeSessions.status, 'active')))
+      .orderBy(desc(adminTradeSessions.createdAt));
+  }
+
+  async closeAdminTradeSession(id: string): Promise<AdminTradeSession> {
+    const [session] = await db.update(adminTradeSessions)
+      .set({ status: 'closed', closedAt: new Date() })
+      .where(eq(adminTradeSessions.id, id))
+      .returning();
+    return session;
+  }
+
+  async addUsersToTradeSession(sessionId: string, users: { userId: string; tradeAmount: string }[]): Promise<AdminTradeSessionUser[]> {
+    const values = users.map(u => ({ sessionId, userId: u.userId, tradeAmount: u.tradeAmount }));
+    const inserted = await db.insert(adminTradeSessionUsers).values(values).returning();
+    return inserted;
+  }
+
+  async getSessionUsers(sessionId: string): Promise<(AdminTradeSessionUser & { user?: User })[]> {
+    const sessionUsers = await db.select().from(adminTradeSessionUsers)
+      .where(eq(adminTradeSessionUsers.sessionId, sessionId));
+    
+    const usersWithDetails = await Promise.all(sessionUsers.map(async (su) => {
+      const user = await this.getUserById(su.userId);
+      return { ...su, user };
+    }));
+    
+    return usersWithDetails;
+  }
+
+  async updateSessionUserAmount(id: string, tradeAmount: string): Promise<AdminTradeSessionUser> {
+    const [updated] = await db.update(adminTradeSessionUsers)
+      .set({ tradeAmount })
+      .where(eq(adminTradeSessionUsers.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Admin Trades
+  async createAdminTrade(data: {
+    sessionId: string;
+    adminId: string;
+    userId: string;
+    symbol: string;
+    name: string;
+    assetType: string;
+    direction: string;
+    amount: string;
+    entryPrice: string;
+    expiryTime?: Date;
+  }): Promise<AdminTrade> {
+    const [trade] = await db.insert(adminTrades).values(data).returning();
+    return trade;
+  }
+
+  async getAdminTrades(filters?: { sessionId?: string; adminId?: string; status?: string }): Promise<(AdminTrade & { user?: User })[]> {
+    let allTrades: AdminTrade[];
+    
+    if (filters?.sessionId) {
+      allTrades = await db.select().from(adminTrades)
+        .where(eq(adminTrades.sessionId, filters.sessionId))
+        .orderBy(desc(adminTrades.createdAt));
+    } else if (filters?.adminId && filters?.status) {
+      allTrades = await db.select().from(adminTrades)
+        .where(and(eq(adminTrades.adminId, filters.adminId), eq(adminTrades.status, filters.status)))
+        .orderBy(desc(adminTrades.createdAt));
+    } else if (filters?.adminId) {
+      allTrades = await db.select().from(adminTrades)
+        .where(eq(adminTrades.adminId, filters.adminId))
+        .orderBy(desc(adminTrades.createdAt));
+    } else {
+      allTrades = await db.select().from(adminTrades).orderBy(desc(adminTrades.createdAt));
+    }
+    
+    const tradesWithUsers = await Promise.all(allTrades.map(async (t) => {
+      const user = await this.getUserById(t.userId);
+      return { ...t, user };
+    }));
+    
+    return tradesWithUsers;
+  }
+
+  async updateAdminTrade(id: string, data: { exitPrice?: string; profit?: string; status?: string; closedAt?: Date }): Promise<AdminTrade> {
+    const [trade] = await db.update(adminTrades)
+      .set(data)
+      .where(eq(adminTrades.id, id))
+      .returning();
+    return trade;
+  }
+
+  async getUsersWithBalance(): Promise<(User & { balance: string })[]> {
+    const allUsers = await db.select().from(users).orderBy(desc(users.createdAt));
+    
+    const usersWithBalance = await Promise.all(allUsers.map(async (user) => {
+      const portfolio = await this.getPortfolioByUserId(user.id);
+      const balance = portfolio?.balance || "0.00";
+      return { ...user, balance };
+    }));
+    
+    return usersWithBalance.filter(u => parseFloat(u.balance) > 0);
   }
 }
 

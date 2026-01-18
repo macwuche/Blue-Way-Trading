@@ -738,5 +738,228 @@ export async function registerRoutes(
     }
   });
 
+  // ============ ADMIN TRADE SESSIONS ============
+
+  // Get users with balance (for selection)
+  app.get("/api/admin/users-with-balance", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const users = await storage.getUsersWithBalance();
+      res.json(users.map(u => ({
+        ...u,
+        createdAt: u.createdAt?.toISOString(),
+        updatedAt: u.updatedAt?.toISOString(),
+      })));
+    } catch (error) {
+      console.error("Error fetching users with balance:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // Create admin trade session
+  app.post("/api/admin/trade-sessions", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const adminId = req.user.claims.sub;
+      const schema = z.object({
+        users: z.array(z.object({
+          userId: z.string(),
+          tradeAmount: z.string(),
+        })).min(1),
+      });
+      
+      const result = schema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error.errors });
+      }
+
+      const session = await storage.createAdminTradeSession(adminId);
+      await storage.addUsersToTradeSession(session.id, result.data.users);
+      const sessionUsers = await storage.getSessionUsers(session.id);
+      
+      res.json({
+        ...session,
+        users: sessionUsers,
+        createdAt: session.createdAt?.toISOString(),
+      });
+    } catch (error) {
+      console.error("Error creating trade session:", error);
+      res.status(500).json({ message: "Failed to create trade session" });
+    }
+  });
+
+  // Get admin trade sessions
+  app.get("/api/admin/trade-sessions", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const adminId = req.user.claims.sub;
+      const sessions = await storage.getActiveAdminTradeSessions(adminId);
+      
+      const sessionsWithUsers = await Promise.all(sessions.map(async (s) => {
+        const users = await storage.getSessionUsers(s.id);
+        return {
+          ...s,
+          users,
+          createdAt: s.createdAt?.toISOString(),
+        };
+      }));
+      
+      res.json(sessionsWithUsers);
+    } catch (error) {
+      console.error("Error fetching trade sessions:", error);
+      res.status(500).json({ message: "Failed to fetch trade sessions" });
+    }
+  });
+
+  // Get single session with users
+  app.get("/api/admin/trade-sessions/:id", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const session = await storage.getAdminTradeSession(req.params.id);
+      if (!session) {
+        return res.status(404).json({ message: "Session not found" });
+      }
+      const users = await storage.getSessionUsers(session.id);
+      res.json({
+        ...session,
+        users,
+        createdAt: session.createdAt?.toISOString(),
+      });
+    } catch (error) {
+      console.error("Error fetching trade session:", error);
+      res.status(500).json({ message: "Failed to fetch trade session" });
+    }
+  });
+
+  // Close trade session
+  app.patch("/api/admin/trade-sessions/:id/close", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const session = await storage.closeAdminTradeSession(req.params.id);
+      res.json({
+        ...session,
+        createdAt: session.createdAt?.toISOString(),
+        closedAt: session.closedAt?.toISOString(),
+      });
+    } catch (error) {
+      console.error("Error closing trade session:", error);
+      res.status(500).json({ message: "Failed to close trade session" });
+    }
+  });
+
+  // Execute batch trade for session users
+  app.post("/api/admin/trade-sessions/:id/trade", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const adminId = req.user.claims.sub;
+      const sessionId = req.params.id;
+      const schema = z.object({
+        symbol: z.string().min(1),
+        name: z.string().min(1),
+        assetType: z.string().min(1),
+        direction: z.enum(["higher", "lower"]),
+        entryPrice: z.number().positive(),
+        expiryMs: z.number().positive(),
+      });
+      
+      const result = schema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid trade data", errors: result.error.errors });
+      }
+
+      const { symbol, name, assetType, direction, entryPrice, expiryMs } = result.data;
+      const sessionUsers = await storage.getSessionUsers(sessionId);
+      
+      const trades = await Promise.all(sessionUsers.map(async (su) => {
+        const amount = parseFloat(su.tradeAmount);
+        
+        // Create admin trade record
+        const adminTrade = await storage.createAdminTrade({
+          sessionId,
+          adminId,
+          userId: su.userId,
+          symbol,
+          name,
+          assetType,
+          direction,
+          amount: amount.toFixed(2),
+          entryPrice: entryPrice.toFixed(8),
+          expiryTime: new Date(Date.now() + expiryMs),
+        });
+
+        // Create actual trade record for user
+        const portfolio = await storage.getPortfolioByUserId(su.userId);
+        if (portfolio) {
+          await storage.createTrade({
+            portfolioId: portfolio.id,
+            symbol,
+            name,
+            assetType,
+            type: direction === "higher" ? "buy" : "sell",
+            quantity: (amount / entryPrice).toFixed(8),
+            price: entryPrice.toFixed(8),
+            total: amount.toFixed(2),
+            status: "pending",
+          });
+        }
+
+        return adminTrade;
+      }));
+
+      res.json({ success: true, trades });
+    } catch (error) {
+      console.error("Error executing batch trade:", error);
+      res.status(500).json({ message: "Failed to execute batch trade" });
+    }
+  });
+
+  // Get admin trades history
+  app.get("/api/admin/trades-history", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const adminId = req.user.claims.sub;
+      const { status } = req.query;
+      
+      const trades = await storage.getAdminTrades({ 
+        adminId, 
+        status: status as string | undefined 
+      });
+      
+      res.json(trades.map(t => ({
+        ...t,
+        createdAt: t.createdAt?.toISOString(),
+        closedAt: t.closedAt?.toISOString(),
+        expiryTime: t.expiryTime?.toISOString(),
+      })));
+    } catch (error) {
+      console.error("Error fetching admin trades:", error);
+      res.status(500).json({ message: "Failed to fetch admin trades" });
+    }
+  });
+
+  // Add profit to users
+  app.post("/api/admin/trade-sessions/:id/add-profit", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const sessionId = req.params.id;
+      const schema = z.object({
+        profitAmounts: z.array(z.object({
+          userId: z.string(),
+          amount: z.number(),
+        })),
+      });
+      
+      const result = schema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error.errors });
+      }
+
+      const results = await Promise.all(result.data.profitAmounts.map(async ({ userId, amount }) => {
+        // Add to balance
+        const portfolio = await storage.adjustUserBalance(userId, Math.abs(amount), amount >= 0 ? 'add' : 'subtract');
+        // Track profit
+        await storage.adjustUserProfit(userId, Math.abs(amount), amount >= 0 ? 'add' : 'subtract');
+        return { userId, newBalance: portfolio.balance };
+      }));
+
+      res.json({ success: true, results });
+    } catch (error) {
+      console.error("Error adding profit:", error);
+      res.status(500).json({ message: "Failed to add profit" });
+    }
+  });
+
   return httpServer;
 }
