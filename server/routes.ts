@@ -321,11 +321,23 @@ export async function registerRoutes(
       const portfolio = await storage.getPortfolioByUserId(user.id);
       const trades = portfolio ? await storage.getTradesByPortfolioId(portfolio.id) : [];
       
+      // Get total withdrawals for this user (sum of approved withdrawals)
+      const userWithdrawals = await storage.getAllWithdrawals({ userId: user.id });
+      const totalWithdrawals = userWithdrawals
+        .filter(w => w.status === "approved")
+        .reduce((sum, w) => sum + parseFloat(w.amount), 0);
+      
+      // Get total referrals (users who have this user as their referrer)
+      const allUsers = await storage.getAllUsers();
+      const totalReferrals = allUsers.filter(u => u.referredBy === user.id).length;
+      
       res.json({
         ...user,
         balance: portfolio?.balance || "0.00",
         totalProfit: portfolio?.totalProfit || "0.00",
         totalTransactions: trades.length,
+        totalWithdrawals: totalWithdrawals.toFixed(2),
+        totalReferrals,
         trades: trades.slice(0, 50).map(t => ({
           ...t,
           createdAt: t.createdAt?.toISOString(),
