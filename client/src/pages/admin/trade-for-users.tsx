@@ -160,14 +160,24 @@ export default function TradeForUsers() {
   }, [sessionId]);
 
   // Fetch session data if sessionId exists but selectedUsers is empty (page refresh scenario)
-  const { data: sessionData, isLoading: sessionLoading } = useQuery<{
+  const { data: sessionData, isLoading: sessionLoading, isError: sessionError } = useQuery<{
     id: string;
     users: { userId: string; tradeAmount: string; user?: User }[];
     status: string;
   }>({
     queryKey: ["/api/admin/trade-sessions", sessionId],
     enabled: !!sessionId && selectedUsers.length === 0,
+    retry: false, // Don't retry on error - stale session should be cleared
   });
+
+  // Clear stale sessionId from localStorage if session fetch fails
+  useEffect(() => {
+    if (sessionError && sessionId) {
+      localStorage.removeItem('admin_trade_session_id');
+      setSessionId(null);
+      setCurrentPage("history");
+    }
+  }, [sessionError, sessionId]);
 
   // Load session users when session data is fetched and navigate to trade room if session is active
   useEffect(() => {
@@ -447,6 +457,18 @@ export default function TradeForUsers() {
       opacity: 0,
     }),
   };
+
+  // Show loading state while restoring session from localStorage
+  if (sessionId && selectedUsers.length === 0 && sessionLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto" />
+          <p className="text-sm text-muted-foreground">Restoring session...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full overflow-hidden relative">
