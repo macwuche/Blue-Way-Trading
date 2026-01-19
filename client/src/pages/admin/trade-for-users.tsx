@@ -630,8 +630,9 @@ export default function TradeForUsers() {
             animate="center"
             exit="exit"
             transition={{ type: "tween", duration: 0.3 }}
+            className="flex flex-col min-h-[calc(100vh-200px)]"
           >
-            <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col flex-1 gap-4 sm:gap-6">
               <div className="flex items-center gap-4">
                 <Button 
                   variant="ghost" 
@@ -647,7 +648,7 @@ export default function TradeForUsers() {
                 </div>
               </div>
 
-              <Card className="glass-card p-4 sm:p-6">
+              <Card className="glass-card p-4 sm:p-6 flex-1 flex flex-col min-h-0">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -691,7 +692,7 @@ export default function TradeForUsers() {
                   </div>
                 </div>
 
-                <div className="space-y-2 max-h-80 overflow-y-auto">
+                <div className="space-y-2 flex-1 overflow-y-auto min-h-0">
                   {usersLoading ? (
                     <div className="text-center py-8">
                       <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto" />
