@@ -18,7 +18,9 @@ import {
   Smartphone,
   FileCheck,
   Crown,
-  Ban
+  Ban,
+  ArrowDownCircle,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -49,6 +51,8 @@ interface UserProfile {
   balance: string;
   totalProfit: string;
   totalTransactions: number;
+  totalWithdrawals: string;
+  totalReferrals: number;
   trades: Trade[];
 }
 
@@ -340,15 +344,15 @@ export default function UserProfilePage() {
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             <Card className="glass-card p-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <DollarSign className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Current Balance</p>
-                  <p className="text-xl font-bold" data-testid="text-balance">
+                  <p className="text-xs text-muted-foreground">Balance</p>
+                  <p className="text-lg font-bold" data-testid="text-balance">
                     ${parseFloat(user.balance || "0").toLocaleString()}
                   </p>
                 </div>
@@ -367,9 +371,9 @@ export default function UserProfilePage() {
                   )} />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Total Profit</p>
+                  <p className="text-xs text-muted-foreground">Profit</p>
                   <p className={cn(
-                    "text-xl font-bold",
+                    "text-lg font-bold",
                     parseFloat(user.totalProfit || "0") >= 0 ? "text-success" : "text-destructive"
                   )} data-testid="text-profit">
                     {parseFloat(user.totalProfit || "0") >= 0 ? "+" : ""}
@@ -385,9 +389,37 @@ export default function UserProfilePage() {
                   <BarChart3 className="w-5 h-5 text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Total Transactions</p>
-                  <p className="text-xl font-bold" data-testid="text-transactions">
+                  <p className="text-xs text-muted-foreground">Trades</p>
+                  <p className="text-lg font-bold" data-testid="text-transactions">
                     {user.totalTransactions || 0}
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="glass-card p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                  <ArrowDownCircle className="w-5 h-5 text-orange-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Withdrawals</p>
+                  <p className="text-lg font-bold" data-testid="text-withdrawals">
+                    ${parseFloat(user.totalWithdrawals || "0").toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="glass-card p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Referrals</p>
+                  <p className="text-lg font-bold" data-testid="text-referrals">
+                    {user.totalReferrals || 0}
                   </p>
                 </div>
               </div>
