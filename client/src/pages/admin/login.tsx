@@ -35,23 +35,30 @@ export default function AdminLoginPage() {
       const response = await apiRequest("POST", "/api/auth/login", data);
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (!data.user?.isAdmin) {
         toast({
           title: "Access Denied",
           description: "You don't have admin privileges",
           variant: "destructive",
         });
-        apiRequest("POST", "/api/auth/logout", {});
+        await apiRequest("POST", "/api/auth/logout", {});
         return;
       }
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/check"] });
+      
+      // Set user data directly in cache to ensure app recognizes login
+      queryClient.setQueryData(["/api/auth/user"], data.user);
+      queryClient.setQueryData(["/api/auth/check"], { authenticated: true, user: data.user });
+      
       toast({
         title: "Welcome Admin",
         description: "Successfully logged in to admin panel",
       });
-      setLocation("/admin");
+      
+      // Small delay to ensure state updates propagate
+      setTimeout(() => {
+        setLocation("/admin");
+      }, 100);
     },
     onError: (error: any) => {
       toast({
