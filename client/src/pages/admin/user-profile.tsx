@@ -72,6 +72,11 @@ export default function UserProfilePage() {
 
   const { data: user, isLoading } = useQuery<UserProfile>({
     queryKey: ["/api/admin/users", userId, "profile"],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/users/${userId}/profile`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch user profile");
+      return res.json();
+    },
     enabled: !!userId,
   });
 
@@ -81,6 +86,7 @@ export default function UserProfilePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users", userId, "profile"] });
       toast({ title: "Status Updated", description: "User status has been updated" });
     },
     onError: () => {
@@ -94,6 +100,7 @@ export default function UserProfilePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users", userId, "profile"] });
       toast({ title: "Verification Updated", description: "User verification status has been updated" });
     },
     onError: () => {
