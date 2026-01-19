@@ -32,6 +32,7 @@ export const users = pgTable("users", {
   kycVerified: boolean("kyc_verified").default(false),
   isAdmin: boolean("is_admin").default(false),
   customPayoutRate: varchar("custom_payout_rate"),
+  referredBy: varchar("referred_by"),
   authProvider: varchar("auth_provider", { length: 20 }).default("email"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
