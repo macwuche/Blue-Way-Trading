@@ -229,10 +229,14 @@ export async function registerRoutes(
   // Admin authentication check
   app.get("/api/admin/auth", async (req: any, res: Response) => {
     try {
-      if (!req.isAuthenticated() || !req.user) {
+      // Check if user is authenticated via session
+      if (!req.user) {
         return res.status(401).json({ isAdmin: false, message: "Not authenticated" });
       }
       const userId = req.user.claims?.sub || req.user.id;
+      if (!userId) {
+        return res.status(401).json({ isAdmin: false, message: "Not authenticated" });
+      }
       const user = await storage.getUserById(userId);
       if (!user || !user.isAdmin) {
         return res.status(403).json({ isAdmin: false, message: "Not authorized" });
