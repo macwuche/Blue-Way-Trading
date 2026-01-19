@@ -462,7 +462,7 @@ export default function TradeForUsers() {
   };
 
   return (
-    <div className="h-full overflow-hidden relative">
+    <div className="min-h-[calc(100vh-200px)]">
       <AnimatePresence mode="wait" custom={slideDirection}>
         {/* Page 3: Trade History (Default) */}
         {currentPage === "history" && (
@@ -474,7 +474,6 @@ export default function TradeForUsers() {
             animate="center"
             exit="exit"
             transition={{ type: "tween", duration: 0.3 }}
-            className="absolute inset-0 p-4 sm:p-6 overflow-auto"
           >
             <div className="space-y-4 sm:space-y-6">
               <div className="flex items-center justify-between">
@@ -631,7 +630,6 @@ export default function TradeForUsers() {
             animate="center"
             exit="exit"
             transition={{ type: "tween", duration: 0.3 }}
-            className="absolute inset-0 p-4 sm:p-6 overflow-auto"
           >
             <div className="space-y-4 sm:space-y-6">
               <div className="flex items-center gap-4">
@@ -788,7 +786,7 @@ export default function TradeForUsers() {
             animate="center"
             exit="exit"
             transition={{ type: "tween", duration: 0.3 }}
-            className="absolute inset-0 flex flex-col"
+            className="flex flex-col min-h-[calc(100vh-200px)]"
           >
             {/* Trade Room Header */}
             <header className="flex items-center gap-2 px-2 h-14 border-b border-white/10 flex-shrink-0">
