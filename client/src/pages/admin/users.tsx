@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { 
   Search, MoreVertical, CheckCircle2, XCircle, 
@@ -55,6 +56,7 @@ interface User {
 type DialogType = "balance" | "profit" | "vip" | "details" | null;
 
 export default function AdminUsers() {
+  const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -353,7 +355,7 @@ export default function AdminUsers() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="glass-dark border-white/10 w-48">
-                          <DropdownMenuItem onClick={() => openDialog("details", user)}>
+                          <DropdownMenuItem onClick={() => navigate(`/admin/users/${user.id}`)}>
                             <Eye className="w-4 h-4 mr-2" />
                             View Details
                           </DropdownMenuItem>

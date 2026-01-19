@@ -21,6 +21,7 @@ import Withdrawal from "@/pages/withdrawal";
 import Verification from "@/pages/verification";
 import More from "@/pages/more";
 import AdminDashboard from "@/pages/admin/dashboard";
+import UserProfilePage from "@/pages/admin/user-profile";
 import NotFound from "@/pages/not-found";
 
 function AppRouter() {
@@ -64,6 +65,7 @@ function AppRouter() {
         <Route path="/login" component={Login} />
         <Route path="/signup" component={Signup} />
         <Route path="/admin" component={AdminDashboard} />
+        <Route path="/admin/users/:userId" component={UserProfilePage} />
         <Route path="/admin/:page" component={AdminDashboard} />
         <Route component={Login} />
       </Switch>
@@ -88,6 +90,7 @@ function AppRouter() {
         <Route path="/verification" component={Verification} />
         <Route path="/more" component={More} />
         <Route path="/admin" component={AdminDashboard} />
+        <Route path="/admin/users/:userId" component={UserProfilePage} />
         <Route path="/admin/:page" component={AdminDashboard} />
         <Route component={NotFound} />
       </Switch>

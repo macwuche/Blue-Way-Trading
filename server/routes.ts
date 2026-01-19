@@ -311,6 +311,34 @@ export async function registerRoutes(
     }
   });
 
+  // Get user profile with full details (for profile page)
+  app.get("/api/admin/users/:id/profile", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const user = await storage.getUserById(req.params.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      const portfolio = await storage.getPortfolioByUserId(user.id);
+      const trades = portfolio ? await storage.getTradesByPortfolioId(portfolio.id) : [];
+      
+      res.json({
+        ...user,
+        balance: portfolio?.balance || "0.00",
+        totalProfit: portfolio?.totalProfit || "0.00",
+        totalTransactions: trades.length,
+        trades: trades.slice(0, 50).map(t => ({
+          ...t,
+          createdAt: t.createdAt?.toISOString(),
+        })),
+        createdAt: user.createdAt?.toISOString(),
+        updatedAt: user.updatedAt?.toISOString(),
+      });
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      res.status(500).json({ message: "Failed to fetch user profile" });
+    }
+  });
+
   // Update user status (active/suspended/pending)
   app.patch("/api/admin/users/:id/status", isAuthenticated, isAdmin, async (req: any, res: Response) => {
     try {
@@ -358,6 +386,25 @@ export async function registerRoutes(
       res.json(user);
     } catch (error) {
       console.error("Error updating verification:", error);
+      res.status(500).json({ message: "Failed to update verification" });
+    }
+  });
+
+  // Update user verification fields (emailVerified, twoFactorEnabled, kycVerified)
+  app.patch("/api/admin/users/:id/verification", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const schema = z.object({ 
+        field: z.enum(["emailVerified", "twoFactorEnabled", "kycVerified"]),
+        value: z.boolean()
+      });
+      const result = schema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data" });
+      }
+      const user = await storage.updateUserVerificationField(req.params.id, result.data.field, result.data.value);
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating verification field:", error);
       res.status(500).json({ message: "Failed to update verification" });
     }
   });
