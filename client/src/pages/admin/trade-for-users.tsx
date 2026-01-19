@@ -786,7 +786,7 @@ export default function TradeForUsers() {
             animate="center"
             exit="exit"
             transition={{ type: "tween", duration: 0.3 }}
-            className="flex flex-col min-h-[calc(100vh-200px)]"
+            className="flex flex-col h-[calc(100vh-140px)]"
           >
             {/* Trade Room Header */}
             <header className="flex items-center gap-2 px-2 h-14 border-b border-white/10 flex-shrink-0">
@@ -961,12 +961,12 @@ export default function TradeForUsers() {
                     transition={{ duration: 0.2 }}
                     className="border-l border-white/10 overflow-hidden"
                   >
-                    <div className="p-4 h-full overflow-auto">
-                      <h3 className="font-semibold mb-4 flex items-center gap-2">
+                    <div className="p-4 h-full flex flex-col">
+                      <h3 className="font-semibold mb-4 flex items-center gap-2 flex-shrink-0">
                         <Users className="w-4 h-4" />
                         Trading For
                       </h3>
-                      <div className="space-y-2">
+                      <div className="space-y-2 overflow-y-auto flex-1 min-h-0">
                         {selectedUsers.map((user) => (
                           <div key={user.id} className="glass-light p-3 rounded-lg">
                             <div className="flex items-center gap-2">
@@ -989,7 +989,7 @@ export default function TradeForUsers() {
               </AnimatePresence>
 
               {/* Trading Panel */}
-              <div className="w-72 border-l border-white/10 p-4 flex flex-col gap-4">
+              <div className="w-72 border-l border-white/10 p-4 flex flex-col gap-4 overflow-y-auto">
                 <div className="glass-light rounded-lg p-3">
                   <div className="text-sm text-muted-foreground mb-1">Total Trading</div>
                   <div className="text-2xl font-bold">
