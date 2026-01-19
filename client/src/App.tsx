@@ -21,7 +21,6 @@ import Withdrawal from "@/pages/withdrawal";
 import Verification from "@/pages/verification";
 import More from "@/pages/more";
 import AdminDashboard from "@/pages/admin/dashboard";
-import AdminLogin from "@/pages/admin/login";
 import NotFound from "@/pages/not-found";
 
 function AppRouter() {
@@ -64,7 +63,8 @@ function AppRouter() {
       <Switch>
         <Route path="/login" component={Login} />
         <Route path="/signup" component={Signup} />
-        <Route path="/admin/login" component={AdminLogin} />
+        <Route path="/admin" component={AdminDashboard} />
+        <Route path="/admin/:page" component={AdminDashboard} />
         <Route component={Login} />
       </Switch>
     );

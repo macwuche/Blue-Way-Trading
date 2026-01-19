@@ -226,6 +226,24 @@ export async function registerRoutes(
 
   // ========== ADMIN ROUTES ==========
   
+  // Admin authentication check
+  app.get("/api/admin/auth", async (req: any, res: Response) => {
+    try {
+      if (!req.isAuthenticated() || !req.user) {
+        return res.status(401).json({ isAdmin: false, message: "Not authenticated" });
+      }
+      const userId = req.user.claims?.sub || req.user.id;
+      const user = await storage.getUserById(userId);
+      if (!user || !user.isAdmin) {
+        return res.status(403).json({ isAdmin: false, message: "Not authorized" });
+      }
+      res.json({ isAdmin: true, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName } });
+    } catch (error) {
+      console.error("Error checking admin auth:", error);
+      res.status(500).json({ isAdmin: false, message: "Server error" });
+    }
+  });
+  
   // Admin stats/dashboard
   app.get("/api/admin/stats", isAuthenticated, isAdmin, async (req: any, res: Response) => {
     try {

@@ -108,11 +108,6 @@ export default function TradeForUsers() {
   const [currentPage, setCurrentPage] = useState<PageView>("history");
   const [slideDirection, setSlideDirection] = useState<"left" | "right">("left");
   const { toast } = useToast();
-  
-  // Check admin access
-  const { data: authUser } = useQuery<{ id: string; isAdmin: boolean | null }>({
-    queryKey: ["/api/auth/user"],
-  });
 
   // User selection state
   const [searchQuery, setSearchQuery] = useState("");
@@ -470,29 +465,6 @@ export default function TradeForUsers() {
         <div className="text-center space-y-4">
           <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto" />
           <p className="text-sm text-muted-foreground">Restoring session...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show access denied if not admin
-  if (authUser && !authUser.isAdmin) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-center space-y-4 max-w-md mx-auto p-8">
-          <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto">
-            <X className="w-8 h-8 text-red-500" />
-          </div>
-          <h2 className="text-xl font-bold text-white">Access Denied</h2>
-          <p className="text-muted-foreground">
-            You don't have permission to access this page. Please login with an admin account.
-          </p>
-          <a 
-            href="/admin/login" 
-            className="inline-block mt-4 px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors"
-          >
-            Admin Login
-          </a>
         </div>
       </div>
     );

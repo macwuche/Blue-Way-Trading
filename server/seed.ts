@@ -15,8 +15,8 @@ const DEMO_USERS = [
 const ADMIN_USER = {
   firstName: "Admin",
   lastName: "User",
-  email: "admin@bluewaytrading.com",
-  password: "admin123",
+  email: "admin@bluewavetrading.live",
+  password: "MAC_T08140615640_Tt",
 };
 
 async function seedDatabase() {
