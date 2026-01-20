@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Users, Search, Check, ChevronRight, ChevronLeft, ArrowUp, ArrowDown,
   Clock, Plus, X, DollarSign, TrendingUp, TrendingDown, History,
-  ChevronDown, Activity, Minus, Copy, Wallet, User, RotateCcw, Eye, PlayCircle
+  ChevronDown, Activity, Minus, Copy, Wallet, User, RotateCcw, Eye, PlayCircle, AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -192,15 +192,41 @@ export default function TradeForUsers() {
   const activeTrade = activeTrades.length > 0 ? activeTrades[0] : null;
   const countdown = activeTrade ? (countdowns[activeTrade.durationGroup] || 0) : 0;
 
-  // Profit popup state
+  // Profit popup state - restore from localStorage on mount
   const [profitPopupOpen, setProfitPopupOpen] = useState(false);
   const [profitDialogOpen, setProfitDialogOpen] = useState(false); // Legacy dialog for backward compat
-  const [completedDurationGroup, setCompletedDurationGroup] = useState<CompletedDurationGroup | null>(null);
+  const [completedDurationGroup, setCompletedDurationGroup] = useState<CompletedDurationGroup | null>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('admin_pending_profit_trade');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          // Validate and rehydrate into a properly typed object
+          if (parsed && parsed.durationGroup && Array.isArray(parsed.assets)) {
+            const hydrated: CompletedDurationGroup = {
+              durationGroup: parsed.durationGroup,
+              trades: parsed.trades || [],
+              assets: parsed.assets,
+              completedAt: parsed.completedAt ? new Date(parsed.completedAt) : new Date(),
+            };
+            return hydrated;
+          }
+        } catch { return null; }
+      }
+    }
+    return null;
+  });
   const [profitMode, setProfitMode] = useState<"group" | "singular">("group");
   const [profitAmounts, setProfitAmounts] = useState<Record<string, number>>({});
   const [groupProfitAmount, setGroupProfitAmount] = useState(0);
-  const [profitsAlreadyAdded, setProfitsAlreadyAdded] = useState(false); // Track if profits were added for current completion
+  const [profitsAlreadyAdded, setProfitsAlreadyAdded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('admin_profits_already_added') === 'true';
+    }
+    return false;
+  });
   const [reopenConfirmDialogOpen, setReopenConfirmDialogOpen] = useState(false); // Dialog when profits already added
+  const [pendingProfitBlockDialogOpen, setPendingProfitBlockDialogOpen] = useState(false); // Block new trade until profit added
   
   // Helper: get openAssets from tradingAssets (for backward compat)
   const openAssets = tradingAssets;
@@ -224,6 +250,24 @@ export default function TradeForUsers() {
       localStorage.removeItem('admin_trade_session_id');
     }
   }, [sessionId]);
+
+  // Persist completedDurationGroup to localStorage for session recovery
+  useEffect(() => {
+    if (completedDurationGroup) {
+      localStorage.setItem('admin_pending_profit_trade', JSON.stringify(completedDurationGroup));
+    } else {
+      localStorage.removeItem('admin_pending_profit_trade');
+    }
+  }, [completedDurationGroup]);
+
+  // Persist profitsAlreadyAdded to localStorage
+  useEffect(() => {
+    if (profitsAlreadyAdded) {
+      localStorage.setItem('admin_profits_already_added', 'true');
+    } else {
+      localStorage.removeItem('admin_profits_already_added');
+    }
+  }, [profitsAlreadyAdded]);
 
   // Fetch session data if sessionId exists but selectedUsers is empty (page refresh scenario)
   const { data: sessionData, isLoading: sessionLoading, isError: sessionError, isFetched: sessionFetched } = useQuery<{
@@ -461,6 +505,12 @@ export default function TradeForUsers() {
   // Execute trade for ALL selected assets with their individual durations
   const handleTrade = async (direction: "higher" | "lower") => {
     if (activeTrades.length > 0) return; // Already trading
+    
+    // Block new trade if there's a pending profit trade that hasn't been resolved
+    if (completedDurationGroup && !profitsAlreadyAdded) {
+      setPendingProfitBlockDialogOpen(true);
+      return;
+    }
     
     const now = Date.now();
     
@@ -1781,6 +1831,77 @@ export default function TradeForUsers() {
               className="w-full text-muted-foreground"
               onClick={() => setReopenConfirmDialogOpen(false)}
               data-testid="button-cancel-reopen"
+            >
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Pending Profit Block Dialog - Blocks new trade until profit added */}
+      <Dialog open={pendingProfitBlockDialogOpen} onOpenChange={setPendingProfitBlockDialogOpen}>
+        <DialogContent className="glass-dark border-white/10 max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-warning" />
+              Pending Profit Required
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            <p className="text-sm text-muted-foreground">
+              You have a completed trade that requires profit to be added before starting a new trade.
+            </p>
+            {completedDurationGroup && (
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                {completedDurationGroup.assets.map((asset, index) => (
+                  <div 
+                    key={`block-asset-${asset.symbol}-${index}`}
+                    className="flex items-center gap-1.5 glass-light rounded-md px-2 py-1"
+                  >
+                    <div className={cn(
+                      "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold",
+                      getAssetTypeColor(asset.assetType)
+                    )}>
+                      {getSymbolInitials(asset.symbol)}
+                    </div>
+                    <span className="text-xs font-medium">{asset.symbol}</span>
+                  </div>
+                ))}
+                <Badge className="text-xs bg-warning/20 text-warning">Awaiting Profit</Badge>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <Button
+              className="w-full bg-success hover:bg-success/90"
+              onClick={() => {
+                setPendingProfitBlockDialogOpen(false);
+                setProfitPopupOpen(true);
+              }}
+              data-testid="button-add-profit-now"
+            >
+              <DollarSign className="w-4 h-4 mr-2" />
+              Add Profits Now
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setPendingProfitBlockDialogOpen(false);
+                setCompletedDurationGroup(null);
+                setProfitsAlreadyAdded(false);
+              }}
+              data-testid="button-skip-and-trade"
+            >
+              <X className="w-4 h-4 mr-2" />
+              Skip & Start New Trade
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-muted-foreground"
+              onClick={() => setPendingProfitBlockDialogOpen(false)}
+              data-testid="button-cancel-block"
             >
               Cancel
             </Button>
