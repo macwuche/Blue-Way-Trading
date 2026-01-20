@@ -159,6 +159,9 @@ export const adminTrades = pgTable("admin_trades", {
   profit: decimal("profit", { precision: 18, scale: 2 }),
   status: varchar("status", { length: 20 }).notNull().default("active"),
   expiryTime: timestamp("expiry_time"),
+  durationMs: integer("duration_ms"), // Duration in milliseconds for this trade
+  durationGroup: varchar("duration_group", { length: 50 }), // Groups trades by same duration (e.g., "30s", "1h", "1d")
+  profitStatus: varchar("profit_status", { length: 20 }).default("pending"), // pending, profit_added, loss
   createdAt: timestamp("created_at").defaultNow(),
   closedAt: timestamp("closed_at"),
 });

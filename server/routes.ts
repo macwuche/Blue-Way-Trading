@@ -17,6 +17,20 @@ const isAdmin = async (req: any, res: Response, next: Function) => {
   next();
 };
 
+// Helper to convert duration in ms to a readable label
+function getDurationLabel(durationMs: number): string {
+  const seconds = Math.floor(durationMs / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d`;
+  if (days < 365) return `${Math.floor(days / 30)}mo`;
+  return `${Math.floor(days / 365)}y`;
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -934,12 +948,14 @@ export async function registerRoutes(
     }
   });
 
-  // Execute batch trade for session users
+  // Execute batch trade for session users (supports multi-asset with individual durations)
   app.post("/api/admin/trade-sessions/:id/trade", isAuthenticated, isAdmin, async (req: any, res: Response) => {
     try {
       const adminId = req.user.claims.sub;
       const sessionId = req.params.id;
-      const schema = z.object({
+      
+      // Schema for single asset trade (legacy support)
+      const singleAssetSchema = z.object({
         symbol: z.string().min(1),
         name: z.string().min(1),
         assetType: z.string().min(1),
@@ -948,51 +964,119 @@ export async function registerRoutes(
         expiryMs: z.number().positive(),
       });
       
-      const result = schema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ message: "Invalid trade data", errors: result.error.errors });
-      }
-
-      const { symbol, name, assetType, direction, entryPrice, expiryMs } = result.data;
-      const sessionUsers = await storage.getSessionUsers(sessionId);
+      // Schema for multi-asset trades with individual durations
+      const multiAssetSchema = z.object({
+        assets: z.array(z.object({
+          symbol: z.string().min(1),
+          name: z.string().min(1),
+          assetType: z.string().min(1),
+          entryPrice: z.number().positive(),
+          durationMs: z.number().positive(),
+          durationLabel: z.string(), // e.g., "30s", "1h", "1d"
+        })),
+        direction: z.enum(["higher", "lower"]),
+      });
       
-      const trades = await Promise.all(sessionUsers.map(async (su) => {
-        const amount = parseFloat(su.tradeAmount);
+      const sessionUsers = await storage.getSessionUsers(sessionId);
+      let allTrades: any[] = [];
+      
+      // Check if multi-asset request
+      if (req.body.assets) {
+        const result = multiAssetSchema.safeParse(req.body);
+        if (!result.success) {
+          return res.status(400).json({ message: "Invalid trade data", errors: result.error.errors });
+        }
         
-        // Create admin trade record
-        const adminTrade = await storage.createAdminTrade({
-          sessionId,
-          adminId,
-          userId: su.userId,
-          symbol,
-          name,
-          assetType,
-          direction,
-          amount: amount.toFixed(2),
-          entryPrice: entryPrice.toFixed(8),
-          expiryTime: new Date(Date.now() + expiryMs),
-        });
+        const { assets, direction } = result.data;
+        
+        // Create trades for each asset and each user
+        for (const asset of assets) {
+          const trades = await Promise.all(sessionUsers.map(async (su) => {
+            const amount = parseFloat(su.tradeAmount);
+            
+            const adminTrade = await storage.createAdminTrade({
+              sessionId,
+              adminId,
+              userId: su.userId,
+              symbol: asset.symbol,
+              name: asset.name,
+              assetType: asset.assetType,
+              direction,
+              amount: amount.toFixed(2),
+              entryPrice: asset.entryPrice.toFixed(8),
+              expiryTime: new Date(Date.now() + asset.durationMs),
+              durationMs: asset.durationMs,
+              durationGroup: asset.durationLabel,
+            });
 
-        // Create actual trade record for user
-        const portfolio = await storage.getPortfolioByUserId(su.userId);
-        if (portfolio) {
-          await storage.createTrade({
-            portfolioId: portfolio.id,
+            // Create trade record for user
+            const portfolio = await storage.getPortfolioByUserId(su.userId);
+            if (portfolio) {
+              await storage.createTrade({
+                portfolioId: portfolio.id,
+                symbol: asset.symbol,
+                name: asset.name,
+                assetType: asset.assetType,
+                type: direction === "higher" ? "buy" : "sell",
+                quantity: (amount / asset.entryPrice).toFixed(8),
+                price: asset.entryPrice.toFixed(8),
+                total: amount.toFixed(2),
+                status: "pending",
+              });
+            }
+
+            return adminTrade;
+          }));
+          allTrades.push(...trades);
+        }
+      } else {
+        // Legacy single asset trade
+        const result = singleAssetSchema.safeParse(req.body);
+        if (!result.success) {
+          return res.status(400).json({ message: "Invalid trade data", errors: result.error.errors });
+        }
+
+        const { symbol, name, assetType, direction, entryPrice, expiryMs } = result.data;
+        
+        const trades = await Promise.all(sessionUsers.map(async (su) => {
+          const amount = parseFloat(su.tradeAmount);
+          
+          const adminTrade = await storage.createAdminTrade({
+            sessionId,
+            adminId,
+            userId: su.userId,
             symbol,
             name,
             assetType,
-            type: direction === "higher" ? "buy" : "sell",
-            quantity: (amount / entryPrice).toFixed(8),
-            price: entryPrice.toFixed(8),
-            total: amount.toFixed(2),
-            status: "pending",
+            direction,
+            amount: amount.toFixed(2),
+            entryPrice: entryPrice.toFixed(8),
+            expiryTime: new Date(Date.now() + expiryMs),
+            durationMs: expiryMs,
+            durationGroup: getDurationLabel(expiryMs),
           });
-        }
 
-        return adminTrade;
-      }));
+          const portfolio = await storage.getPortfolioByUserId(su.userId);
+          if (portfolio) {
+            await storage.createTrade({
+              portfolioId: portfolio.id,
+              symbol,
+              name,
+              assetType,
+              type: direction === "higher" ? "buy" : "sell",
+              quantity: (amount / entryPrice).toFixed(8),
+              price: entryPrice.toFixed(8),
+              total: amount.toFixed(2),
+              status: "pending",
+            });
+          }
 
-      res.json({ success: true, trades });
+          return adminTrade;
+        }));
+        allTrades = trades;
+      }
+
+      res.json({ success: true, trades: allTrades });
     } catch (error) {
       console.error("Error executing batch trade:", error);
       res.status(500).json({ message: "Failed to execute batch trade" });
@@ -1055,7 +1139,7 @@ export async function registerRoutes(
     }
   });
 
-  // Add profit to users
+  // Add profit to users (legacy endpoint)
   app.post("/api/admin/trade-sessions/:id/add-profit", isAuthenticated, isAdmin, async (req: any, res: Response) => {
     try {
       const sessionId = req.params.id;
@@ -1083,6 +1167,118 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error adding profit:", error);
       res.status(500).json({ message: "Failed to add profit" });
+    }
+  });
+
+  // Get trades awaiting profit (completed but profit not yet added)
+  app.get("/api/admin/trades/awaiting-profit", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const adminId = req.user.claims.sub;
+      const { sessionId, durationGroup } = req.query;
+      
+      const trades = await storage.getAdminTrades({ 
+        adminId,
+        sessionId: sessionId as string | undefined,
+        status: "completed"
+      });
+      
+      // Filter trades where profit status is pending
+      const awaitingProfit = trades.filter(t => t.profitStatus === "pending" || !t.profitStatus);
+      
+      // Optionally filter by duration group
+      const filtered = durationGroup 
+        ? awaitingProfit.filter(t => t.durationGroup === durationGroup)
+        : awaitingProfit;
+      
+      res.json(filtered.map(t => ({
+        ...t,
+        createdAt: t.createdAt?.toISOString(),
+        closedAt: t.closedAt?.toISOString(),
+        expiryTime: t.expiryTime?.toISOString(),
+      })));
+    } catch (error) {
+      console.error("Error fetching trades awaiting profit:", error);
+      res.status(500).json({ message: "Failed to fetch trades" });
+    }
+  });
+
+  // Add profit to specific trades (new endpoint for popup flow)
+  app.post("/api/admin/trades/add-profit", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const schema = z.object({
+        tradeIds: z.array(z.string()),
+        profitPerTrade: z.record(z.string(), z.number()), // { tradeId: profitAmount }
+        mode: z.enum(["group", "singular"]), // group = all at once, singular = one at a time
+      });
+      
+      const result = schema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error.errors });
+      }
+
+      const { tradeIds, profitPerTrade, mode } = result.data;
+      
+      const results = await Promise.all(tradeIds.map(async (tradeId) => {
+        const profit = profitPerTrade[tradeId] || 0;
+        
+        // Update trade with profit
+        const trade = await storage.updateAdminTrade(tradeId, {
+          profit: profit.toFixed(2),
+          profitStatus: "profit_added",
+        });
+        
+        if (trade) {
+          // Add profit to user's balance
+          const portfolio = await storage.adjustUserBalance(
+            trade.userId, 
+            Math.abs(profit), 
+            profit >= 0 ? 'add' : 'subtract'
+          );
+          await storage.adjustUserProfit(
+            trade.userId, 
+            Math.abs(profit), 
+            profit >= 0 ? 'add' : 'subtract'
+          );
+          
+          return { 
+            tradeId, 
+            userId: trade.userId, 
+            profit, 
+            newBalance: portfolio.balance 
+          };
+        }
+        return null;
+      }));
+
+      res.json({ success: true, results: results.filter(r => r !== null) });
+    } catch (error) {
+      console.error("Error adding profit to trades:", error);
+      res.status(500).json({ message: "Failed to add profit" });
+    }
+  });
+
+  // Get active trades for a specific user (for user dashboard notification)
+  app.get("/api/user/active-trades", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const trades = await storage.getAdminTrades({ userId, status: "active" });
+      
+      res.json(trades.map(t => ({
+        id: t.id,
+        symbol: t.symbol,
+        name: t.name,
+        assetType: t.assetType,
+        direction: t.direction,
+        amount: t.amount,
+        entryPrice: t.entryPrice,
+        expiryTime: t.expiryTime?.toISOString(),
+        durationMs: t.durationMs,
+        createdAt: t.createdAt?.toISOString(),
+      })));
+    } catch (error) {
+      console.error("Error fetching user active trades:", error);
+      res.status(500).json({ message: "Failed to fetch active trades" });
     }
   });
 

@@ -501,6 +501,8 @@ export class DatabaseStorage implements IStorage {
     amount: string;
     entryPrice: string;
     expiryTime?: Date;
+    durationMs?: number;
+    durationGroup?: string;
   }): Promise<AdminTrade> {
     const [trade] = await db.insert(adminTrades).values(data).returning();
     return trade;
@@ -537,7 +539,7 @@ export class DatabaseStorage implements IStorage {
     return tradesWithUsers;
   }
 
-  async updateAdminTrade(id: string, data: { exitPrice?: string; profit?: string; status?: string; closedAt?: Date }): Promise<AdminTrade> {
+  async updateAdminTrade(id: string, data: { exitPrice?: string; profit?: string; status?: string; closedAt?: Date; profitStatus?: string }): Promise<AdminTrade> {
     const [trade] = await db.update(adminTrades)
       .set(data)
       .where(eq(adminTrades.id, id))

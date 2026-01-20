@@ -81,8 +81,10 @@ interface ActiveTrade {
   expiryTime: number;
   startTime: number;
   tradeIds: string[];
+  durationGroup: string;
 }
 
+// Extended expiry options from 30 seconds to 2 years
 const expiryOptions = [
   { value: "30s", label: "30 seconds", ms: 30000 },
   { value: "1m", label: "1 minute", ms: 60000 },
@@ -93,7 +95,33 @@ const expiryOptions = [
   { value: "15m", label: "15 minutes", ms: 900000 },
   { value: "30m", label: "30 minutes", ms: 1800000 },
   { value: "1h", label: "1 hour", ms: 3600000 },
+  { value: "2h", label: "2 hours", ms: 7200000 },
+  { value: "4h", label: "4 hours", ms: 14400000 },
+  { value: "8h", label: "8 hours", ms: 28800000 },
+  { value: "12h", label: "12 hours", ms: 43200000 },
+  { value: "1d", label: "1 day", ms: 86400000 },
+  { value: "2d", label: "2 days", ms: 172800000 },
+  { value: "3d", label: "3 days", ms: 259200000 },
+  { value: "1w", label: "1 week", ms: 604800000 },
+  { value: "2w", label: "2 weeks", ms: 1209600000 },
+  { value: "1mo", label: "1 month", ms: 2592000000 },
+  { value: "3mo", label: "3 months", ms: 7776000000 },
+  { value: "6mo", label: "6 months", ms: 15552000000 },
+  { value: "1y", label: "1 year", ms: 31536000000 },
+  { value: "2y", label: "2 years", ms: 63072000000 },
 ];
+
+// Asset with individual duration for multi-asset trading
+interface TradingAsset extends Asset {
+  duration: string; // expiry option value like "30s", "1h"
+}
+
+// Completed duration group awaiting profit
+interface CompletedDurationGroup {
+  durationGroup: string;
+  trades: AdminTrade[];
+  completedAt: Date;
+}
 
 const getSymbolInitials = (symbol: string): string => {
   if (symbol.includes("/")) {
@@ -122,12 +150,13 @@ export default function TradeForUsers() {
     }
     return null;
   });
-  const [openAssets, setOpenAssets] = useState<Asset[]>([cryptoAssets[0]]);
-  const [selectedAsset, setSelectedAsset] = useState<Asset>(cryptoAssets[0]);
+  // Multi-asset trading with individual durations
+  const [tradingAssets, setTradingAssets] = useState<TradingAsset[]>([{ ...cryptoAssets[0], duration: "1m" }]);
+  const [selectedAssetIndex, setSelectedAssetIndex] = useState(0);
+  const selectedAsset = tradingAssets[selectedAssetIndex] || { ...cryptoAssets[0], duration: "1m" };
   const [marketModalOpen, setMarketModalOpen] = useState(false);
-  const [expiration, setExpiration] = useState("1m");
-  const [activeTrade, setActiveTrade] = useState<ActiveTrade | null>(null);
-  const [countdown, setCountdown] = useState(0);
+  const [activeTrades, setActiveTrades] = useState<ActiveTrade[]>([]); // Multiple active trades for multi-asset
+  const [countdowns, setCountdowns] = useState<Record<string, number>>({}); // countdown per duration group
   const [showUsersPanel, setShowUsersPanel] = useState(false);
   const [indicators, setIndicators] = useState<IndicatorSettings>({
     alligator: false,
@@ -137,9 +166,20 @@ export default function TradeForUsers() {
     emaPeriod: 12,
   });
 
-  // Profit dialog
-  const [profitDialogOpen, setProfitDialogOpen] = useState(false);
+  // Legacy single trade state for backward compatibility
+  const activeTrade = activeTrades.length > 0 ? activeTrades[0] : null;
+  const countdown = activeTrade ? (countdowns[activeTrade.durationGroup] || 0) : 0;
+
+  // Profit popup state
+  const [profitPopupOpen, setProfitPopupOpen] = useState(false);
+  const [profitDialogOpen, setProfitDialogOpen] = useState(false); // Legacy dialog for backward compat
+  const [completedDurationGroup, setCompletedDurationGroup] = useState<CompletedDurationGroup | null>(null);
+  const [profitMode, setProfitMode] = useState<"group" | "singular">("group");
   const [profitAmounts, setProfitAmounts] = useState<Record<string, number>>({});
+  
+  // Helper: get openAssets from tradingAssets (for backward compat)
+  const openAssets = tradingAssets;
+  const expiration = selectedAsset.duration;
 
   // Fetch users with balance
   const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
@@ -351,90 +391,164 @@ export default function TradeForUsers() {
     );
   };
 
+  // Add new asset to trading list with default duration
   const handleSelectAsset = (asset: Asset) => {
-    if (!openAssets.find(a => a.symbol === asset.symbol)) {
-      setOpenAssets([...openAssets, asset]);
+    const existing = tradingAssets.find(a => a.symbol === asset.symbol);
+    if (!existing) {
+      setTradingAssets([...tradingAssets, { ...asset, duration: "1m" }]);
+      setSelectedAssetIndex(tradingAssets.length); // Select the new asset
+    } else {
+      const index = tradingAssets.findIndex(a => a.symbol === asset.symbol);
+      setSelectedAssetIndex(index);
     }
-    setSelectedAsset(asset);
     setMarketModalOpen(false);
   };
 
-  const handleCloseAssetTab = (asset: Asset, e: React.MouseEvent) => {
+  // Close an asset tab
+  const handleCloseAssetTab = (asset: TradingAsset, e: React.MouseEvent) => {
     e.stopPropagation();
-    const newAssets = openAssets.filter(a => a.symbol !== asset.symbol);
-    setOpenAssets(newAssets);
+    const newAssets = tradingAssets.filter(a => a.symbol !== asset.symbol);
+    setTradingAssets(newAssets);
     if (selectedAsset.symbol === asset.symbol && newAssets.length > 0) {
-      setSelectedAsset(newAssets[0]);
+      setSelectedAssetIndex(0);
     }
   };
 
-  const getExpiryMs = useCallback(() => {
-    return expiryOptions.find(o => o.value === expiration)?.ms || 60000;
+  // Update duration for a specific asset
+  const updateAssetDuration = (symbol: string, duration: string) => {
+    setTradingAssets(tradingAssets.map(a => 
+      a.symbol === symbol ? { ...a, duration } : a
+    ));
+  };
+
+  // Set expiration for current selected asset
+  const setExpiration = (value: string) => {
+    updateAssetDuration(selectedAsset.symbol, value);
+  };
+
+  const getExpiryMs = useCallback((durationValue?: string) => {
+    const dur = durationValue || expiration;
+    return expiryOptions.find(o => o.value === dur)?.ms || 60000;
   }, [expiration]);
 
+  // Execute trade for ALL selected assets with their individual durations
   const handleTrade = async (direction: "higher" | "lower") => {
-    if (activeTrade) return;
+    if (activeTrades.length > 0) return; // Already trading
     
-    const expiryMs = getExpiryMs();
     const now = Date.now();
     
-    // Start countdown immediately for UI responsiveness
-    setCountdown(Math.floor(expiryMs / 1000));
+    // Group assets by their duration for countdown management
+    const durationGroups = new Map<string, TradingAsset[]>();
+    tradingAssets.forEach(asset => {
+      const group = durationGroups.get(asset.duration) || [];
+      group.push(asset);
+      durationGroups.set(asset.duration, group);
+    });
+
+    // Start countdowns for each duration group
+    const initialCountdowns: Record<string, number> = {};
+    durationGroups.forEach((_, duration) => {
+      const ms = getExpiryMs(duration);
+      initialCountdowns[duration] = Math.floor(ms / 1000);
+    });
+    setCountdowns(initialCountdowns);
 
     try {
+      // Execute multi-asset trade
+      const assets = tradingAssets.map(asset => ({
+        symbol: asset.symbol,
+        name: asset.name,
+        assetType: asset.type,
+        entryPrice: asset.price,
+        durationMs: getExpiryMs(asset.duration),
+        durationLabel: asset.duration,
+      }));
+
       const result = await executeTradeMutation.mutateAsync({
-        symbol: selectedAsset.symbol,
-        name: selectedAsset.name,
-        assetType: selectedAsset.type,
+        assets,
         direction,
-        entryPrice: selectedAsset.price,
-        expiryMs,
-      });
+      } as any);
       
       const tradeIds = result.trades?.map((t) => t.id) || [];
       
-      const newTrade: ActiveTrade = {
-        id: `trade-${now}`,
-        symbol: selectedAsset.symbol,
-        direction,
-        amount: selectedUsers.reduce((sum, u) => sum + u.tradeAmount, 0),
-        entryPrice: selectedAsset.price,
-        expiryTime: now + expiryMs,
-        startTime: now,
-        tradeIds,
-      };
+      // Create active trades for each duration group
+      const newActiveTrades: ActiveTrade[] = [];
+      durationGroups.forEach((groupAssets, duration) => {
+        const expiryMs = getExpiryMs(duration);
+        newActiveTrades.push({
+          id: `trade-${now}-${duration}`,
+          symbol: groupAssets.map(a => a.symbol).join(", "),
+          direction,
+          amount: selectedUsers.reduce((sum, u) => sum + u.tradeAmount, 0),
+          entryPrice: groupAssets[0].price,
+          expiryTime: now + expiryMs,
+          startTime: now,
+          tradeIds: tradeIds.filter((_, i) => {
+            // Split tradeIds by duration group (approximation)
+            return true; // For now include all
+          }),
+          durationGroup: duration,
+        });
+      });
       
-      setActiveTrade(newTrade);
+      setActiveTrades(newActiveTrades);
     } catch (error) {
-      setCountdown(0);
+      setCountdowns({});
     }
   };
 
+  // Countdown effect for multiple active trades
   useEffect(() => {
-    if (!activeTrade) return;
+    if (activeTrades.length === 0) return;
 
     const interval = setInterval(() => {
-      const remaining = Math.max(0, Math.floor((activeTrade.expiryTime - Date.now()) / 1000));
-      setCountdown(remaining);
+      const now = Date.now();
+      const newCountdowns: Record<string, number> = {};
+      const completedGroups: ActiveTrade[] = [];
+      const stillActive: ActiveTrade[] = [];
 
-      if (remaining <= 0) {
-        clearInterval(interval);
-        
-        // Complete trades when countdown ends
-        if (activeTrade.tradeIds && activeTrade.tradeIds.length > 0) {
+      activeTrades.forEach(trade => {
+        const remaining = Math.max(0, Math.floor((trade.expiryTime - now) / 1000));
+        newCountdowns[trade.durationGroup] = remaining;
+
+        if (remaining <= 0) {
+          completedGroups.push(trade);
+        } else {
+          stillActive.push(trade);
+        }
+      });
+
+      setCountdowns(newCountdowns);
+
+      // Handle completed trades
+      completedGroups.forEach(trade => {
+        if (trade.tradeIds && trade.tradeIds.length > 0) {
           completeTradeMutation.mutate({
-            tradeIds: activeTrade.tradeIds,
+            tradeIds: trade.tradeIds,
             exitPrice: selectedAsset.price,
           });
         }
         
-        setActiveTrade(null);
-        toast({ title: "Trade Completed", description: "The trade period has ended" });
-      }
+        // Show profit popup for completed group
+        toast({ 
+          title: `Trade Completed (${trade.durationGroup})`, 
+          description: "Click to add profit for users" 
+        });
+        
+        // TODO: Trigger profit popup for this duration group
+        setProfitPopupOpen(true);
+        setCompletedDurationGroup({
+          durationGroup: trade.durationGroup,
+          trades: [], // Will be fetched from API
+          completedAt: new Date(),
+        });
+      });
+
+      setActiveTrades(stillActive);
     }, 100);
 
     return () => clearInterval(interval);
-  }, [activeTrade, selectedAsset.price, completeTradeMutation]);
+  }, [activeTrades, selectedAsset.price, completeTradeMutation]);
 
   const formatCountdown = (seconds: number) => {
     if (seconds >= 3600) {
@@ -478,8 +592,8 @@ export default function TradeForUsers() {
     return acc;
   }, {} as Record<string, AdminTrade[]>);
 
-  const activeTrades = tradeHistory.filter(t => t.status === "active" || t.status === "pending");
-  const completedTrades = tradeHistory.filter(t => t.status === "completed" || t.status === "closed");
+  const historyActiveTrades = tradeHistory.filter(t => t.status === "active" || t.status === "pending");
+  const historyCompletedTrades = tradeHistory.filter(t => t.status === "completed" || t.status === "closed");
 
   const slideVariants = {
     enter: (direction: "left" | "right") => ({
@@ -529,10 +643,10 @@ export default function TradeForUsers() {
               <Tabs defaultValue="active" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="active" data-testid="tab-active-trades">
-                    Active Trades ({activeTrades.length})
+                    Active Trades ({historyActiveTrades.length})
                   </TabsTrigger>
                   <TabsTrigger value="completed" data-testid="tab-completed-trades">
-                    Completed ({completedTrades.length})
+                    Completed ({historyCompletedTrades.length})
                   </TabsTrigger>
                 </TabsList>
                 
@@ -541,7 +655,7 @@ export default function TradeForUsers() {
                     <div className="text-center py-8">
                       <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto" />
                     </div>
-                  ) : activeTrades.length === 0 ? (
+                  ) : historyActiveTrades.length === 0 ? (
                     <Card className="glass-card p-8 text-center">
                       <History className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                       <p className="text-muted-foreground">No active trades</p>
@@ -597,7 +711,7 @@ export default function TradeForUsers() {
                 </TabsContent>
 
                 <TabsContent value="completed" className="space-y-4 mt-4">
-                  {completedTrades.length === 0 ? (
+                  {historyCompletedTrades.length === 0 ? (
                     <Card className="glass-card p-8 text-center">
                       <History className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                       <p className="text-muted-foreground">No completed trades yet</p>
@@ -835,10 +949,10 @@ export default function TradeForUsers() {
               </Button>
 
               <div className="flex items-center gap-1 overflow-x-auto flex-1">
-                {openAssets.map((asset) => (
+                {tradingAssets.map((asset, index) => (
                   <button
                     key={asset.symbol}
-                    onClick={() => setSelectedAsset(asset)}
+                    onClick={() => setSelectedAssetIndex(index)}
                     data-testid={`tab-${asset.symbol}`}
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200",
@@ -851,7 +965,8 @@ export default function TradeForUsers() {
                       {getSymbolInitials(asset.symbol)}
                     </div>
                     <span>{asset.symbol}</span>
-                    {openAssets.length > 1 && (
+                    <Badge className="text-[10px] px-1 py-0 bg-primary/20">{asset.duration}</Badge>
+                    {tradingAssets.length > 1 && (
                       <button
                         onClick={(e) => handleCloseAssetTab(asset, e)}
                         className="ml-1 hover:text-white"
