@@ -1,14 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { 
   LayoutDashboard, TrendingUp, Wallet, History, Star, 
-  LogOut, Menu, ChevronDown, Search, Bell, User, BarChart3
+  LogOut, Menu, ChevronDown, Search, Bell, User, BarChart3,
+  Clock, ArrowUp, ArrowDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GlassCard } from "@/components/ui/glass-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { PortfolioCard, HoldingRow } from "@/components/portfolio-card";
 import { TradingPanel } from "@/components/trading-panel";
 import { PriceChart } from "@/components/price-chart";
@@ -50,6 +53,19 @@ interface DashboardData {
   }>;
 }
 
+interface ActiveUserTrade {
+  id: string;
+  symbol: string;
+  name: string;
+  direction: "higher" | "lower";
+  amount: string;
+  entryPrice: string;
+  durationMs: number | null;
+  durationGroup: string | null;
+  createdAt: string;
+  expiryTime: string | null; // Changed from expiresAt to match API
+}
+
 export default function Dashboard() {
   const { user, logout, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
@@ -57,11 +73,56 @@ export default function Dashboard() {
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(cryptoAssets[0]);
   const [marketModalOpen, setMarketModalOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [tradeCountdowns, setTradeCountdowns] = useState<Record<string, number>>({});
 
   const { data: dashboardData, isLoading: dataLoading } = useQuery<DashboardData>({
     queryKey: ["/api/dashboard"],
     retry: false,
   });
+
+  // Fetch active trades for the user
+  const { data: activeTrades = [], isLoading: activeTradesLoading } = useQuery<ActiveUserTrade[]>({
+    queryKey: ["/api/user/active-trades"],
+    refetchInterval: 5000, // Refresh every 5 seconds
+  });
+
+  // Countdown effect for active trades
+  useEffect(() => {
+    if (activeTrades.length === 0) return;
+
+    const calculateCountdowns = () => {
+      const now = Date.now();
+      const newCountdowns: Record<string, number> = {};
+      
+      activeTrades.forEach(trade => {
+        if (trade.expiryTime) {
+          const expiryTime = new Date(trade.expiryTime).getTime();
+          const remaining = Math.max(0, Math.floor((expiryTime - now) / 1000));
+          newCountdowns[trade.id] = remaining;
+        }
+      });
+      
+      setTradeCountdowns(newCountdowns);
+    };
+
+    calculateCountdowns();
+    const interval = setInterval(calculateCountdowns, 1000);
+    return () => clearInterval(interval);
+  }, [activeTrades]);
+
+  const formatTradeCountdown = useCallback((seconds: number) => {
+    if (seconds >= 3600) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    } else if (seconds >= 60) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+    return `0:${seconds.toString().padStart(2, '0')}`;
+  }, []);
 
   const executeTradeMutation = useMutation({
     mutationFn: async (data: { 
@@ -293,6 +354,102 @@ export default function Dashboard() {
                       currentPrice={selectedAsset.price}
                       changePercent={selectedAsset.changePercent24h}
                     />
+                  </GlassCard>
+                )}
+
+                {/* Active Trades Section */}
+                {activeTrades.length > 0 && (
+                  <GlassCard className="p-6" gradient>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-5 h-5 text-primary" />
+                        <h3 className="font-semibold">Active Trades</h3>
+                        <Badge className="bg-primary/20 text-primary ml-2">{activeTrades.length}</Badge>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {activeTrades.slice(0, 5).map((trade) => {
+                        const countdown = tradeCountdowns[trade.id] || 0;
+                        // Calculate progress based on durationMs if available, otherwise estimate from createdAt
+                        let progress = 0;
+                        if (trade.expiryTime && trade.durationMs && trade.durationMs > 0) {
+                          // Use actual duration for accurate progress
+                          const totalSeconds = trade.durationMs / 1000;
+                          progress = Math.max(0, Math.min(100, (countdown / totalSeconds) * 100));
+                        } else if (trade.expiryTime && trade.createdAt) {
+                          // Fallback: calculate duration from createdAt to expiryTime
+                          const created = new Date(trade.createdAt).getTime();
+                          const expires = new Date(trade.expiryTime).getTime();
+                          const totalDuration = (expires - created) / 1000;
+                          if (totalDuration > 0) {
+                            progress = Math.max(0, Math.min(100, (countdown / totalDuration) * 100));
+                          }
+                        }
+                        
+                        return (
+                          <div
+                            key={trade.id}
+                            className="glass-light rounded-lg p-3"
+                            data-testid={`active-trade-${trade.id}`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <div className={cn(
+                                  "w-8 h-8 rounded-full flex items-center justify-center",
+                                  trade.direction === "higher" 
+                                    ? "bg-success/20 text-success" 
+                                    : "bg-destructive/20 text-destructive"
+                                )}>
+                                  {trade.direction === "higher" 
+                                    ? <ArrowUp className="w-4 h-4" /> 
+                                    : <ArrowDown className="w-4 h-4" />
+                                  }
+                                </div>
+                                <div>
+                                  <p className="font-medium text-sm">{trade.symbol}</p>
+                                  <p className="text-xs text-muted-foreground">{trade.name}</p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-semibold">${parseFloat(trade.amount).toLocaleString()}</p>
+                                {trade.durationGroup && (
+                                  <Badge className="text-[10px] bg-primary/10">{trade.durationGroup}</Badge>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Countdown timer */}
+                            <div className="flex items-center gap-2">
+                              <Progress value={100 - progress} className="flex-1 h-2" />
+                              <span className={cn(
+                                "text-sm font-mono font-bold",
+                                countdown < 10 ? "text-destructive animate-pulse" : "text-primary"
+                              )}>
+                                {formatTradeCountdown(countdown)}
+                              </span>
+                            </div>
+                            
+                            <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+                              <span>Entry: ${parseFloat(trade.entryPrice).toLocaleString()}</span>
+                              <span className={cn(
+                                "px-2 py-0.5 rounded uppercase font-medium",
+                                trade.direction === "higher" 
+                                  ? "bg-success/20 text-success" 
+                                  : "bg-destructive/20 text-destructive"
+                              )}>
+                                {trade.direction}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      
+                      {activeTrades.length > 5 && (
+                        <p className="text-center text-sm text-muted-foreground py-2">
+                          +{activeTrades.length - 5} more active trades
+                        </p>
+                      )}
+                    </div>
                   </GlassCard>
                 )}
 

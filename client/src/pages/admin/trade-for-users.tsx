@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Users, Search, Check, ChevronRight, ChevronLeft, ArrowUp, ArrowDown,
   Clock, Plus, X, DollarSign, TrendingUp, TrendingDown, History,
-  ChevronDown, Activity, Minus, Copy, Wallet
+  ChevronDown, Activity, Minus, Copy, Wallet, User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -131,7 +131,7 @@ const getSymbolInitials = (symbol: string): string => {
   return symbol.slice(0, 2);
 };
 
-type PageView = "history" | "select-users" | "trade-room";
+type PageView = "history" | "select-users" | "trade-room" | "add-profits";
 
 export default function TradeForUsers() {
   const [currentPage, setCurrentPage] = useState<PageView>("history");
@@ -176,6 +176,7 @@ export default function TradeForUsers() {
   const [completedDurationGroup, setCompletedDurationGroup] = useState<CompletedDurationGroup | null>(null);
   const [profitMode, setProfitMode] = useState<"group" | "singular">("group");
   const [profitAmounts, setProfitAmounts] = useState<Record<string, number>>({});
+  const [groupProfitAmount, setGroupProfitAmount] = useState(0);
   
   // Helper: get openAssets from tradingAssets (for backward compat)
   const openAssets = tradingAssets;
@@ -272,23 +273,25 @@ export default function TradeForUsers() {
     },
   });
 
-  // Execute trade mutation
+  // Execute trade mutation (supports multi-asset)
   const executeTradeMutation = useMutation({
     mutationFn: async (data: {
-      symbol: string;
-      name: string;
-      assetType: string;
+      assets?: { symbol: string; name: string; assetType: string; entryPrice: number; durationMs: number; durationLabel: string }[];
       direction: "higher" | "lower";
-      entryPrice: number;
-      expiryMs: number;
-    }): Promise<{ success: boolean; trades: { id: string }[] }> => {
+      // Legacy single-asset support
+      symbol?: string;
+      name?: string;
+      assetType?: string;
+      entryPrice?: number;
+      expiryMs?: number;
+    }): Promise<{ success: boolean; trades: { id: string; durationGroup?: string }[] }> => {
       if (!sessionId) throw new Error("No active session");
       const res = await apiRequest("POST", `/api/admin/trade-sessions/${sessionId}/trade`, data);
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/trades-history"] });
-      toast({ title: "Trade Executed", description: `Trade placed for ${selectedUsers.length} user(s)` });
+      toast({ title: "Trade Executed", description: `Trade placed for ${selectedUsers.length} user(s) across ${tradingAssets.length} asset(s)` });
     },
     onError: (error: any) => {
       toast({ title: "Trade Failed", description: error?.message || "Failed to execute trade", variant: "destructive" });
@@ -366,7 +369,7 @@ export default function TradeForUsers() {
   };
 
   const navigateTo = (page: PageView) => {
-    if (page === "history" || (page === "select-users" && currentPage === "trade-room")) {
+    if (page === "history" || (page === "select-users" && currentPage === "trade-room") || (page === "trade-room" && currentPage === "add-profits")) {
       setSlideDirection("right");
     } else {
       setSlideDirection("left");
@@ -582,6 +585,39 @@ export default function TradeForUsers() {
     }
     
     addProfitMutation.mutate(profitList);
+  };
+
+  // Handle profit from popup dialog (group or singular mode)
+  const handlePopupAddProfit = () => {
+    let profitList: { userId: string; amount: number }[] = [];
+    
+    if (profitMode === "group") {
+      // Group mode: apply same profit to all users
+      if (groupProfitAmount === 0) {
+        toast({ title: "No Profit", description: "Enter a profit amount first", variant: "destructive" });
+        return;
+      }
+      profitList = selectedUsers.map(u => ({ userId: u.id, amount: groupProfitAmount }));
+    } else {
+      // Singular mode: individual profits per user
+      profitList = Object.entries(profitAmounts)
+        .filter(([_, amount]) => amount !== 0)
+        .map(([userId, amount]) => ({ userId, amount }));
+      
+      if (profitList.length === 0) {
+        toast({ title: "No Changes", description: "Enter profit amounts first", variant: "destructive" });
+        return;
+      }
+    }
+    
+    addProfitMutation.mutate(profitList, {
+      onSuccess: () => {
+        setProfitPopupOpen(false);
+        setGroupProfitAmount(0);
+        setProfitAmounts({});
+        setCompletedDurationGroup(null);
+      }
+    });
   };
 
   // Group trades by date
@@ -1224,6 +1260,141 @@ export default function TradeForUsers() {
             </div>
           </motion.div>
         )}
+
+        {/* Page 4: Add Profits - Full page for all users */}
+        {currentPage === "add-profits" && (
+          <motion.div
+            key="add-profits"
+            custom={slideDirection}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ type: "tween", duration: 0.3 }}
+            className="space-y-4 h-[calc(100vh-140px)] flex flex-col"
+          >
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigateTo("trade-room")}
+                data-testid="button-back-from-profits"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+              <div className="flex-1">
+                <h2 className="text-xl font-bold">Add Profits</h2>
+                <p className="text-sm text-muted-foreground">
+                  {selectedUsers.length} users • Duration: {completedDurationGroup?.durationGroup || "N/A"}
+                </p>
+              </div>
+            </div>
+
+            {/* Mode toggle */}
+            <div className="flex gap-2 flex-shrink-0">
+              <Button
+                variant={profitMode === "group" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setProfitMode("group")}
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Group
+              </Button>
+              <Button
+                variant={profitMode === "singular" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setProfitMode("singular")}
+              >
+                <User className="w-4 h-4 mr-2" />
+                Individual
+              </Button>
+            </div>
+
+            {/* Group profit input */}
+            {profitMode === "group" && (
+              <Card className="glass-card p-4 flex-shrink-0">
+                <label className="text-sm font-medium mb-2 block">
+                  Profit Amount for All {selectedUsers.length} Users
+                </label>
+                <div className="flex gap-2 items-center">
+                  <span className="text-xl font-bold text-success">$</span>
+                  <Input
+                    type="number"
+                    value={groupProfitAmount}
+                    onChange={(e) => setGroupProfitAmount(parseFloat(e.target.value) || 0)}
+                    className="text-lg"
+                    placeholder="Enter profit amount"
+                    data-testid="input-group-profit-page"
+                  />
+                </div>
+              </Card>
+            )}
+
+            {/* Users list */}
+            <div className="flex-1 overflow-y-auto space-y-2">
+              {selectedUsers.map((user) => (
+                <Card key={user.id} className="glass-card p-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10">
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {getInitials(user)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="font-medium">{getUserName(user)}</div>
+                      <div className="text-xs text-muted-foreground">
+                        Balance: ${parseFloat(user.balance).toLocaleString()} • Trade: ${user.tradeAmount.toLocaleString()}
+                      </div>
+                    </div>
+                    {profitMode === "group" ? (
+                      <Badge className="bg-success/20 text-success">
+                        +${groupProfitAmount.toLocaleString()}
+                      </Badge>
+                    ) : (
+                      <Input
+                        type="number"
+                        value={profitAmounts[user.id] || 0}
+                        onChange={(e) => setProfitAmounts(prev => ({
+                          ...prev,
+                          [user.id]: parseFloat(e.target.value) || 0
+                        }))}
+                        className="w-28"
+                        placeholder="Profit"
+                        data-testid={`input-profit-page-${user.id}`}
+                      />
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-3 pt-2 border-t border-white/10 flex-shrink-0">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => navigateTo("trade-room")}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-success hover:bg-success/90"
+                onClick={handlePopupAddProfit}
+                disabled={addProfitMutation.isPending}
+                data-testid="button-apply-profits-page"
+              >
+                {addProfitMutation.isPending ? (
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                ) : (
+                  <>
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    Apply Profits
+                  </>
+                )}
+              </Button>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* Market Modal */}
@@ -1233,7 +1404,7 @@ export default function TradeForUsers() {
         onSelectAsset={handleSelectAsset}
       />
 
-      {/* Add Profit Dialog */}
+      {/* Add Profit Dialog (Legacy) */}
       <Dialog open={profitDialogOpen} onOpenChange={setProfitDialogOpen}>
         <DialogContent className="glass-dark border-white/10 max-w-md">
           <DialogHeader>
@@ -1279,6 +1450,173 @@ export default function TradeForUsers() {
                 <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
               ) : (
                 "Add Profit"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Profit Popup Dialog - Appears when a duration group completes */}
+      <Dialog open={profitPopupOpen} onOpenChange={setProfitPopupOpen}>
+        <DialogContent className="glass-dark border-white/10 max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-success" />
+              Trade Completed - Add Profits
+            </DialogTitle>
+            {completedDurationGroup && (
+              <p className="text-sm text-muted-foreground mt-1">
+                Duration: <Badge className="ml-1 bg-primary/20">{completedDurationGroup.durationGroup}</Badge>
+              </p>
+            )}
+          </DialogHeader>
+          
+          {/* Mode selector */}
+          <div className="flex gap-2 mt-2">
+            <Button
+              variant={profitMode === "group" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setProfitMode("group")}
+              data-testid="button-group-mode"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Group Profit
+            </Button>
+            <Button
+              variant={profitMode === "singular" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setProfitMode("singular")}
+              data-testid="button-singular-mode"
+            >
+              <User className="w-4 h-4 mr-2" />
+              Individual Profit
+            </Button>
+          </div>
+
+          {profitMode === "group" ? (
+            // Group mode - single profit amount applied to all
+            <div className="space-y-4 py-4">
+              <div className="glass-light rounded-lg p-4">
+                <label className="text-sm font-medium mb-2 block">
+                  Profit Amount for All Users ({selectedUsers.length})
+                </label>
+                <div className="flex gap-2 items-center">
+                  <span className="text-lg font-bold text-success">$</span>
+                  <Input
+                    type="number"
+                    value={groupProfitAmount}
+                    onChange={(e) => setGroupProfitAmount(parseFloat(e.target.value) || 0)}
+                    className="text-lg"
+                    placeholder="Enter profit amount"
+                    data-testid="input-group-profit"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  This amount will be added to each user's balance
+                </p>
+              </div>
+
+              {/* Preview users */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Users ({Math.min(selectedUsers.length, 5)} of {selectedUsers.length})</p>
+                {selectedUsers.slice(0, 5).map((user) => (
+                  <div key={user.id} className="flex items-center gap-3 glass-light rounded-lg p-2">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                        {getInitials(user)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{getUserName(user)}</div>
+                    </div>
+                    <Badge className="bg-success/20 text-success">
+                      +${groupProfitAmount.toLocaleString()}
+                    </Badge>
+                  </div>
+                ))}
+                {selectedUsers.length > 5 && (
+                  <button
+                    onClick={() => {
+                      setProfitPopupOpen(false);
+                      navigateTo("add-profits");
+                    }}
+                    className="text-primary text-sm hover:underline w-full text-center py-2"
+                    data-testid="link-view-all-users"
+                  >
+                    View all {selectedUsers.length} users to add profits
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            // Singular mode - individual profit per user
+            <div className="space-y-4 py-4 max-h-[40vh] overflow-y-auto">
+              {selectedUsers.slice(0, 5).map((user) => (
+                <div key={user.id} className="flex items-center gap-3 glass-light rounded-lg p-2">
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                      {getInitials(user)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">{getUserName(user)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      Trade: ${user.tradeAmount.toLocaleString()}
+                    </div>
+                  </div>
+                  <Input
+                    type="number"
+                    value={profitAmounts[user.id] || 0}
+                    onChange={(e) => setProfitAmounts(prev => ({
+                      ...prev,
+                      [user.id]: parseFloat(e.target.value) || 0
+                    }))}
+                    className="w-24"
+                    placeholder="Profit"
+                    data-testid={`input-singular-profit-${user.id}`}
+                  />
+                </div>
+              ))}
+              {selectedUsers.length > 5 && (
+                <button
+                  onClick={() => {
+                    setProfitPopupOpen(false);
+                    navigateTo("add-profits");
+                  }}
+                  className="text-primary text-sm hover:underline w-full text-center py-2"
+                  data-testid="link-view-all-users-singular"
+                >
+                  View all {selectedUsers.length} users to add individual profits
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-white/10">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setProfitPopupOpen(false);
+                setGroupProfitAmount(0);
+                setProfitAmounts({});
+              }}
+              data-testid="button-skip-profit"
+            >
+              Skip
+            </Button>
+            <Button 
+              onClick={handlePopupAddProfit}
+              disabled={addProfitMutation.isPending}
+              className="bg-success hover:bg-success/90"
+              data-testid="button-apply-profit"
+            >
+              {addProfitMutation.isPending ? (
+                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+              ) : (
+                <>
+                  <DollarSign className="w-4 h-4 mr-2" />
+                  Apply Profit
+                </>
               )}
             </Button>
           </div>

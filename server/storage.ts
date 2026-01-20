@@ -511,21 +511,22 @@ export class DatabaseStorage implements IStorage {
   async getAdminTrades(filters?: { sessionId?: string; adminId?: string; status?: string; userId?: string }): Promise<(AdminTrade & { user?: User })[]> {
     let allTrades: AdminTrade[];
     
-    if (filters?.sessionId) {
+    // Build conditions array dynamically
+    const conditions = [];
+    if (filters?.sessionId) conditions.push(eq(adminTrades.sessionId, filters.sessionId));
+    if (filters?.userId) conditions.push(eq(adminTrades.userId, filters.userId));
+    if (filters?.adminId) conditions.push(eq(adminTrades.adminId, filters.adminId));
+    if (filters?.status) conditions.push(eq(adminTrades.status, filters.status));
+    
+    if (conditions.length === 1) {
+      // Single condition - don't use and()
       allTrades = await db.select().from(adminTrades)
-        .where(eq(adminTrades.sessionId, filters.sessionId))
+        .where(conditions[0])
         .orderBy(desc(adminTrades.createdAt));
-    } else if (filters?.userId) {
+    } else if (conditions.length > 1) {
+      // Multiple conditions - use and()
       allTrades = await db.select().from(adminTrades)
-        .where(eq(adminTrades.userId, filters.userId))
-        .orderBy(desc(adminTrades.createdAt));
-    } else if (filters?.adminId && filters?.status) {
-      allTrades = await db.select().from(adminTrades)
-        .where(and(eq(adminTrades.adminId, filters.adminId), eq(adminTrades.status, filters.status)))
-        .orderBy(desc(adminTrades.createdAt));
-    } else if (filters?.adminId) {
-      allTrades = await db.select().from(adminTrades)
-        .where(eq(adminTrades.adminId, filters.adminId))
+        .where(and(...conditions))
         .orderBy(desc(adminTrades.createdAt));
     } else {
       allTrades = await db.select().from(adminTrades).orderBy(desc(adminTrades.createdAt));
