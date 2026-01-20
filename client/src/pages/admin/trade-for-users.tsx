@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Users, Search, Check, ChevronRight, ChevronLeft, ArrowUp, ArrowDown,
   Clock, Plus, X, DollarSign, TrendingUp, TrendingDown, History,
-  ChevronDown, Activity, Minus, Copy, Wallet, User
+  ChevronDown, Activity, Minus, Copy, Wallet, User, RotateCcw, Eye, PlayCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -199,6 +199,8 @@ export default function TradeForUsers() {
   const [profitMode, setProfitMode] = useState<"group" | "singular">("group");
   const [profitAmounts, setProfitAmounts] = useState<Record<string, number>>({});
   const [groupProfitAmount, setGroupProfitAmount] = useState(0);
+  const [profitsAlreadyAdded, setProfitsAlreadyAdded] = useState(false); // Track if profits were added for current completion
+  const [reopenConfirmDialogOpen, setReopenConfirmDialogOpen] = useState(false); // Dialog when profits already added
   
   // Helper: get openAssets from tradingAssets (for backward compat)
   const openAssets = tradingAssets;
@@ -566,6 +568,7 @@ export default function TradeForUsers() {
         
         // Use assets captured at trade execution time (stored in ActiveTrade)
         // Trigger profit popup for this duration group
+        setProfitsAlreadyAdded(false); // Reset flag for new completion
         setProfitPopupOpen(true);
         setCompletedDurationGroup({
           durationGroup: trade.durationGroup,
@@ -643,7 +646,8 @@ export default function TradeForUsers() {
         setProfitPopupOpen(false);
         setGroupProfitAmount(0);
         setProfitAmounts({});
-        setCompletedDurationGroup(null);
+        setProfitsAlreadyAdded(true); // Mark that profits were added for this completion
+        // Keep completedDurationGroup to show reopen button
       }
     });
   };
@@ -1266,6 +1270,24 @@ export default function TradeForUsers() {
                   </>
                 )}
 
+                {/* Reopen Profit Popup Button - Shows when a trade has completed but popup is closed */}
+                {completedDurationGroup && !profitPopupOpen && !activeTrade && (
+                  <Button
+                    className="bg-primary/80 hover:bg-primary h-12 font-semibold"
+                    onClick={() => {
+                      if (profitsAlreadyAdded) {
+                        setReopenConfirmDialogOpen(true);
+                      } else {
+                        setProfitPopupOpen(true);
+                      }
+                    }}
+                    data-testid="button-reopen-profit-popup"
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    {profitsAlreadyAdded ? "Trade Completed" : "Add Profits"}
+                  </Button>
+                )}
+
                 <div className="glass-light rounded-lg p-2 mt-auto">
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div>
@@ -1690,6 +1712,77 @@ export default function TradeForUsers() {
                   Apply Profit
                 </>
               )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reopen Confirmation Dialog - When profits already added */}
+      <Dialog open={reopenConfirmDialogOpen} onOpenChange={setReopenConfirmDialogOpen}>
+        <DialogContent className="glass-dark border-white/10 max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Check className="w-5 h-5 text-success" />
+              Profits Already Added
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            <p className="text-sm text-muted-foreground">
+              You have already added profits for this trade session. What would you like to do?
+            </p>
+            {completedDurationGroup && (
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                {completedDurationGroup.assets.map((asset, index) => (
+                  <div 
+                    key={`confirm-asset-${asset.symbol}-${index}`}
+                    className="flex items-center gap-1.5 glass-light rounded-md px-2 py-1"
+                  >
+                    <div className={cn(
+                      "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold",
+                      getAssetTypeColor(asset.assetType)
+                    )}>
+                      {getSymbolInitials(asset.symbol)}
+                    </div>
+                    <span className="text-xs font-medium">{asset.symbol}</span>
+                  </div>
+                ))}
+                <Badge className="text-xs bg-success/20 text-success">Completed</Badge>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <Button
+              className="w-full"
+              onClick={() => {
+                setReopenConfirmDialogOpen(false);
+                navigateTo("history");
+              }}
+              data-testid="button-see-all-trades"
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              See All Trades
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setReopenConfirmDialogOpen(false);
+                setCompletedDurationGroup(null);
+                setProfitsAlreadyAdded(false);
+              }}
+              data-testid="button-start-new-trade"
+            >
+              <PlayCircle className="w-4 h-4 mr-2" />
+              Start New Trade
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-muted-foreground"
+              onClick={() => setReopenConfirmDialogOpen(false)}
+              data-testid="button-cancel-reopen"
+            >
+              Cancel
             </Button>
           </div>
         </DialogContent>
