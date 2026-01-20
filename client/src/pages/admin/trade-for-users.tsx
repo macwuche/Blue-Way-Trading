@@ -75,6 +75,8 @@ interface AdminTrade {
 interface ActiveTrade {
   id: string;
   symbol: string;
+  name: string;
+  assetType: string;
   direction: "higher" | "lower";
   amount: number;
   entryPrice: number;
@@ -82,6 +84,7 @@ interface ActiveTrade {
   startTime: number;
   tradeIds: string[];
   durationGroup: string;
+  assets: CompletedAsset[]; // Store individual assets for profit popup
 }
 
 // Extended expiry options from 30 seconds to 2 years
@@ -116,10 +119,18 @@ interface TradingAsset extends Asset {
   duration: string; // expiry option value like "30s", "1h"
 }
 
+// Asset info for displaying in profit popup
+interface CompletedAsset {
+  symbol: string;
+  name: string;
+  assetType: string;
+}
+
 // Completed duration group awaiting profit
 interface CompletedDurationGroup {
   durationGroup: string;
   trades: AdminTrade[];
+  assets: CompletedAsset[];
   completedAt: Date;
 }
 
@@ -129,6 +140,17 @@ const getSymbolInitials = (symbol: string): string => {
     return parts[0].slice(0, 2);
   }
   return symbol.slice(0, 2);
+};
+
+// Get color class based on asset type
+const getAssetTypeColor = (assetType: string): string => {
+  switch (assetType.toLowerCase()) {
+    case 'crypto': return 'text-yellow-500 bg-yellow-500/20';
+    case 'forex': return 'text-emerald-500 bg-emerald-500/20';
+    case 'stocks': return 'text-blue-500 bg-blue-500/20';
+    case 'etf': return 'text-purple-500 bg-purple-500/20';
+    default: return 'text-primary bg-primary/20';
+  }
 };
 
 type PageView = "history" | "select-users" | "trade-room" | "add-profits";
@@ -481,6 +503,8 @@ export default function TradeForUsers() {
         newActiveTrades.push({
           id: `trade-${now}-${duration}`,
           symbol: groupAssets.map(a => a.symbol).join(", "),
+          name: groupAssets.map(a => a.name).join(", "),
+          assetType: groupAssets[0].type, // Use first asset's type for color coding
           direction,
           amount: selectedUsers.reduce((sum, u) => sum + u.tradeAmount, 0),
           entryPrice: groupAssets[0].price,
@@ -491,6 +515,8 @@ export default function TradeForUsers() {
             return true; // For now include all
           }),
           durationGroup: duration,
+          // Store individual assets for profit popup display
+          assets: groupAssets.map(a => ({ symbol: a.symbol, name: a.name, assetType: a.type })),
         });
       });
       
@@ -538,11 +564,13 @@ export default function TradeForUsers() {
           description: "Click to add profit for users" 
         });
         
-        // TODO: Trigger profit popup for this duration group
+        // Use assets captured at trade execution time (stored in ActiveTrade)
+        // Trigger profit popup for this duration group
         setProfitPopupOpen(true);
         setCompletedDurationGroup({
           durationGroup: trade.durationGroup,
           trades: [], // Will be fetched from API
+          assets: trade.assets, // Use assets captured at trade execution time
           completedAt: new Date(),
         });
       });
@@ -1284,9 +1312,27 @@ export default function TradeForUsers() {
               </Button>
               <div className="flex-1">
                 <h2 className="text-xl font-bold">Add Profits</h2>
-                <p className="text-sm text-muted-foreground">
-                  {selectedUsers.length} users • Duration: {completedDurationGroup?.durationGroup || "N/A"}
-                </p>
+                <div className="flex flex-wrap items-center gap-2 mt-1">
+                  {/* Asset badges */}
+                  {completedDurationGroup?.assets.map((asset, index) => (
+                    <div 
+                      key={`page-asset-${asset.symbol}-${index}`}
+                      className="flex items-center gap-1.5 glass-light rounded-md px-2 py-0.5"
+                    >
+                      <div className={cn(
+                        "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold",
+                        getAssetTypeColor(asset.assetType)
+                      )}>
+                        {getSymbolInitials(asset.symbol)}
+                      </div>
+                      <span className="text-xs font-medium">{asset.symbol}</span>
+                    </div>
+                  ))}
+                  <span className="text-xs text-muted-foreground">•</span>
+                  <span className="text-xs text-muted-foreground">{selectedUsers.length} users</span>
+                  <span className="text-xs text-muted-foreground">•</span>
+                  <Badge className="text-xs bg-primary/20">{completedDurationGroup?.durationGroup || "N/A"}</Badge>
+                </div>
               </div>
             </div>
 
@@ -1465,9 +1511,35 @@ export default function TradeForUsers() {
               Trade Completed - Add Profits
             </DialogTitle>
             {completedDurationGroup && (
-              <p className="text-sm text-muted-foreground mt-1">
-                Duration: <Badge className="ml-1 bg-primary/20">{completedDurationGroup.durationGroup}</Badge>
-              </p>
+              <div className="space-y-2 mt-2">
+                {/* Asset display */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {completedDurationGroup.assets.map((asset, index) => (
+                    <div 
+                      key={`${asset.symbol}-${index}`}
+                      className="flex items-center gap-2 glass-light rounded-lg px-3 py-1.5"
+                      data-testid={`asset-badge-${asset.symbol}`}
+                    >
+                      <div className={cn(
+                        "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
+                        getAssetTypeColor(asset.assetType)
+                      )}>
+                        {getSymbolInitials(asset.symbol)}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-sm">{asset.symbol}</span>
+                        <span className="text-[10px] text-muted-foreground">{asset.name}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Duration badge */}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="w-4 h-4" />
+                  <span>Duration:</span>
+                  <Badge className="bg-primary/20">{completedDurationGroup.durationGroup}</Badge>
+                </div>
+              </div>
             )}
           </DialogHeader>
           
