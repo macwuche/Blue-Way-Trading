@@ -20,7 +20,11 @@ import {
   Crown,
   Ban,
   ArrowDownCircle,
-  Users
+  Users,
+  Activity,
+  ArrowUpRight,
+  ArrowDownRight,
+  ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -54,6 +58,7 @@ interface UserProfile {
   totalWithdrawals: string;
   totalReferrals: number;
   trades: Trade[];
+  adminTrades: AdminTrade[];
 }
 
 interface Trade {
@@ -67,6 +72,21 @@ interface Trade {
   total: string;
   status: string;
   createdAt: string;
+}
+
+interface AdminTrade {
+  id: string;
+  symbol: string;
+  name: string;
+  assetType: string;
+  direction: string;
+  amount: string;
+  entryPrice: string;
+  exitPrice: string | null;
+  profit: string | null;
+  status: string;
+  createdAt: string;
+  closedAt: string | null;
 }
 
 export default function UserProfilePage() {
@@ -425,6 +445,100 @@ export default function UserProfilePage() {
               </div>
             </Card>
           </div>
+
+          <Card className="glass-card p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Activity className="w-4 h-4" />
+                Recent Trades (Admin)
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/admin/trades")}
+                className="text-xs"
+                data-testid="button-view-all-trades"
+              >
+                View All
+                <ExternalLink className="w-3 h-3 ml-1" />
+              </Button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Date</th>
+                    <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Asset</th>
+                    <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Direction</th>
+                    <th className="text-right py-3 px-2 text-xs font-medium text-muted-foreground">Amount</th>
+                    <th className="text-right py-3 px-2 text-xs font-medium text-muted-foreground">Profit</th>
+                    <th className="text-right py-3 px-2 text-xs font-medium text-muted-foreground">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {user.adminTrades && user.adminTrades.length > 0 ? (
+                    user.adminTrades.map((trade) => (
+                      <tr key={trade.id} className="border-b border-white/5 hover:bg-white/5" data-testid={`row-admin-trade-${trade.id}`}>
+                        <td className="py-3 px-2 text-sm">
+                          {new Date(trade.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="py-3 px-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-xs text-white font-bold">
+                              {trade.symbol.substring(0, 2)}
+                            </div>
+                            <span className="text-sm font-medium">{trade.symbol}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-2">
+                          <Badge className={cn(
+                            "text-xs",
+                            trade.direction === "higher" ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
+                          )}>
+                            {trade.direction === "higher" ? (
+                              <><ArrowUpRight className="w-3 h-3 mr-1" />HIGHER</>
+                            ) : (
+                              <><ArrowDownRight className="w-3 h-3 mr-1" />LOWER</>
+                            )}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-2 text-right text-sm font-medium">
+                          ${parseFloat(trade.amount).toLocaleString()}
+                        </td>
+                        <td className="py-3 px-2 text-right">
+                          {trade.profit ? (
+                            <span className={cn(
+                              "text-sm font-medium",
+                              parseFloat(trade.profit) >= 0 ? "text-success" : "text-destructive"
+                            )}>
+                              {parseFloat(trade.profit) >= 0 ? "+" : ""}${parseFloat(trade.profit).toLocaleString()}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-2 text-right">
+                          <Badge className={cn(
+                            "text-xs",
+                            trade.status === "closed" ? "bg-success/20 text-success" : 
+                            trade.status === "active" ? "bg-primary/20 text-primary" : "bg-warning/20 text-warning"
+                          )}>
+                            {trade.status}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                        No admin trades for this user
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
 
           <Card className="glass-card p-4 sm:p-6">
             <h3 className="font-semibold mb-4 flex items-center gap-2">

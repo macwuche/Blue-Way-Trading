@@ -321,6 +321,9 @@ export async function registerRoutes(
       const portfolio = await storage.getPortfolioByUserId(user.id);
       const trades = portfolio ? await storage.getTradesByPortfolioId(portfolio.id) : [];
       
+      // Get admin trades for this user
+      const adminTradesForUser = await storage.getAdminTrades({ userId: user.id });
+      
       // Get total withdrawals for this user (sum of approved withdrawals)
       const userWithdrawals = await storage.getAllWithdrawals({ userId: user.id });
       const totalWithdrawals = userWithdrawals
@@ -342,12 +345,34 @@ export async function registerRoutes(
           ...t,
           createdAt: t.createdAt?.toISOString(),
         })),
+        adminTrades: adminTradesForUser.slice(0, 10).map(t => ({
+          ...t,
+          createdAt: t.createdAt?.toISOString(),
+          closedAt: t.closedAt?.toISOString(),
+          expiryTime: t.expiryTime?.toISOString(),
+        })),
         createdAt: user.createdAt?.toISOString(),
         updatedAt: user.updatedAt?.toISOString(),
       });
     } catch (error) {
       console.error("Error fetching user profile:", error);
       res.status(500).json({ message: "Failed to fetch user profile" });
+    }
+  });
+
+  // Get all admin trades (for All Admin Trades page)
+  app.get("/api/admin/trades", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const allAdminTrades = await storage.getAdminTrades();
+      res.json(allAdminTrades.map(t => ({
+        ...t,
+        createdAt: t.createdAt?.toISOString(),
+        closedAt: t.closedAt?.toISOString(),
+        expiryTime: t.expiryTime?.toISOString(),
+      })));
+    } catch (error) {
+      console.error("Error fetching admin trades:", error);
+      res.status(500).json({ message: "Failed to fetch admin trades" });
     }
   });
 
@@ -456,20 +481,6 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error adjusting profit:", error);
       res.status(500).json({ message: "Failed to adjust profit" });
-    }
-  });
-
-  // Get all trades (for admin trade monitoring)
-  app.get("/api/admin/trades", isAuthenticated, isAdmin, async (req: any, res: Response) => {
-    try {
-      const trades = await storage.getAllTrades();
-      res.json(trades.map(t => ({
-        ...t,
-        createdAt: t.createdAt?.toISOString(),
-      })));
-    } catch (error) {
-      console.error("Error fetching trades:", error);
-      res.status(500).json({ message: "Failed to fetch trades" });
     }
   });
 

@@ -506,12 +506,16 @@ export class DatabaseStorage implements IStorage {
     return trade;
   }
 
-  async getAdminTrades(filters?: { sessionId?: string; adminId?: string; status?: string }): Promise<(AdminTrade & { user?: User })[]> {
+  async getAdminTrades(filters?: { sessionId?: string; adminId?: string; status?: string; userId?: string }): Promise<(AdminTrade & { user?: User })[]> {
     let allTrades: AdminTrade[];
     
     if (filters?.sessionId) {
       allTrades = await db.select().from(adminTrades)
         .where(eq(adminTrades.sessionId, filters.sessionId))
+        .orderBy(desc(adminTrades.createdAt));
+    } else if (filters?.userId) {
+      allTrades = await db.select().from(adminTrades)
+        .where(eq(adminTrades.userId, filters.userId))
         .orderBy(desc(adminTrades.createdAt));
     } else if (filters?.adminId && filters?.status) {
       allTrades = await db.select().from(adminTrades)

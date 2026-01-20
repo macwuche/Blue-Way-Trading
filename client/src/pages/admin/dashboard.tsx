@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, Shield, CreditCard, Wallet, 
   Send, Newspaper, Crown, Settings, ArrowLeft, Menu,
   TrendingUp, TrendingDown, DollarSign, Activity, RefreshCw,
-  Lock, Mail, LogOut
+  Lock, Mail, LogOut, BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -42,6 +42,7 @@ const adminNavItems = [
   { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { id: "users", icon: Users, label: "Users" },
   { id: "trade-for-users", icon: Activity, label: "Trade for Users" },
+  { id: "all-trades", icon: BarChart3, label: "All Trades", href: "/admin/trades" },
   { id: "kyc", icon: Shield, label: "KYC Verification" },
   { id: "payment-methods", icon: CreditCard, label: "Payment Methods" },
   { id: "deposits", icon: Wallet, label: "Deposits" },
@@ -357,7 +358,7 @@ function AdminLoginForm({ onLoginSuccess }: { onLoginSuccess: () => void }) {
 }
 
 export default function AdminDashboard() {
-  const [, setLocation] = useLocation();
+  const [locationPath, setLocation] = useLocation();
   const [match, params] = useRoute("/admin/:page");
   const currentPage = match ? params?.page : "dashboard";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -383,8 +384,10 @@ export default function AdminDashboard() {
     });
   };
 
-  const handleNavClick = (id: string) => {
-    if (id === "dashboard") {
+  const handleNavClick = (id: string, href?: string) => {
+    if (href) {
+      setLocation(href);
+    } else if (id === "dashboard") {
       setLocation("/admin");
     } else {
       setLocation(`/admin/${id}`);
@@ -439,11 +442,11 @@ export default function AdminDashboard() {
       {adminNavItems.map((item) => (
         <button
           key={item.id}
-          onClick={() => handleNavClick(item.id)}
+          onClick={() => handleNavClick(item.id, (item as any).href)}
           data-testid={`admin-nav-${item.id}`}
           className={cn(
             "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-left",
-            currentPage === item.id
+            currentPage === item.id || ((item as any).href && locationPath === (item as any).href)
               ? "bg-primary/20 text-primary"
               : "text-muted-foreground hover-elevate"
           )}
