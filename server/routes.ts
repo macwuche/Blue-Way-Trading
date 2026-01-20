@@ -999,6 +999,39 @@ export async function registerRoutes(
     }
   });
 
+  // Complete trades when countdown expires
+  app.post("/api/admin/trades/complete", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const schema = z.object({
+        tradeIds: z.array(z.string()),
+        exitPrice: z.number().positive(),
+      });
+      
+      const result = schema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data", errors: result.error.errors });
+      }
+
+      const { tradeIds, exitPrice } = result.data;
+      const now = new Date();
+
+      const updatedTrades = await Promise.all(tradeIds.map(async (tradeId) => {
+        const trade = await storage.updateAdminTrade(tradeId, {
+          exitPrice: exitPrice.toFixed(8),
+          status: "completed",
+          closedAt: now,
+        });
+        return trade;
+      }));
+
+      // Invalidate queries to update UI
+      res.json({ success: true, trades: updatedTrades });
+    } catch (error) {
+      console.error("Error completing trades:", error);
+      res.status(500).json({ message: "Failed to complete trades" });
+    }
+  });
+
   // Get admin trades history
   app.get("/api/admin/trades-history", isAuthenticated, isAdmin, async (req: any, res: Response) => {
     try {

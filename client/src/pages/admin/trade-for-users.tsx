@@ -80,6 +80,7 @@ interface ActiveTrade {
   entryPrice: number;
   expiryTime: number;
   startTime: number;
+  tradeIds: string[];
 }
 
 const expiryOptions = [
@@ -240,9 +241,10 @@ export default function TradeForUsers() {
       direction: "higher" | "lower";
       entryPrice: number;
       expiryMs: number;
-    }) => {
+    }): Promise<{ success: boolean; trades: { id: string }[] }> => {
       if (!sessionId) throw new Error("No active session");
-      return apiRequest("POST", `/api/admin/trade-sessions/${sessionId}/trade`, data);
+      const res = await apiRequest("POST", `/api/admin/trade-sessions/${sessionId}/trade`, data);
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/trades-history"] });
@@ -250,6 +252,21 @@ export default function TradeForUsers() {
     },
     onError: (error: any) => {
       toast({ title: "Trade Failed", description: error?.message || "Failed to execute trade", variant: "destructive" });
+    },
+  });
+
+  // Complete trades mutation (when countdown ends)
+  const completeTradeMutation = useMutation({
+    mutationFn: async (data: { tradeIds: string[]; exitPrice: number }) => {
+      const res = await apiRequest("POST", "/api/admin/trades/complete", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/trades-history"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/trades"] });
+    },
+    onError: (error: any) => {
+      console.error("Error completing trades:", error);
     },
   });
 
@@ -355,33 +372,42 @@ export default function TradeForUsers() {
     return expiryOptions.find(o => o.value === expiration)?.ms || 60000;
   }, [expiration]);
 
-  const handleTrade = (direction: "higher" | "lower") => {
+  const handleTrade = async (direction: "higher" | "lower") => {
     if (activeTrade) return;
     
     const expiryMs = getExpiryMs();
     const now = Date.now();
     
-    const newTrade: ActiveTrade = {
-      id: `trade-${now}`,
-      symbol: selectedAsset.symbol,
-      direction,
-      amount: selectedUsers.reduce((sum, u) => sum + u.tradeAmount, 0),
-      entryPrice: selectedAsset.price,
-      expiryTime: now + expiryMs,
-      startTime: now,
-    };
-    
-    setActiveTrade(newTrade);
+    // Start countdown immediately for UI responsiveness
     setCountdown(Math.floor(expiryMs / 1000));
 
-    executeTradeMutation.mutate({
-      symbol: selectedAsset.symbol,
-      name: selectedAsset.name,
-      assetType: selectedAsset.type,
-      direction,
-      entryPrice: selectedAsset.price,
-      expiryMs,
-    });
+    try {
+      const result = await executeTradeMutation.mutateAsync({
+        symbol: selectedAsset.symbol,
+        name: selectedAsset.name,
+        assetType: selectedAsset.type,
+        direction,
+        entryPrice: selectedAsset.price,
+        expiryMs,
+      });
+      
+      const tradeIds = result.trades?.map((t) => t.id) || [];
+      
+      const newTrade: ActiveTrade = {
+        id: `trade-${now}`,
+        symbol: selectedAsset.symbol,
+        direction,
+        amount: selectedUsers.reduce((sum, u) => sum + u.tradeAmount, 0),
+        entryPrice: selectedAsset.price,
+        expiryTime: now + expiryMs,
+        startTime: now,
+        tradeIds,
+      };
+      
+      setActiveTrade(newTrade);
+    } catch (error) {
+      setCountdown(0);
+    }
   };
 
   useEffect(() => {
@@ -393,13 +419,22 @@ export default function TradeForUsers() {
 
       if (remaining <= 0) {
         clearInterval(interval);
+        
+        // Complete trades when countdown ends
+        if (activeTrade.tradeIds && activeTrade.tradeIds.length > 0) {
+          completeTradeMutation.mutate({
+            tradeIds: activeTrade.tradeIds,
+            exitPrice: selectedAsset.price,
+          });
+        }
+        
         setActiveTrade(null);
         toast({ title: "Trade Completed", description: "The trade period has ended" });
       }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [activeTrade]);
+  }, [activeTrade, selectedAsset.price, completeTradeMutation]);
 
   const formatCountdown = (seconds: number) => {
     if (seconds >= 3600) {
