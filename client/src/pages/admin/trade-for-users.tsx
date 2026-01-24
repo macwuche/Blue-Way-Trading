@@ -1303,19 +1303,19 @@ export default function TradeForUsers() {
                       className="bg-success hover:bg-success/90 h-14 text-lg font-bold"
                       onClick={() => handleTrade("higher")}
                       disabled={executeTradeMutation.isPending}
-                      data-testid="button-higher"
+                      data-testid="button-buy"
                     >
                       <ArrowUp className="w-5 h-5 mr-2" />
-                      HIGHER
+                      BUY
                     </Button>
                     <Button
                       className="bg-destructive hover:bg-destructive/90 h-14 text-lg font-bold"
                       onClick={() => handleTrade("lower")}
                       disabled={executeTradeMutation.isPending}
-                      data-testid="button-lower"
+                      data-testid="button-sell"
                     >
                       <ArrowDown className="w-5 h-5 mr-2" />
-                      LOWER
+                      SELL
                     </Button>
                   </>
                 )}
