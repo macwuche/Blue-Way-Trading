@@ -793,21 +793,21 @@ export default function TradeRoom() {
               <Button
                 onClick={() => handleTrade("higher")}
                 disabled={executeTradeMutation.isPending || !!activeTrade}
-                data-testid="button-higher"
+                data-testid="button-buy"
                 className="w-full h-16 bg-success hover:bg-success/90 text-white text-lg font-bold flex items-center justify-center gap-3"
               >
                 <ArrowUp className="w-6 h-6" />
-                HIGHER
+                BUY
               </Button>
 
               <Button
                 onClick={() => handleTrade("lower")}
                 disabled={executeTradeMutation.isPending || !!activeTrade}
-                data-testid="button-lower"
+                data-testid="button-sell"
                 className="w-full h-16 bg-destructive hover:bg-destructive/90 text-white text-lg font-bold flex items-center justify-center gap-3"
               >
                 <ArrowDown className="w-6 h-6" />
-                LOWER
+                SELL
               </Button>
             </div>
 
@@ -949,25 +949,25 @@ export default function TradeRoom() {
             </div>
           </div>
 
-          {/* Lower/Higher Buttons Row */}
+          {/* Sell/Buy Buttons Row */}
           <div className="grid grid-cols-2 gap-3">
             <Button
               onClick={() => handleTrade("lower")}
               disabled={executeTradeMutation.isPending || !!activeTrade}
-              data-testid="button-lower-mobile"
+              data-testid="button-sell-mobile"
               className="h-14 bg-destructive hover:bg-destructive/90 text-white text-lg font-bold flex items-center justify-center gap-2"
             >
-              Lower
+              Sell
               <TrendingDown className="w-5 h-5" />
             </Button>
 
             <Button
               onClick={() => handleTrade("higher")}
               disabled={executeTradeMutation.isPending || !!activeTrade}
-              data-testid="button-higher-mobile"
+              data-testid="button-buy-mobile"
               className="h-14 bg-success hover:bg-success/90 text-white text-lg font-bold flex items-center justify-center gap-2"
             >
-              Higher
+              Buy
               <TrendingUp className="w-5 h-5" />
             </Button>
           </div>
