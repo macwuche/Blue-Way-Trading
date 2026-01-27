@@ -1,6 +1,8 @@
 import { useEffect, useRef, useMemo } from "react";
-import { createChart, CandlestickSeries, LineSeries, type IChartApi, type CandlestickData, type Time, type LineData } from "lightweight-charts";
+import { createChart, CandlestickSeries, LineSeries, AreaSeries, type IChartApi, type CandlestickData, type Time, type LineData } from "lightweight-charts";
 import { cn } from "@/lib/utils";
+
+export type ChartType = "candlestick" | "line" | "area";
 
 export interface IndicatorSettings {
   alligator: boolean;
@@ -16,6 +18,7 @@ interface CandlestickChartProps {
   isPositive: boolean;
   className?: string;
   indicators?: IndicatorSettings;
+  chartType?: ChartType;
 }
 
 function generateCandlestickData(basePrice: number, points: number = 50): CandlestickData[] {
@@ -146,11 +149,12 @@ const defaultIndicators: IndicatorSettings = {
   emaPeriod: 12,
 };
 
-export function CandlestickChart({ symbol, currentPrice, isPositive, className, indicators = defaultIndicators }: CandlestickChartProps) {
+export function CandlestickChart({ symbol, currentPrice, isPositive, className, indicators = defaultIndicators, chartType = "candlestick" }: CandlestickChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ReturnType<IChartApi["addSeries"]> | null>(null);
   const indicatorSeriesRef = useRef<ReturnType<IChartApi["addSeries"]>[]>([]);
+  const currentChartTypeRef = useRef<ChartType>(chartType);
 
   const chartData = useMemo(() => {
     return generateCandlestickData(currentPrice, 60);
@@ -215,20 +219,48 @@ export function CandlestickChart({ symbol, currentPrice, isPositive, className, 
       },
     });
 
-    const candlestickSeries = chart.addSeries(CandlestickSeries, {
-      upColor: "#34C759",
-      downColor: "#FF3B30",
-      borderUpColor: "#34C759",
-      borderDownColor: "#FF3B30",
-      wickUpColor: "#34C759",
-      wickDownColor: "#FF3B30",
-    });
+    // Convert OHLC data to line/area data (using close prices)
+    const lineData = chartData.map(d => ({ time: d.time, value: d.close }));
+    const mainColor = isPositive ? "#34C759" : "#FF3B30";
 
-    candlestickSeries.setData(chartData);
+    let mainSeries: ReturnType<IChartApi["addSeries"]>;
+
+    if (chartType === "candlestick") {
+      mainSeries = chart.addSeries(CandlestickSeries, {
+        upColor: "#34C759",
+        downColor: "#FF3B30",
+        borderUpColor: "#34C759",
+        borderDownColor: "#FF3B30",
+        wickUpColor: "#34C759",
+        wickDownColor: "#FF3B30",
+      });
+      mainSeries.setData(chartData);
+    } else if (chartType === "line") {
+      mainSeries = chart.addSeries(LineSeries, {
+        color: mainColor,
+        lineWidth: 2,
+        priceLineVisible: true,
+        lastValueVisible: true,
+      });
+      mainSeries.setData(lineData);
+    } else {
+      // Area chart
+      mainSeries = chart.addSeries(AreaSeries, {
+        lineColor: mainColor,
+        topColor: isPositive ? "rgba(52, 199, 89, 0.4)" : "rgba(255, 59, 48, 0.4)",
+        bottomColor: isPositive ? "rgba(52, 199, 89, 0.0)" : "rgba(255, 59, 48, 0.0)",
+        lineWidth: 2,
+        priceLineVisible: true,
+        lastValueVisible: true,
+      });
+      mainSeries.setData(lineData);
+    }
+
     chart.timeScale().fitContent();
 
     chartRef.current = chart;
-    seriesRef.current = candlestickSeries;
+    seriesRef.current = mainSeries;
+    currentChartTypeRef.current = chartType;
 
     const handleResize = () => {
       if (chartContainerRef.current && chartRef.current) {
@@ -246,7 +278,7 @@ export function CandlestickChart({ symbol, currentPrice, isPositive, className, 
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
-  }, [chartData]);
+  }, [chartData, chartType, isPositive]);
 
   useEffect(() => {
     if (!chartRef.current) return;
@@ -314,7 +346,7 @@ export function CandlestickChart({ symbol, currentPrice, isPositive, className, 
         indicatorSeriesRef.current.push(lipsSeries);
       }
     }
-  }, [indicators, indicatorData]);
+  }, [indicators, indicatorData, chartType]);
 
   return (
     <div 

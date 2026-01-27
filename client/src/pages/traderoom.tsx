@@ -5,7 +5,7 @@ import {
   Wallet, History, BarChart3, MessageCircle, Newspaper, 
   Settings, Plus, ArrowUp, ArrowDown, Clock, ChevronDown,
   ChevronLeft, ChevronRight, Minus, TrendingUp, TrendingDown,
-  Copy, X, Crown, Activity
+  Copy, X, Crown, Activity, CandlestickChart as CandlestickIcon, LineChart, AreaChart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,7 +30,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CandlestickChart, type IndicatorSettings } from "@/components/candlestick-chart";
+import { CandlestickChart, type IndicatorSettings, type ChartType } from "@/components/candlestick-chart";
 import { MarketModal } from "@/components/market-modal";
 import { AssetInfoPanel } from "@/components/asset-info-panel";
 import { useAuth } from "@/hooks/use-auth";
@@ -121,6 +121,7 @@ export default function TradeRoom() {
     maPeriod: 20,
     emaPeriod: 12,
   });
+  const [chartType, setChartType] = useState<ChartType>("candlestick");
 
   const { data: dashboardData } = useQuery<DashboardData>({
     queryKey: ["/api/dashboard"],
@@ -595,8 +596,46 @@ export default function TradeRoom() {
               </button>
             </div>
             
-            {/* Mobile Indicator Button */}
-            <div className="md:hidden flex items-center justify-end px-2 py-1 border-b border-white/10">
+            {/* Mobile Chart Controls */}
+            <div className="md:hidden flex items-center justify-between px-2 py-1 border-b border-white/10">
+              {/* Chart Type Toggle */}
+              <div className="flex items-center gap-1">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setChartType("candlestick")}
+                  data-testid="button-chart-candlestick-mobile"
+                  className={cn(
+                    chartType === "candlestick" ? "text-primary bg-primary/10" : "text-muted-foreground"
+                  )}
+                >
+                  <CandlestickIcon className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setChartType("line")}
+                  data-testid="button-chart-line-mobile"
+                  className={cn(
+                    chartType === "line" ? "text-primary bg-primary/10" : "text-muted-foreground"
+                  )}
+                >
+                  <LineChart className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setChartType("area")}
+                  data-testid="button-chart-area-mobile"
+                  className={cn(
+                    chartType === "area" ? "text-primary bg-primary/10" : "text-muted-foreground"
+                  )}
+                >
+                  <AreaChart className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* Indicators Button */}
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -663,11 +702,49 @@ export default function TradeRoom() {
 
             {/* Chart */}
             <div className="flex-1 relative p-2 min-h-[200px]">
+              {/* Desktop Chart Type Toggle - positioned in top right of chart */}
+              <div className="hidden md:flex absolute top-4 right-4 z-10 items-center gap-1 glass-dark rounded-lg p-1">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setChartType("candlestick")}
+                  data-testid="button-chart-candlestick"
+                  className={cn(
+                    chartType === "candlestick" ? "text-primary bg-primary/10" : "text-muted-foreground"
+                  )}
+                >
+                  <CandlestickIcon className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setChartType("line")}
+                  data-testid="button-chart-line"
+                  className={cn(
+                    chartType === "line" ? "text-primary bg-primary/10" : "text-muted-foreground"
+                  )}
+                >
+                  <LineChart className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setChartType("area")}
+                  data-testid="button-chart-area"
+                  className={cn(
+                    chartType === "area" ? "text-primary bg-primary/10" : "text-muted-foreground"
+                  )}
+                >
+                  <AreaChart className="w-4 h-4" />
+                </Button>
+              </div>
+
               <CandlestickChart
                 symbol={selectedAsset.symbol}
                 currentPrice={selectedAsset.price}
                 isPositive={selectedAsset.changePercent24h >= 0}
                 indicators={indicators}
+                chartType={chartType}
               />
 
               {/* Active Trade Countdown Overlay */}
