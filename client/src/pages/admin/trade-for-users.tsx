@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Users, Search, Check, ChevronRight, ChevronLeft, ArrowUp, ArrowDown,
   Clock, Plus, X, DollarSign, TrendingUp, TrendingDown, History,
-  ChevronDown, Activity, Minus, Copy, Wallet, User, RotateCcw, Eye, PlayCircle, AlertTriangle
+  ChevronDown, Activity, Minus, Copy, Wallet, User, RotateCcw, Eye, PlayCircle, AlertTriangle,
+  CandlestickChart as CandlestickIcon, LineChart, AreaChart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -33,7 +34,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CandlestickChart, type IndicatorSettings } from "@/components/candlestick-chart";
+import { CandlestickChart, type IndicatorSettings, type ChartType } from "@/components/candlestick-chart";
 import { MarketModal } from "@/components/market-modal";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -187,6 +188,7 @@ export default function TradeForUsers() {
     maPeriod: 20,
     emaPeriod: 12,
   });
+  const [chartType, setChartType] = useState<ChartType>("candlestick");
 
   // Legacy single trade state for backward compatibility
   const activeTrade = activeTrades.length > 0 ? activeTrades[0] : null;
@@ -1149,6 +1151,43 @@ export default function TradeForUsers() {
                   </button>
 
                   <div className="ml-auto flex items-center gap-3">
+                    {/* Chart Type Toggle */}
+                    <div className="flex items-center gap-1 glass-light rounded-lg p-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setChartType("candlestick")}
+                        data-testid="button-chart-candlestick-admin"
+                        className={cn(
+                          chartType === "candlestick" ? "text-primary bg-primary/10" : "text-muted-foreground"
+                        )}
+                      >
+                        <CandlestickIcon className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setChartType("line")}
+                        data-testid="button-chart-line-admin"
+                        className={cn(
+                          chartType === "line" ? "text-primary bg-primary/10" : "text-muted-foreground"
+                        )}
+                      >
+                        <LineChart className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setChartType("area")}
+                        data-testid="button-chart-area-admin"
+                        className={cn(
+                          chartType === "area" ? "text-primary bg-primary/10" : "text-muted-foreground"
+                        )}
+                      >
+                        <AreaChart className="w-4 h-4" />
+                      </Button>
+                    </div>
+
                     <Popover>
                       <PopoverTrigger asChild>
                         <button
@@ -1215,6 +1254,7 @@ export default function TradeForUsers() {
                     currentPrice={selectedAsset.price}
                     isPositive={selectedAsset.change24h >= 0}
                     indicators={indicators}
+                    chartType={chartType}
                   />
                 </div>
               </div>
