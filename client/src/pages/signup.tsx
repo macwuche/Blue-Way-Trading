@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,16 +7,20 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { SiFacebook, SiGoogle } from "react-icons/si";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { countries } from "@/lib/countries";
 import loginBgImage from "@assets/GmbuHuHbRYpTPJt5_1768481770485.png";
 
 const signupSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Please enter a valid email"),
+  phone: z.string().min(1, "Phone number is required"),
+  country: z.string().min(1, "Country is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string().min(1, "Please confirm your password"),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -29,6 +33,7 @@ type SignupFormData = z.infer<typeof signupSchema>;
 export default function SignupPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const [detectedCountry, setDetectedCountry] = useState<string>("");
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -36,10 +41,31 @@ export default function SignupPage() {
       firstName: "",
       lastName: "",
       email: "",
+      phone: "",
+      country: "",
       password: "",
       confirmPassword: "",
     },
   });
+
+  useEffect(() => {
+    async function detectCountry() {
+      try {
+        const response = await fetch("https://ipapi.co/json/");
+        const data = await response.json();
+        if (data.country_code) {
+          const matchedCountry = countries.find(c => c.code === data.country_code);
+          if (matchedCountry) {
+            setDetectedCountry(matchedCountry.name);
+            form.setValue("country", matchedCountry.name);
+          }
+        }
+      } catch (error) {
+        console.log("Could not detect country by IP");
+      }
+    }
+    detectCountry();
+  }, [form]);
 
   const signupMutation = useMutation({
     mutationFn: async (data: SignupFormData) => {
@@ -147,6 +173,58 @@ export default function SignupPage() {
                         className="h-12 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:border-[#34C759] focus:ring-[#34C759]"
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-[#34C759] font-medium">Phone Number</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="tel"
+                        placeholder="+1 234 567 8900"
+                        data-testid="input-phone"
+                        className="h-12 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:border-[#34C759] focus:ring-[#34C759]"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="country"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-[#34C759] font-medium">Country</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger 
+                          data-testid="select-country"
+                          className="h-12 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:border-[#34C759] focus:ring-[#34C759]"
+                        >
+                          <SelectValue placeholder="Select your country" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="max-h-[300px]">
+                        {countries.map((country) => (
+                          <SelectItem 
+                            key={country.code} 
+                            value={country.name}
+                            data-testid={`option-country-${country.code}`}
+                          >
+                            {country.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -63,7 +63,7 @@ export function registerCustomAuthRoutes(app: Express) {
         });
       }
 
-      const { email, password, firstName, lastName } = result.data;
+      const { email, password, firstName, lastName, phone, country } = result.data;
 
       // Check if user already exists
       const existingUser = await storage.getUserByEmail(email);
@@ -80,6 +80,8 @@ export function registerCustomAuthRoutes(app: Express) {
         password: hashedPassword,
         firstName,
         lastName,
+        phone,
+        country,
         authProvider: "email",
         status: "active",
         isVerified: false,
