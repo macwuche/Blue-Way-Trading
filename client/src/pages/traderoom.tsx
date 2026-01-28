@@ -36,7 +36,8 @@ import { AssetInfoPanel } from "@/components/asset-info-panel";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { type Asset, cryptoAssets, formatPrice } from "@/lib/market-data";
+import { type Asset, formatPrice } from "@/lib/market-data";
+import { useMarketData } from "@/hooks/use-market-data";
 import { cn } from "@/lib/utils";
 
 interface DashboardData {
@@ -105,8 +106,11 @@ export default function TradeRoom() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [openAssets, setOpenAssets] = useState<Asset[]>([cryptoAssets[0]]);
-  const [selectedAsset, setSelectedAsset] = useState<Asset>(cryptoAssets[0]);
+  
+  const { cryptoAssets, forexAssets, stockAssets, etfAssets, allAssets, getAssetBySymbol } = useMarketData({ refreshInterval: 5000 });
+  
+  const [openAssets, setOpenAssets] = useState<Asset[]>([]);
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [marketModalOpen, setMarketModalOpen] = useState(false);
   const [expiration, setExpiration] = useState("1m");
   const [amount, setAmount] = useState(10);
@@ -122,6 +126,25 @@ export default function TradeRoom() {
     emaPeriod: 12,
   });
   const [chartType, setChartType] = useState<ChartType>("candlestick");
+
+  useEffect(() => {
+    if (cryptoAssets.length > 0 && !selectedAsset) {
+      setSelectedAsset(cryptoAssets[0]);
+      setOpenAssets([cryptoAssets[0]]);
+    }
+  }, [cryptoAssets, selectedAsset]);
+
+  useEffect(() => {
+    if (selectedAsset && allAssets.length > 0) {
+      const updatedAsset = allAssets.find(a => a.symbol === selectedAsset.symbol);
+      if (updatedAsset && updatedAsset.price !== selectedAsset.price) {
+        setSelectedAsset(updatedAsset);
+        setOpenAssets(prev => prev.map(a => 
+          a.symbol === updatedAsset.symbol ? updatedAsset : a
+        ));
+      }
+    }
+  }, [allAssets, selectedAsset]);
 
   const { data: dashboardData } = useQuery<DashboardData>({
     queryKey: ["/api/dashboard"],
@@ -166,7 +189,7 @@ export default function TradeRoom() {
     e.stopPropagation();
     const newAssets = openAssets.filter(a => a.symbol !== asset.symbol);
     setOpenAssets(newAssets);
-    if (selectedAsset.symbol === asset.symbol && newAssets.length > 0) {
+    if (selectedAsset?.symbol === asset.symbol && newAssets.length > 0) {
       setSelectedAsset(newAssets[0]);
     }
   };
@@ -248,7 +271,7 @@ export default function TradeRoom() {
   };
 
   const handleSellEarly = () => {
-    if (!activeTrade) return;
+    if (!activeTrade || !selectedAsset) return;
     
     const currentPrice = selectedAsset.price;
     const priceChange = currentPrice - activeTrade.entryPrice;
@@ -275,7 +298,7 @@ export default function TradeRoom() {
   };
 
   useEffect(() => {
-    if (!activeTrade) return;
+    if (!activeTrade || !selectedAsset) return;
 
     const interval = setInterval(() => {
       const remaining = Math.max(0, Math.floor((activeTrade.expiryTime - Date.now()) / 1000));
@@ -303,7 +326,7 @@ export default function TradeRoom() {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [activeTrade, selectedAsset.price]);
+  }, [activeTrade, selectedAsset]);
 
   const formatCountdown = (seconds: number) => {
     if (seconds >= 3600) {
@@ -325,6 +348,14 @@ export default function TradeRoom() {
   const handleSliderChange = (value: number[]) => {
     setAmount(value[0]);
   };
+
+  if (!selectedAsset) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
+        <div className="text-white/70">Loading market data...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#0a0a0a]">

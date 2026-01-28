@@ -10,22 +10,17 @@ export interface Asset {
   icon?: string;
 }
 
-export const cryptoAssets: Asset[] = [
+export const defaultCryptoAssets: Asset[] = [
   { symbol: "BTC/USDT", name: "Bitcoin / Tether", price: 43250.82, change24h: 1250.50, changePercent24h: 2.98, volume24h: 28500000000, marketCap: 847000000000, type: "crypto" },
   { symbol: "ETH/USDT", name: "Ethereum / Tether", price: 2285.45, change24h: -45.20, changePercent24h: -1.94, volume24h: 15200000000, marketCap: 274000000000, type: "crypto" },
   { symbol: "SOL/USDT", name: "Solana / Tether", price: 98.76, change24h: 5.32, changePercent24h: 5.69, volume24h: 2800000000, marketCap: 42000000000, type: "crypto" },
-  { symbol: "BNB/USDT", name: "Binance Coin / Tether", price: 312.45, change24h: 8.90, changePercent24h: 2.93, volume24h: 1200000000, marketCap: 48000000000, type: "crypto" },
-  { symbol: "ETH/BTC", name: "Ethereum / Bitcoin", price: 0.0528, change24h: -0.0012, changePercent24h: -2.22, volume24h: 1500000000, marketCap: 0, type: "crypto" },
-  { symbol: "SOL/ETH", name: "Solana / Ethereum", price: 0.0432, change24h: 0.0018, changePercent24h: 4.35, volume24h: 650000000, marketCap: 0, type: "crypto" },
   { symbol: "XRP/USDT", name: "Ripple / Tether", price: 0.6245, change24h: -0.0125, changePercent24h: -1.96, volume24h: 1500000000, marketCap: 34000000000, type: "crypto" },
   { symbol: "ADA/USDT", name: "Cardano / Tether", price: 0.5823, change24h: 0.0245, changePercent24h: 4.39, volume24h: 650000000, marketCap: 20000000000, type: "crypto" },
   { symbol: "DOGE/USDT", name: "Dogecoin / Tether", price: 0.0892, change24h: 0.0034, changePercent24h: 3.96, volume24h: 890000000, marketCap: 12500000000, type: "crypto" },
   { symbol: "DOT/USDT", name: "Polkadot / Tether", price: 7.45, change24h: -0.23, changePercent24h: -2.99, volume24h: 320000000, marketCap: 9500000000, type: "crypto" },
-  { symbol: "BTC/ETH", name: "Bitcoin / Ethereum", price: 18.93, change24h: 0.45, changePercent24h: 2.44, volume24h: 980000000, marketCap: 0, type: "crypto" },
-  { symbol: "BNB/BTC", name: "Binance Coin / Bitcoin", price: 0.00723, change24h: -0.00012, changePercent24h: -1.63, volume24h: 420000000, marketCap: 0, type: "crypto" },
 ];
 
-export const forexAssets: Asset[] = [
+export const defaultForexAssets: Asset[] = [
   { symbol: "EUR/USD", name: "Euro / US Dollar", price: 1.0845, change24h: 0.0025, changePercent24h: 0.23, volume24h: 125000000000, marketCap: 0, type: "forex" },
   { symbol: "GBP/USD", name: "British Pound / US Dollar", price: 1.2650, change24h: -0.0018, changePercent24h: -0.14, volume24h: 85000000000, marketCap: 0, type: "forex" },
   { symbol: "USD/JPY", name: "US Dollar / Japanese Yen", price: 148.25, change24h: 0.45, changePercent24h: 0.30, volume24h: 95000000000, marketCap: 0, type: "forex" },
@@ -33,7 +28,7 @@ export const forexAssets: Asset[] = [
   { symbol: "AUD/USD", name: "Australian Dollar / US Dollar", price: 0.6542, change24h: 0.0032, changePercent24h: 0.49, volume24h: 35000000000, marketCap: 0, type: "forex" },
 ];
 
-export const stockAssets: Asset[] = [
+export const defaultStockAssets: Asset[] = [
   { symbol: "AAPL", name: "Apple Inc.", price: 185.92, change24h: 2.45, changePercent24h: 1.34, volume24h: 52000000, marketCap: 2900000000000, type: "stock" },
   { symbol: "GOOGL", name: "Alphabet Inc.", price: 141.80, change24h: -1.20, changePercent24h: -0.84, volume24h: 23000000, marketCap: 1780000000000, type: "stock" },
   { symbol: "MSFT", name: "Microsoft Corp.", price: 378.91, change24h: 4.56, changePercent24h: 1.22, volume24h: 18500000, marketCap: 2810000000000, type: "stock" },
@@ -43,7 +38,7 @@ export const stockAssets: Asset[] = [
   { symbol: "META", name: "Meta Platforms", price: 354.76, change24h: 7.89, changePercent24h: 2.27, volume24h: 15000000, marketCap: 920000000000, type: "stock" },
 ];
 
-export const etfAssets: Asset[] = [
+export const defaultEtfAssets: Asset[] = [
   { symbol: "SPY", name: "SPDR S&P 500 ETF", price: 478.92, change24h: 3.45, changePercent24h: 0.73, volume24h: 65000000, marketCap: 450000000000, type: "etf" },
   { symbol: "QQQ", name: "Invesco QQQ Trust", price: 405.67, change24h: 5.12, changePercent24h: 1.28, volume24h: 42000000, marketCap: 210000000000, type: "etf" },
   { symbol: "VTI", name: "Vanguard Total Stock Market", price: 242.34, change24h: 1.89, changePercent24h: 0.79, volume24h: 4500000, marketCap: 350000000000, type: "etf" },
@@ -51,7 +46,69 @@ export const etfAssets: Asset[] = [
   { symbol: "GLD", name: "SPDR Gold Shares", price: 189.23, change24h: 0.45, changePercent24h: 0.24, volume24h: 8500000, marketCap: 58000000000, type: "etf" },
 ];
 
-export const allAssets: Asset[] = [...cryptoAssets, ...forexAssets, ...stockAssets, ...etfAssets];
+export const defaultAllAssets: Asset[] = [...defaultCryptoAssets, ...defaultForexAssets, ...defaultStockAssets, ...defaultEtfAssets];
+
+export let cryptoAssets: Asset[] = [...defaultCryptoAssets];
+export let forexAssets: Asset[] = [...defaultForexAssets];
+export let stockAssets: Asset[] = [...defaultStockAssets];
+export let etfAssets: Asset[] = [...defaultEtfAssets];
+export let allAssets: Asset[] = [...defaultAllAssets];
+
+export interface MarketDataResponse {
+  assets: Asset[];
+  lastFetchTime: number;
+  stale: boolean;
+}
+
+export async function fetchMarketData(): Promise<MarketDataResponse | null> {
+  try {
+    const response = await fetch("/api/market-data");
+    if (!response.ok) {
+      return null;
+    }
+    const data = await response.json() as MarketDataResponse;
+    
+    if (data.assets && data.assets.length > 0) {
+      const crypto: Asset[] = [];
+      const forex: Asset[] = [];
+      const stocks: Asset[] = [];
+      const etfs: Asset[] = [];
+      
+      for (const asset of data.assets) {
+        switch (asset.type) {
+          case "crypto":
+            crypto.push(asset);
+            break;
+          case "forex":
+            forex.push(asset);
+            break;
+          case "stock":
+            stocks.push(asset);
+            break;
+          case "etf":
+            etfs.push(asset);
+            break;
+        }
+      }
+      
+      if (crypto.length > 0) cryptoAssets = crypto;
+      if (forex.length > 0) forexAssets = forex;
+      if (stocks.length > 0) stockAssets = stocks;
+      if (etfs.length > 0) etfAssets = etfs;
+      
+      allAssets = [...cryptoAssets, ...forexAssets, ...stockAssets, ...etfAssets];
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error fetching market data:", error);
+    return null;
+  }
+}
+
+export function getAssetBySymbol(symbol: string): Asset | undefined {
+  return allAssets.find(a => a.symbol === symbol);
+}
 
 export function formatPrice(price: number): string {
   if (price >= 1000) {

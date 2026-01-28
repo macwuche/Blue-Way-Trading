@@ -4,7 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AssetRow } from "./asset-row";
-import { cryptoAssets, forexAssets, stockAssets, etfAssets, type Asset } from "@/lib/market-data";
+import { type Asset } from "@/lib/market-data";
+import { useMarketData } from "@/hooks/use-market-data";
 import { cn } from "@/lib/utils";
 
 interface MarketModalProps {
@@ -26,6 +27,7 @@ const categories: { id: AssetCategory; label: string; icon: React.ReactNode }[] 
 export function MarketModal({ open, onOpenChange, onSelectAsset }: MarketModalProps) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<AssetCategory>("all");
+  const { cryptoAssets, forexAssets, stockAssets, etfAssets } = useMarketData({ refreshInterval: 5000 });
 
   const filteredAssets = useMemo(() => {
     let assets: Asset[] = [];
@@ -57,7 +59,7 @@ export function MarketModal({ open, onOpenChange, onSelectAsset }: MarketModalPr
     }
 
     return assets;
-  }, [category, search]);
+  }, [category, search, cryptoAssets, forexAssets, stockAssets, etfAssets]);
 
   const handleSelect = (asset: Asset) => {
     onSelectAsset(asset);

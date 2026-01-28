@@ -85,56 +85,81 @@ function mapTickerToName(ticker: string, type: string): string {
   return names[ticker] || ticker;
 }
 
+let apiKeyWarningLogged = false;
+
+async function fetchSnapshotByTicker(ticker: string): Promise<MarketSnapshot | null> {
+  if (!MASSIVE_API_KEY) {
+    if (!apiKeyWarningLogged) {
+      console.warn("[Massive API] MASSIVE_API_KEY not set - using fallback static data");
+      apiKeyWarningLogged = true;
+    }
+    return null;
+  }
+
+  try {
+    const url = `${MASSIVE_API_BASE}/v3/snapshot?ticker=${encodeURIComponent(ticker)}&limit=1&apiKey=${MASSIVE_API_KEY}`;
+    
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      console.warn(`[Massive API] Failed to fetch ${ticker}: HTTP ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json() as any;
+    
+    if (!data.results || !Array.isArray(data.results) || data.results.length === 0) {
+      console.warn(`[Massive API] No results for ${ticker}`);
+      return null;
+    }
+
+    const result = data.results[0];
+    if (result.error) {
+      console.warn(`[Massive API] Error for ${ticker}: ${result.error}`);
+      return null;
+    }
+
+    const session = result.session || {};
+    const lastTrade = result.last_trade || {};
+    
+    return {
+      ticker: result.ticker,
+      name: result.name || mapTickerToName(result.ticker, result.type),
+      type: result.type,
+      price: session.price || lastTrade.price || session.close || 0,
+      previousClose: session.previous_close || 0,
+      change: session.change || 0,
+      changePercent: session.change_percent || 0,
+      volume: session.volume || 0,
+      high: session.high || 0,
+      low: session.low || 0,
+      open: session.open || 0,
+      marketStatus: result.market_status || "unknown",
+      lastUpdated: session.last_updated || Date.now() * 1000000,
+    };
+  } catch (error) {
+    return null;
+  }
+}
+
 async function fetchSnapshotsFromMassive(tickers: string[]): Promise<MarketSnapshot[]> {
   if (!MASSIVE_API_KEY) {
     console.error("MASSIVE_API_KEY not configured");
     return [];
   }
 
-  try {
-    const tickerParam = tickers.join(",");
-    const url = `${MASSIVE_API_BASE}/v3/snapshot?ticker=${encodeURIComponent(tickerParam)}&limit=50&apiKey=${MASSIVE_API_KEY}`;
-    
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      console.error(`Massive API error: ${response.status} ${response.statusText}`);
-      const text = await response.text();
-      console.error("Response body:", text);
-      return [];
+  const results: MarketSnapshot[] = [];
+  
+  const fetchPromises = tickers.map(ticker => fetchSnapshotByTicker(ticker));
+  const snapshots = await Promise.all(fetchPromises);
+  
+  for (const snapshot of snapshots) {
+    if (snapshot) {
+      results.push(snapshot);
     }
-
-    const data = await response.json() as any;
-    
-    if (!data.results || !Array.isArray(data.results)) {
-      console.error("Unexpected API response format:", data);
-      return [];
-    }
-
-    return data.results.map((result: any) => {
-      const session = result.session || {};
-      const lastTrade = result.last_trade || {};
-      
-      return {
-        ticker: result.ticker,
-        name: result.name || mapTickerToName(result.ticker, result.type),
-        type: result.type,
-        price: session.price || lastTrade.price || session.close || 0,
-        previousClose: session.previous_close || 0,
-        change: session.change || 0,
-        changePercent: session.change_percent || 0,
-        volume: session.volume || 0,
-        high: session.high || 0,
-        low: session.low || 0,
-        open: session.open || 0,
-        marketStatus: result.market_status || "unknown",
-        lastUpdated: session.last_updated || Date.now() * 1000000,
-      };
-    });
-  } catch (error) {
-    console.error("Error fetching from Massive API:", error);
-    return [];
   }
+
+  return results;
 }
 
 async function refreshMarketData(): Promise<void> {

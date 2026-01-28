@@ -39,7 +39,8 @@ import { MarketModal } from "@/components/market-modal";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { allAssets, cryptoAssets, type Asset, formatPrice } from "@/lib/market-data";
+import { type Asset, formatPrice } from "@/lib/market-data";
+import { useMarketData } from "@/hooks/use-market-data";
 import { format } from "date-fns";
 
 interface User {
@@ -160,6 +161,8 @@ export default function TradeForUsers() {
   const [currentPage, setCurrentPage] = useState<PageView>("history");
   const [slideDirection, setSlideDirection] = useState<"left" | "right">("left");
   const { toast } = useToast();
+  
+  const { cryptoAssets, allAssets } = useMarketData({ refreshInterval: 5000 });
 
   // User selection state
   const [searchQuery, setSearchQuery] = useState("");
@@ -174,9 +177,10 @@ export default function TradeForUsers() {
     return null;
   });
   // Multi-asset trading with individual durations
-  const [tradingAssets, setTradingAssets] = useState<TradingAsset[]>([{ ...cryptoAssets[0], duration: "1m" }]);
+  const [tradingAssets, setTradingAssets] = useState<TradingAsset[]>([]);
   const [selectedAssetIndex, setSelectedAssetIndex] = useState(0);
-  const selectedAsset = tradingAssets[selectedAssetIndex] || { ...cryptoAssets[0], duration: "1m" };
+  const defaultAsset: TradingAsset = { symbol: "BTC/USDT", name: "Bitcoin", price: 0, change24h: 0, changePercent24h: 0, volume24h: 0, marketCap: 0, type: "crypto", duration: "1m" };
+  const selectedAsset = tradingAssets[selectedAssetIndex] || defaultAsset;
   const [marketModalOpen, setMarketModalOpen] = useState(false);
   const [activeTrades, setActiveTrades] = useState<ActiveTrade[]>([]); // Multiple active trades for multi-asset
   const [countdowns, setCountdowns] = useState<Record<string, number>>({}); // countdown per duration group
@@ -230,9 +234,32 @@ export default function TradeForUsers() {
   const [reopenConfirmDialogOpen, setReopenConfirmDialogOpen] = useState(false); // Dialog when profits already added
   const [pendingProfitBlockDialogOpen, setPendingProfitBlockDialogOpen] = useState(false); // Block new trade until profit added
   
+  // Initialize tradingAssets when market data is available
+  useEffect(() => {
+    if (cryptoAssets.length > 0 && tradingAssets.length === 0) {
+      setTradingAssets([{ ...cryptoAssets[0], duration: "1m" }]);
+    }
+  }, [cryptoAssets, tradingAssets.length]);
+
+  // Update trading assets with live prices
+  useEffect(() => {
+    if (allAssets.length > 0 && tradingAssets.length > 0) {
+      setTradingAssets(prev => prev.map(asset => {
+        const updated = allAssets.find(a => a.symbol === asset.symbol);
+        if (updated && updated.price !== asset.price) {
+          return { ...asset, ...updated };
+        }
+        return asset;
+      }));
+    }
+  }, [allAssets]);
+
   // Helper: get openAssets from tradingAssets (for backward compat)
   const openAssets = tradingAssets;
   const expiration = selectedAsset.duration;
+  
+  // Check if live market data is loaded (price > 0)
+  const isMarketDataReady = selectedAsset.price > 0 && tradingAssets.length > 0;
 
   // Fetch users with balance
   const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
@@ -1342,20 +1369,20 @@ export default function TradeForUsers() {
                     <Button
                       className="bg-success hover:bg-success/90 h-14 text-lg font-bold"
                       onClick={() => handleTrade("higher")}
-                      disabled={executeTradeMutation.isPending}
+                      disabled={executeTradeMutation.isPending || !isMarketDataReady}
                       data-testid="button-buy"
                     >
                       <ArrowUp className="w-5 h-5 mr-2" />
-                      BUY
+                      {!isMarketDataReady ? "Loading..." : "BUY"}
                     </Button>
                     <Button
                       className="bg-destructive hover:bg-destructive/90 h-14 text-lg font-bold"
                       onClick={() => handleTrade("lower")}
-                      disabled={executeTradeMutation.isPending}
+                      disabled={executeTradeMutation.isPending || !isMarketDataReady}
                       data-testid="button-sell"
                     >
                       <ArrowDown className="w-5 h-5 mr-2" />
-                      SELL
+                      {!isMarketDataReady ? "Loading..." : "SELL"}
                     </Button>
                   </>
                 )}

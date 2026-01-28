@@ -75,5 +75,14 @@ Preferred communication style: Simple, everyday language.
 - **TypeScript**: Type checking across frontend and backend
 
 ### Market Data
-- Currently uses static mock data in `client/src/lib/market-data.ts`
-- Architecture supports future integration with external APIs (CoinGecko, AlphaVantage, TwelveData, etc.)
+- **Real-time Data**: Integrated with Massive.com API for live market prices
+- **Server-side Caching**: `server/massive-api.ts` fetches data every 5 seconds to prevent API overload
+- **API Endpoint**: `/api/market-data` serves cached prices to frontend clients
+- **Frontend Hook**: `client/src/hooks/use-market-data.ts` provides `useMarketData()` hook for components
+- **Supported Assets**:
+  - Stocks: AAPL, GOOGL, MSFT, AMZN, NVDA, TSLA, META
+  - ETFs: SPY, QQQ, VTI, IWM, GLD
+  - Crypto: BTC/USDT, ETH/USDT, SOL/USDT, XRP/USDT, ADA/USDT, DOGE/USDT, DOT/USDT
+  - Forex: EUR/USD, GBP/USD, USD/JPY, USD/CHF, AUD/USD
+- **Static Fallback**: `client/src/lib/market-data.ts` contains fallback static data when API unavailable
+- **Required Secret**: `MASSIVE_API_KEY` for API authentication
