@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupCustomAuth, registerCustomAuthRoutes, isAuthenticated } from "./auth";
 import { tradeExecutionSchema, insertWatchlistSchema } from "@shared/schema";
 import { z } from "zod";
+import { getMarketData, getAllAssetsFromCache, startMarketDataRefresh } from "./massive-api";
 
 // Middleware to check if user is admin
 const isAdmin = async (req: any, res: Response, next: Function) => {
@@ -37,6 +38,23 @@ export async function registerRoutes(
 ): Promise<Server> {
   setupCustomAuth(app);
   registerCustomAuthRoutes(app);
+
+  startMarketDataRefresh(5000);
+
+  app.get("/api/market-data", async (req: Request, res: Response) => {
+    try {
+      const data = await getMarketData();
+      const assets = getAllAssetsFromCache();
+      res.json({
+        assets,
+        lastFetchTime: data.lastFetchTime,
+        stale: Date.now() - data.lastFetchTime > 10000,
+      });
+    } catch (error) {
+      console.error("Error fetching market data:", error);
+      res.status(500).json({ message: "Failed to fetch market data" });
+    }
+  });
 
   app.get("/api/dashboard", isAuthenticated, async (req: any, res: Response) => {
     try {
