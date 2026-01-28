@@ -93,13 +93,9 @@ async function fetchSnapshotsFromMassive(tickers: string[]): Promise<MarketSnaps
 
   try {
     const tickerParam = tickers.join(",");
-    const url = `${MASSIVE_API_BASE}/v3/snapshot?ticker=${encodeURIComponent(tickerParam)}&limit=50`;
+    const url = `${MASSIVE_API_BASE}/v3/snapshot?ticker=${encodeURIComponent(tickerParam)}&limit=50&apiKey=${MASSIVE_API_KEY}`;
     
-    const response = await fetch(url, {
-      headers: {
-        "Authorization": `Bearer ${MASSIVE_API_KEY}`,
-      },
-    });
+    const response = await fetch(url);
 
     if (!response.ok) {
       console.error(`Massive API error: ${response.status} ${response.statusText}`);
