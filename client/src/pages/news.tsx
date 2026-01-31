@@ -8,6 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   Search, RefreshCw, Calendar, Filter, ExternalLink, 
   Loader2, Newspaper, ArrowLeft, Globe, Clock, Bell,
@@ -200,6 +206,7 @@ export default function NewsPage() {
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
   
   const [selectedSymbol, setSelectedSymbol] = useState("all");
   const [selectedDate, setSelectedDate] = useState("any");
@@ -445,7 +452,7 @@ export default function NewsPage() {
     <Card
       key={article.uuid}
       className="glass-card overflow-hidden hover-elevate cursor-pointer"
-      onClick={() => article.url !== "#" && window.open(article.url, "_blank")}
+      onClick={() => setSelectedArticle(article)}
       data-testid={`news-article-${article.uuid}`}
     >
       <div className="flex flex-col md:flex-row">
@@ -681,6 +688,86 @@ export default function NewsPage() {
           </div>
         )}
       </div>
+
+      <Dialog open={!!selectedArticle} onOpenChange={(open) => !open && setSelectedArticle(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="news-article-modal">
+          {selectedArticle && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  {selectedArticle.category && (
+                    <Badge variant="secondary" className="text-xs uppercase">
+                      {selectedArticle.category}
+                    </Badge>
+                  )}
+                  {selectedArticle.sentiment && selectedArticle.sentiment !== "neutral" && (
+                    <Badge className={cn("text-xs", getSentimentColor(selectedArticle.sentiment))}>
+                      {getSentimentIcon(selectedArticle.sentiment)}
+                      <span className="ml-1">{selectedArticle.sentiment.toUpperCase()}</span>
+                    </Badge>
+                  )}
+                  {selectedArticle.entities?.slice(0, 3).map((entity) => (
+                    <Badge
+                      key={entity.symbol}
+                      variant="outline"
+                      className="text-xs"
+                    >
+                      {entity.symbol}
+                    </Badge>
+                  ))}
+                </div>
+                <DialogTitle className="text-xl leading-tight">
+                  {selectedArticle.title}
+                </DialogTitle>
+              </DialogHeader>
+
+              {selectedArticle.image_url && (
+                <div className="w-full h-48 rounded-lg overflow-hidden my-4">
+                  <img
+                    src={selectedArticle.image_url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                </div>
+              )}
+
+              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                <span className="flex items-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  {format(new Date(selectedArticle.published_at), "MMM d, yyyy 'at' h:mm a")}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Globe className="w-4 h-4" />
+                  {selectedArticle.source}
+                </span>
+              </div>
+
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <p className="text-foreground leading-relaxed">
+                  {selectedArticle.description || selectedArticle.snippet}
+                </p>
+              </div>
+
+              {selectedArticle.url && selectedArticle.url !== "#" && (
+                <div className="mt-6 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => window.open(selectedArticle.url, "_blank")}
+                    data-testid="button-read-full-article"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Read Full Article
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
