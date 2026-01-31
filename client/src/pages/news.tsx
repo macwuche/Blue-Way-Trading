@@ -690,10 +690,10 @@ export default function NewsPage() {
       </div>
 
       <Dialog open={!!selectedArticle} onOpenChange={(open) => !open && setSelectedArticle(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="news-article-modal">
+        <DialogContent className="w-[80vw] max-w-[80vw] h-[80vh] max-h-[80vh] overflow-y-auto" data-testid="news-article-modal">
           {selectedArticle && (
-            <>
-              <DialogHeader>
+            <div className="flex flex-col h-full">
+              <DialogHeader className="flex-shrink-0">
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                   {selectedArticle.category && (
                     <Badge variant="secondary" className="text-xs uppercase">
@@ -716,43 +716,50 @@ export default function NewsPage() {
                     </Badge>
                   ))}
                 </div>
-                <DialogTitle className="text-xl leading-tight">
+                <DialogTitle className="text-2xl leading-tight font-bold">
                   {selectedArticle.title}
                 </DialogTitle>
               </DialogHeader>
 
-              {selectedArticle.image_url && (
-                <div className="w-full h-48 rounded-lg overflow-hidden my-4">
-                  <img
-                    src={selectedArticle.image_url}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
+              <div className="flex-1 overflow-y-auto mt-4">
+                {selectedArticle.image_url && (
+                  <div className="w-full h-64 rounded-lg overflow-hidden mb-6">
+                    <img
+                      src={selectedArticle.image_url}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    {format(new Date(selectedArticle.published_at), "MMM d, yyyy 'at' h:mm a")}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Globe className="w-4 h-4" />
+                    {selectedArticle.source}
+                  </span>
                 </div>
-              )}
 
-              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  {format(new Date(selectedArticle.published_at), "MMM d, yyyy 'at' h:mm a")}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Globe className="w-4 h-4" />
-                  {selectedArticle.source}
-                </span>
-              </div>
-
-              <div className="prose prose-sm dark:prose-invert max-w-none">
-                <p className="text-foreground leading-relaxed">
-                  {selectedArticle.description || selectedArticle.snippet}
-                </p>
+                <div className="prose prose-lg dark:prose-invert max-w-none">
+                  <p className="text-foreground leading-relaxed text-base whitespace-pre-wrap">
+                    {selectedArticle.description || selectedArticle.snippet}
+                  </p>
+                  {selectedArticle.snippet && selectedArticle.description && selectedArticle.snippet !== selectedArticle.description && (
+                    <p className="text-foreground leading-relaxed text-base whitespace-pre-wrap mt-4">
+                      {selectedArticle.snippet}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {selectedArticle.url && selectedArticle.url !== "#" && (
-                <div className="mt-6 pt-4 border-t">
+                <div className="flex-shrink-0 mt-6 pt-4 border-t">
                   <Button
                     variant="outline"
                     className="w-full"
@@ -764,7 +771,7 @@ export default function NewsPage() {
                   </Button>
                 </div>
               )}
-            </>
+            </div>
           )}
         </DialogContent>
       </Dialog>
