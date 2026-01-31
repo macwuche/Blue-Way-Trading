@@ -5,6 +5,7 @@ import { setupCustomAuth, registerCustomAuthRoutes, isAuthenticated } from "./au
 import { tradeExecutionSchema, insertWatchlistSchema } from "@shared/schema";
 import { z } from "zod";
 import { getMarketData, getAllAssetsFromCache, startMarketDataRefresh } from "./massive-api";
+import { fetchMarketNews } from "./marketaux-api";
 
 // Middleware to check if user is admin
 const isAdmin = async (req: any, res: Response, next: Function) => {
@@ -53,6 +54,40 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching market data:", error);
       res.status(500).json({ message: "Failed to fetch market data" });
+    }
+  });
+
+  // Market News API endpoint
+  app.get("/api/news", async (req: Request, res: Response) => {
+    try {
+      const { symbols, search, published_after, published_before, page, limit } = req.query;
+      
+      const result = await fetchMarketNews({
+        symbols: symbols as string | undefined,
+        search: search as string | undefined,
+        published_after: published_after as string | undefined,
+        published_before: published_before as string | undefined,
+        page: page ? parseInt(page as string, 10) : 1,
+        limit: limit ? parseInt(limit as string, 10) : 10,
+      });
+
+      if (!result) {
+        return res.json({
+          articles: [],
+          meta: { found: 0, returned: 0, limit: 10, page: 1 },
+          cached: false,
+        });
+      }
+
+      res.json({
+        articles: result.data,
+        meta: result.meta,
+        cached: Date.now() - result.timestamp < 1000,
+        cacheAge: Math.floor((Date.now() - result.timestamp) / 1000),
+      });
+    } catch (error) {
+      console.error("Error fetching news:", error);
+      res.status(500).json({ message: "Failed to fetch news" });
     }
   });
 
