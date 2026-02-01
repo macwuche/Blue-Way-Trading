@@ -265,17 +265,23 @@ export class DatabaseStorage implements IStorage {
     }
     
     const currentProfit = parseFloat(portfolio.totalProfit);
-    const newProfit = operation === 'add' 
-      ? (currentProfit + amount).toFixed(2)
-      : (currentProfit - amount).toFixed(2);
+    const currentBalance = parseFloat(portfolio.balance);
+    
+    const profitChange = operation === 'add' ? amount : -amount;
+    const newProfit = (currentProfit + profitChange).toFixed(2);
+    const newBalance = Math.max(0, currentBalance + profitChange).toFixed(2);
     
     const initialBalance = 10000;
-    const totalValue = parseFloat(portfolio.balance) + parseFloat(newProfit);
+    const totalValue = parseFloat(newBalance) + parseFloat(newProfit);
     const profitPercent = (((totalValue - initialBalance) / initialBalance) * 100).toFixed(2);
     
     const [updated] = await db
       .update(portfolios)
-      .set({ totalProfit: newProfit, totalProfitPercent: profitPercent })
+      .set({ 
+        totalProfit: newProfit, 
+        totalProfitPercent: profitPercent,
+        balance: newBalance
+      })
       .where(eq(portfolios.id, portfolio.id))
       .returning();
     return updated;
