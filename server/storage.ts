@@ -230,8 +230,11 @@ export class DatabaseStorage implements IStorage {
 
   // Admin balance/profit management
   async adjustUserBalance(userId: string, amount: number, operation: 'add' | 'subtract'): Promise<Portfolio> {
+    console.log(`[Admin] adjustUserBalance called - userId: ${userId}, amount: ${amount}, operation: ${operation}`);
+    
     let portfolio = await this.getPortfolioByUserId(userId);
     if (!portfolio) {
+      console.log(`[Admin] No portfolio found for userId ${userId}, creating new one`);
       portfolio = await this.createPortfolio({
         userId,
         balance: "0.00",
@@ -245,17 +248,24 @@ export class DatabaseStorage implements IStorage {
       ? (currentBalance + amount).toFixed(2)
       : Math.max(0, currentBalance - amount).toFixed(2);
     
+    console.log(`[Admin] Updating balance for portfolioId ${portfolio.id}: ${currentBalance} -> ${newBalance}`);
+    
     const [updated] = await db
       .update(portfolios)
       .set({ balance: newBalance })
       .where(eq(portfolios.id, portfolio.id))
       .returning();
+    
+    console.log(`[Admin] Balance updated successfully - new balance: ${updated.balance}`);
     return updated;
   }
 
   async adjustUserProfit(userId: string, amount: number, operation: 'add' | 'subtract'): Promise<Portfolio> {
+    console.log(`[Admin] adjustUserProfit called - userId: ${userId}, amount: ${amount}, operation: ${operation}`);
+    
     let portfolio = await this.getPortfolioByUserId(userId);
     if (!portfolio) {
+      console.log(`[Admin] No portfolio found for userId ${userId}, creating new one`);
       portfolio = await this.createPortfolio({
         userId,
         balance: "0.00",
@@ -271,6 +281,8 @@ export class DatabaseStorage implements IStorage {
     const newProfit = (currentProfit + profitChange).toFixed(2);
     const newBalance = Math.max(0, currentBalance + profitChange).toFixed(2);
     
+    console.log(`[Admin] Updating profit for portfolioId ${portfolio.id}: profit ${currentProfit} -> ${newProfit}, balance ${currentBalance} -> ${newBalance}`);
+    
     const initialBalance = 10000;
     const totalValue = parseFloat(newBalance) + parseFloat(newProfit);
     const profitPercent = (((totalValue - initialBalance) / initialBalance) * 100).toFixed(2);
@@ -284,6 +296,8 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(portfolios.id, portfolio.id))
       .returning();
+    
+    console.log(`[Admin] Profit updated successfully - new profit: ${updated.totalProfit}, new balance: ${updated.balance}`);
     return updated;
   }
 

@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { 
   LayoutDashboard, TrendingUp, Wallet, History, Star, 
   LogOut, Menu, ChevronDown, Search, Bell, User, BarChart3,
-  Clock, ArrowUp, ArrowDown
+  Clock, ArrowUp, ArrowDown, RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -75,9 +75,11 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [tradeCountdowns, setTradeCountdowns] = useState<Record<string, number>>({});
 
-  const { data: dashboardData, isLoading: dataLoading } = useQuery<DashboardData>({
+  const { data: dashboardData, isLoading: dataLoading, refetch: refetchDashboard, isFetching: isDashboardFetching } = useQuery<DashboardData>({
     queryKey: ["/api/dashboard"],
     retry: false,
+    refetchInterval: 30000, // Auto-refresh every 30 seconds to pick up admin changes
+    refetchOnWindowFocus: true, // Refresh when user returns to tab
   });
 
   // Fetch active trades for the user
@@ -318,12 +320,24 @@ export default function Dashboard() {
                 {dataLoading ? (
                   <Skeleton className="h-[200px] rounded-lg" />
                 ) : (
-                  <PortfolioCard
-                    balance={balance}
-                    totalProfit={totalProfit}
-                    totalProfitPercent={totalProfitPercent}
-                    portfolioValue={portfolioValue}
-                  />
+                  <div className="relative">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => refetchDashboard()}
+                      disabled={isDashboardFetching}
+                      className="absolute top-3 right-3 z-10"
+                      data-testid="button-refresh-portfolio"
+                    >
+                      <RefreshCw className={cn("w-4 h-4", isDashboardFetching && "animate-spin")} />
+                    </Button>
+                    <PortfolioCard
+                      balance={balance}
+                      totalProfit={totalProfit}
+                      totalProfitPercent={totalProfitPercent}
+                      portfolioValue={portfolioValue}
+                    />
+                  </div>
                 )}
 
                 {selectedAsset && (
@@ -504,12 +518,24 @@ export default function Dashboard() {
               {dataLoading ? (
                 <Skeleton className="h-[200px] rounded-lg" />
               ) : (
-                <PortfolioCard
-                  balance={balance}
-                  totalProfit={totalProfit}
-                  totalProfitPercent={totalProfitPercent}
-                  portfolioValue={portfolioValue}
-                />
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => refetchDashboard()}
+                    disabled={isDashboardFetching}
+                    className="absolute top-3 right-3 z-10"
+                    data-testid="button-refresh-portfolio-tab"
+                  >
+                    <RefreshCw className={cn("w-4 h-4", isDashboardFetching && "animate-spin")} />
+                  </Button>
+                  <PortfolioCard
+                    balance={balance}
+                    totalProfit={totalProfit}
+                    totalProfitPercent={totalProfitPercent}
+                    portfolioValue={portfolioValue}
+                  />
+                </div>
               )}
 
               <GlassCard className="p-6" gradient>
