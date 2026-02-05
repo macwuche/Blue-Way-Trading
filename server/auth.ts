@@ -129,6 +129,7 @@ export function registerCustomAuthRoutes(app: Express) {
     try {
       const result = loginSchema.safeParse(req.body);
       if (!result.success) {
+        console.log("[Login] Validation failed:", result.error.errors);
         return res.status(400).json({ 
           message: "Validation failed", 
           errors: result.error.errors 
@@ -136,12 +137,15 @@ export function registerCustomAuthRoutes(app: Express) {
       }
 
       const { email, password } = result.data;
+      console.log("[Login] Attempting login for email:", email);
 
       // Find user
       const user = await storage.getUserByEmail(email);
       if (!user) {
+        console.log("[Login] User not found for email:", email);
         return res.status(401).json({ message: "Invalid email or password" });
       }
+      console.log("[Login] Found user:", { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName });
 
       // Check if user has a password (for email auth)
       if (!user.password) {
@@ -169,6 +173,8 @@ export function registerCustomAuthRoutes(app: Express) {
         isAdmin: user.isAdmin,
         profileImageUrl: user.profileImageUrl,
       };
+      
+      console.log("[Login] SUCCESS - Session set for userId:", user.id, "email:", user.email);
 
       res.json({
         success: true,
@@ -259,13 +265,18 @@ export function registerCustomAuthRoutes(app: Express) {
 
   // Get current user - fetch fresh data from database
   app.get("/api/auth/user", async (req: Request, res: Response) => {
+    console.log("[Auth/User] Session userId:", req.session.userId);
+    
     if (!req.session.userId) {
+      console.log("[Auth/User] No session userId - not authenticated");
       return res.status(401).json({ message: "Not authenticated" });
     }
     
     try {
       // Fetch fresh user data from database
       const user = await storage.getUserById(req.session.userId);
+      console.log("[Auth/User] Fetched user from DB:", user ? { id: user.id, email: user.email, firstName: user.firstName } : "null");
+      
       if (!user) {
         // User no longer exists, clear session
         req.session.destroy(() => {});
