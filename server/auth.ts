@@ -257,12 +257,39 @@ export function registerCustomAuthRoutes(app: Express) {
     }
   });
 
-  // Get current user
-  app.get("/api/auth/user", (req: Request, res: Response) => {
+  // Get current user - fetch fresh data from database
+  app.get("/api/auth/user", async (req: Request, res: Response) => {
     if (!req.session.userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    res.json(req.session.user);
+    
+    try {
+      // Fetch fresh user data from database
+      const user = await storage.getUserById(req.session.userId);
+      if (!user) {
+        // User no longer exists, clear session
+        req.session.destroy(() => {});
+        return res.status(401).json({ message: "User not found" });
+      }
+      
+      // Return fresh user data
+      res.json({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isAdmin: user.isAdmin,
+        profileImageUrl: user.profileImageUrl,
+        phone: user.phone,
+        country: user.country,
+        status: user.status,
+        vipLevel: user.vipLevel,
+        isVerified: user.isVerified,
+      });
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
   });
 
   // Check authentication status
