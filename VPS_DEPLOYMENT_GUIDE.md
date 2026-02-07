@@ -2,7 +2,7 @@
 
 ## Domain: accessbluewave.site
 ## Server: Ubuntu 24.04 LTS (76.13.139.24)
-## App folder: /root/Bluewave
+## App folder: /root/bluewave
 
 ---
 
@@ -94,15 +94,15 @@ GRANT ALL ON SCHEMA public TO bluewave;
 
 On your VPS:
 ```bash
-mkdir -p /root/Bluewave
+mkdir -p /root/bluewave
 ```
 
-**What this does:** Creates the `/root/Bluewave` folder where your app will live.
+**What this does:** Creates the `/root/bluewave` folder where your app will live.
 
 Now, **open a NEW terminal window on your local computer** (not the VPS). In Replit, download the file called `bluewave-deploy.tar.gz` from the project root first. Then from your local machine run:
 
 ```bash
-scp bluewave-deploy.tar.gz root@76.13.139.24:/root/Bluewave/
+scp bluewave-deploy.tar.gz root@76.13.139.24:/root/bluewave/
 ```
 
 **What this does:** Copies the app bundle from your computer to the VPS server.
@@ -112,7 +112,7 @@ scp bluewave-deploy.tar.gz root@76.13.139.24:/root/Bluewave/
 Now go back to your VPS terminal:
 
 ```bash
-cd /root/Bluewave
+cd /root/bluewave
 tar xzf bluewave-deploy.tar.gz
 ```
 
@@ -123,7 +123,7 @@ tar xzf bluewave-deploy.tar.gz
 ## STEP 7: Install Node.js dependencies
 
 ```bash
-cd /root/Bluewave
+cd /root/bluewave
 npm install
 ```
 
@@ -134,7 +134,7 @@ npm install
 ## STEP 8: Set up environment variables
 
 ```bash
-cat > /root/Bluewave/.env << 'EOF'
+cat > /root/bluewave/.env << 'EOF'
 NODE_ENV=production
 PORT=5000
 DATABASE_URL=postgresql://bluewave:YourStrongPassword123!@localhost:5432/bluewave_db
@@ -160,7 +160,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 Now secure the file so only root can read it:
 ```bash
-chmod 600 /root/Bluewave/.env
+chmod 600 /root/bluewave/.env
 ```
 
 ---
@@ -168,7 +168,7 @@ chmod 600 /root/Bluewave/.env
 ## STEP 9: Set up the database tables
 
 ```bash
-cd /root/Bluewave
+cd /root/bluewave
 export $(grep -v '^#' .env | xargs)
 npx drizzle-kit push
 ```
@@ -194,7 +194,7 @@ npm install -g pm2
 Now create a PM2 configuration file that includes your environment variables:
 
 ```bash
-cat > /root/Bluewave/ecosystem.config.cjs << 'PMEOF'
+cat > /root/bluewave/ecosystem.config.cjs << 'PMEOF'
 const fs = require('fs');
 const path = require('path');
 
@@ -212,7 +212,7 @@ module.exports = {
   apps: [{
     name: 'bluewave',
     script: './dist/index.cjs',
-    cwd: '/root/Bluewave',
+    cwd: '/root/bluewave',
     env: env,
     instances: 1,
     autorestart: true,
@@ -233,7 +233,7 @@ PMEOF
 ## STEP 11: Test that the app starts
 
 ```bash
-cd /root/Bluewave
+cd /root/bluewave
 pm2 start ecosystem.config.cjs
 pm2 logs bluewave --lines 20
 ```
@@ -443,7 +443,7 @@ sudo -u postgres psql -c "SELECT 1;"  # Test PostgreSQL is running
 When you make changes to your app in Replit:
 1. Build the new version in Replit (run `npm run build`)
 2. Download the new `dist/` folder
-3. Upload to VPS: `scp -r dist/ root@76.13.139.24:/root/Bluewave/`
+3. Upload to VPS: `scp -r dist/ root@76.13.139.24:/root/bluewave/`
 4. Restart: `pm2 restart bluewave`
 
 ### Check if everything is running:
@@ -456,6 +456,6 @@ systemctl status postgresql # Database status
 ### If you change environment variables:
 Edit the `.env` file, then restart:
 ```bash
-nano /root/Bluewave/.env
+nano /root/bluewave/.env
 pm2 restart bluewave
 ```
