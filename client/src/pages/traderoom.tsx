@@ -153,6 +153,40 @@ export default function TradeRoom() {
 
   const balance = parseFloat(dashboardData?.portfolio?.balance || "10000");
 
+  useEffect(() => {
+    if (!user) return;
+
+    const eventSource = new EventSource("/api/user/events");
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "portfolio_update") {
+          queryClient.setQueryData<DashboardData>(["/api/dashboard"], (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              portfolio: {
+                ...old.portfolio,
+                balance: data.balance,
+                totalProfit: data.totalProfit,
+                totalProfitPercent: data.totalProfitPercent,
+              },
+            };
+          });
+        }
+      } catch {
+      }
+    };
+
+    eventSource.onerror = () => {
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [user]);
+
   const executeTradeMutation = useMutation({
     mutationFn: async (data: { 
       symbol: string; 
