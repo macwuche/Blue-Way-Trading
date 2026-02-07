@@ -86,3 +86,12 @@ Preferred communication style: Simple, everyday language.
   - Forex: EUR/USD, GBP/USD, USD/JPY, USD/CHF, AUD/USD
 - **Static Fallback**: `client/src/lib/market-data.ts` contains fallback static data when API unavailable
 - **Required Secret**: `MASSIVE_API_KEY` for API authentication
+
+### Real-time Updates
+- **Server-Sent Events (SSE)**: `server/sse.ts` manages SSE client connections per user
+- **SSE Endpoint**: `/api/user/events` pushes portfolio updates to connected dashboard clients
+- **Admin Triggers**: All admin balance/profit adjustment endpoints call `sendUserUpdate()` to push changes instantly
+- **Dashboard Listener**: `client/src/pages/dashboard.tsx` connects to SSE and updates React Query cache in real-time
+
+### Session Management
+- **Explicit Session Save**: All login/register endpoints call `req.session.save()` before responding to ensure session data is persisted to PostgreSQL before the client can refresh

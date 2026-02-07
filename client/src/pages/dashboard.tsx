@@ -88,6 +88,43 @@ export default function Dashboard() {
     refetchInterval: 5000, // Refresh every 5 seconds
   });
 
+  // SSE: Listen for real-time portfolio updates from admin
+  useEffect(() => {
+    if (!user) return;
+
+    const eventSource = new EventSource("/api/user/events");
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "portfolio_update") {
+          queryClient.setQueryData<DashboardData>(["/api/dashboard"], (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              portfolio: {
+                ...old.portfolio,
+                balance: data.balance,
+                totalProfit: data.totalProfit,
+                totalProfitPercent: data.totalProfitPercent,
+              },
+            };
+          });
+        }
+      } catch {
+        // Ignore parse errors from keepalive comments
+      }
+    };
+
+    eventSource.onerror = () => {
+      // EventSource will auto-reconnect
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [user]);
+
   // Countdown effect for active trades
   useEffect(() => {
     if (activeTrades.length === 0) return;

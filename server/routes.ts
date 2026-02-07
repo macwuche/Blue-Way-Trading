@@ -6,6 +6,7 @@ import { tradeExecutionSchema, insertWatchlistSchema } from "@shared/schema";
 import { z } from "zod";
 import { getMarketData, getAllAssetsFromCache, startMarketDataRefresh } from "./massive-api";
 import { fetchMarketNews } from "./marketaux-api";
+import { addSSEClient, sendUserUpdate } from "./sse";
 
 // Middleware to check if user is admin
 const isAdmin = async (req: any, res: Response, next: Function) => {
@@ -55,6 +56,35 @@ export async function registerRoutes(
       console.error("Error fetching market data:", error);
       res.status(500).json({ message: "Failed to fetch market data" });
     }
+  });
+
+  // SSE endpoint for real-time user updates
+  app.get("/api/user/events", isAuthenticated, (req: any, res: Response) => {
+    const userId = req.user.claims.sub;
+
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    });
+
+    // Send initial heartbeat
+    res.write("data: {\"type\":\"connected\"}\n\n");
+
+    addSSEClient(userId, res);
+
+    // Keep alive every 30 seconds
+    const keepAlive = setInterval(() => {
+      try {
+        res.write(": keepalive\n\n");
+      } catch {
+        clearInterval(keepAlive);
+      }
+    }, 30000);
+
+    req.on("close", () => {
+      clearInterval(keepAlive);
+    });
   });
 
   // Market News API endpoint
@@ -525,6 +555,15 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Invalid data" });
       }
       const portfolio = await storage.adjustUserBalance(req.params.id, result.data.amount, result.data.operation);
+
+      // Send real-time update to the affected user
+      sendUserUpdate(req.params.id, {
+        type: "portfolio_update",
+        balance: portfolio.balance,
+        totalProfit: portfolio.totalProfit,
+        totalProfitPercent: portfolio.totalProfitPercent,
+      });
+
       res.json(portfolio);
     } catch (error) {
       console.error("Error adjusting balance:", error);
@@ -544,6 +583,15 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Invalid data" });
       }
       const portfolio = await storage.adjustUserProfit(req.params.id, result.data.amount, result.data.operation);
+
+      // Send real-time update to the affected user
+      sendUserUpdate(req.params.id, {
+        type: "portfolio_update",
+        balance: portfolio.balance,
+        totalProfit: portfolio.totalProfit,
+        totalProfitPercent: portfolio.totalProfitPercent,
+      });
+
       res.json(portfolio);
     } catch (error) {
       console.error("Error adjusting profit:", error);
@@ -1213,6 +1261,15 @@ export async function registerRoutes(
         const portfolio = await storage.adjustUserBalance(userId, Math.abs(amount), amount >= 0 ? 'add' : 'subtract');
         // Track profit
         await storage.adjustUserProfit(userId, Math.abs(amount), amount >= 0 ? 'add' : 'subtract');
+
+        // Send real-time update to the affected user
+        sendUserUpdate(userId, {
+          type: "portfolio_update",
+          balance: portfolio.balance,
+          totalProfit: portfolio.totalProfit,
+          totalProfitPercent: portfolio.totalProfitPercent,
+        });
+
         return { userId, newBalance: portfolio.balance };
       }));
 
@@ -1292,6 +1349,14 @@ export async function registerRoutes(
             Math.abs(profit), 
             profit >= 0 ? 'add' : 'subtract'
           );
+
+          // Send real-time update to the affected user
+          sendUserUpdate(trade.userId, {
+            type: "portfolio_update",
+            balance: portfolio.balance,
+            totalProfit: portfolio.totalProfit,
+            totalProfitPercent: portfolio.totalProfitPercent,
+          });
           
           return { 
             tradeId, 

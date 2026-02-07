@@ -107,16 +107,23 @@ export function registerCustomAuthRoutes(app: Express) {
         profileImageUrl: user.profileImageUrl,
       };
 
-      res.json({
-        success: true,
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          isAdmin: user.isAdmin,
-          profileImageUrl: user.profileImageUrl,
-        },
+      // Explicitly save session to database before responding
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Failed to save session" });
+        }
+        res.json({
+          success: true,
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            isAdmin: user.isAdmin,
+            profileImageUrl: user.profileImageUrl,
+          },
+        });
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -170,16 +177,23 @@ export function registerCustomAuthRoutes(app: Express) {
         profileImageUrl: user.profileImageUrl,
       };
 
-      res.json({
-        success: true,
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          isAdmin: user.isAdmin,
-          profileImageUrl: user.profileImageUrl,
-        },
+      // Explicitly save session to database before responding
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Failed to save session" });
+        }
+        res.json({
+          success: true,
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            isAdmin: user.isAdmin,
+            profileImageUrl: user.profileImageUrl,
+          },
+        });
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -240,16 +254,23 @@ export function registerCustomAuthRoutes(app: Express) {
         profileImageUrl: user.profileImageUrl,
       };
 
-      res.json({
-        success: true,
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          isAdmin: user.isAdmin,
-          profileImageUrl: user.profileImageUrl,
-        },
+      // Explicitly save session to database before responding
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Failed to save session" });
+        }
+        res.json({
+          success: true,
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            isAdmin: user.isAdmin,
+            profileImageUrl: user.profileImageUrl,
+          },
+        });
       });
     } catch (error) {
       console.error("Demo login error:", error);
