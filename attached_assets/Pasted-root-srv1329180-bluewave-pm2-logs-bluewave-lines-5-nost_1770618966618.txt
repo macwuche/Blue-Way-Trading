@@ -1,0 +1,120 @@
+root@srv1329180:~/bluewave# pm2 logs bluewave --lines 5 --nostream
+[TAILING] Tailing last 5 lines for [bluewave] process (change the value with --lines option)
+/root/.pm2/logs/bluewave-error-4.log last 5 lines:
+4|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+4|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+4|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+4|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+4|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+
+/root/.pm2/logs/bluewave-out-4.log last 5 lines:
+4|bluewave | [Massive API] Refreshed market data: 24 assets
+4|bluewave | [Massive API] Refreshed market data: 24 assets
+4|bluewave | [Massive API] Refreshed market data: 24 assets
+4|bluewave | [Massive API] Refreshed market data: 24 assets
+4|bluewave | [Massive API] Refreshed market data: 24 assets
+
+root@srv1329180:~/bluewave# cd /root/bluewave && git pull origin main && npm run build
+remote: Enumerating objects: 42, done.
+remote: Counting objects: 100% (42/42), done.
+remote: Compressing objects: 100% (24/24), done.
+remote: Total 37 (delta 12), reused 37 (delta 12), pack-reused 0 (from 0)
+Unpacking objects: 100% (37/37), 4.18 MiB | 27.12 MiB/s, done.
+From https://github.com/macwuche/Blue-Way-Trading
+ * branch            main       -> FETCH_HEAD
+   dc6cd3d..f14c00e  main       -> origin/main
+Updating dc6cd3d..f14c00e
+Fast-forward
+ VPS_DEPLOYMENT_GUIDE.md                                                     |  28 +++---
+ attached_assets/Pasted--root-srv1329180-b-1770617385354_1770617385355.txt   |  35 +++++++
+ ...oot-srv1329180-bluewave-cd-root-bluewave-root-srv13291_1770520359948.txt |  77 ++++++++++++++++
+ ...oot-srv1329180-bluewave-certbot-certonly-manual-prefer_1770547683171.txt |  82 +++++++++++++++++
+ ...oot-srv1329180-bluewave-ping-accessbluewave-site-PING-_1770521586554.txt |  45 +++++++++
+ ...oot-srv1329180-bluewave-pm2-delete-bluewave-js-pm2-log_1770520732416.txt |  38 ++++++++
+ ...oot-srv1329180-bluewave-pm2-logs-lines-30-TAILING-Tail_1770585107562.txt | 160 ++++++++++++++++++++++++++++++++
+ ...oot-srv1329180-bluewave-root-srv1329180-bluewave-nginx_1770522090404.txt |  45 +++++++++
+ ...oot-srv1329180-bluewave-sed-i-s-PORT-5000-PORT-5001-ro_1770520612093.txt | 102 +++++++++++++++++++++
+ ...oot-srv1329180-cd-bluewave-root-srv1329180-bluewave-op_1770568644172.txt |  51 +++++++++++
+ attached_assets/image_1770548633053.png                                     | Bin 0 -> 241128 bytes
+ attached_assets/image_1770548761278.png                                     | Bin 0 -> 201617 bytes
+ attached_assets/image_1770553868692.png                                     | Bin 0 -> 280222 bytes
+ attached_assets/image_1770553885181.png                                     | Bin 0 -> 264371 bytes
+ attached_assets/image_1770553902890.png                                     | Bin 0 -> 263852 bytes
+ attached_assets/image_1770553973821.png                                     | Bin 0 -> 253975 bytes
+ attached_assets/image_1770554002586.png                                     | Bin 0 -> 245511 bytes
+ attached_assets/image_1770554034283.png                                     | Bin 0 -> 239460 bytes
+ attached_assets/image_1770566489109.png                                     | Bin 0 -> 298124 bytes
+ attached_assets/image_1770567123783.png                                     | Bin 0 -> 278710 bytes
+ attached_assets/image_1770567138520.png                                     | Bin 0 -> 279925 bytes
+ attached_assets/image_1770567173612.png                                     | Bin 0 -> 285057 bytes
+ attached_assets/image_1770568140320.png                                     | Bin 0 -> 298423 bytes
+ attached_assets/image_1770584524289.png                                     | Bin 0 -> 542221 bytes
+ attached_assets/image_1770617119602.png                                     | Bin 0 -> 522691 bytes
+ attached_assets/image_1770617752103.png                                     | Bin 0 -> 329916 bytes
+ scripts/setup-db.sql                                                        | 178 ++++++++++++++++++++++++++++++++++++
+ server/auth.ts                                                              |   2 +-
+ 28 files changed, 828 insertions(+), 15 deletions(-)
+ create mode 100644 attached_assets/Pasted--root-srv1329180-b-1770617385354_1770617385355.txt
+ create mode 100644 attached_assets/Pasted-root-srv1329180-bluewave-cd-root-bluewave-root-srv13291_1770520359948.txt
+ create mode 100644 attached_assets/Pasted-root-srv1329180-bluewave-certbot-certonly-manual-prefer_1770547683171.txt
+ create mode 100644 attached_assets/Pasted-root-srv1329180-bluewave-ping-accessbluewave-site-PING-_1770521586554.txt
+ create mode 100644 attached_assets/Pasted-root-srv1329180-bluewave-pm2-delete-bluewave-js-pm2-log_1770520732416.txt
+ create mode 100644 attached_assets/Pasted-root-srv1329180-bluewave-pm2-logs-lines-30-TAILING-Tail_1770585107562.txt
+ create mode 100644 attached_assets/Pasted-root-srv1329180-bluewave-root-srv1329180-bluewave-nginx_1770522090404.txt
+ create mode 100644 attached_assets/Pasted-root-srv1329180-bluewave-sed-i-s-PORT-5000-PORT-5001-ro_1770520612093.txt
+ create mode 100644 attached_assets/Pasted-root-srv1329180-cd-bluewave-root-srv1329180-bluewave-op_1770568644172.txt
+ create mode 100644 attached_assets/image_1770548633053.png
+ create mode 100644 attached_assets/image_1770548761278.png
+ create mode 100644 attached_assets/image_1770553868692.png
+ create mode 100644 attached_assets/image_1770553885181.png
+ create mode 100644 attached_assets/image_1770553902890.png
+ create mode 100644 attached_assets/image_1770553973821.png
+ create mode 100644 attached_assets/image_1770554002586.png
+ create mode 100644 attached_assets/image_1770554034283.png
+ create mode 100644 attached_assets/image_1770566489109.png
+ create mode 100644 attached_assets/image_1770567123783.png
+ create mode 100644 attached_assets/image_1770567138520.png
+ create mode 100644 attached_assets/image_1770567173612.png
+ create mode 100644 attached_assets/image_1770568140320.png
+ create mode 100644 attached_assets/image_1770584524289.png
+ create mode 100644 attached_assets/image_1770617119602.png
+ create mode 100644 attached_assets/image_1770617752103.png
+ create mode 100644 scripts/setup-db.sql
+
+> rest-express@1.0.0 build
+> tsx script/build.ts
+
+building client...
+vite v7.3.0 building client environment for production...
+transforming (5) ../node_modules/wouter/esm/index.js
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+✓ 3047 modules transformed.
+../dist/public/index.html                                              1.31 kB │ gzip:   0.57 kB
+../dist/public/assets/GmbuHuHbRYpTPJt5_1768481770485-DL5FOx8Z.png  2,291.07 kB
+../dist/public/assets/index-DPusTJRP.css                             116.75 kB │ gzip:  18.09 kB
+../dist/public/assets/index-DWbZvxbN.js                            1,495.05 kB │ gzip: 426.14 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 14.79s
+building server...
+
+  dist/index.cjs  1.1mb ⚠️
+
+⚡ Done in 255ms
+root@srv1329180:~/bluewave# cat /root/bluewave/.env
+NODE_ENV=production
+PORT=5001
+DATABASE_URL=postgresql://bluewave:BlueWave2026Secure@localhost:5432/bluewave_db
+SESSION_SECRET=7516e0f205980e3bdf2f4002425fb8736238e6e2053586715fe895144ccaa730
+MARKETAUX_API_KEY=1b7OqjTA3dJSNT6TfHE9GBfhzvGe17PDXsOYr0T1
+MASSIVE_API_KEY=9CuMnBVcJh16e9O7YAZ__Ye9OIh_gqn1
+MASSIVE_S3_ACCESS_KEY_ID=45997742-7c0a-42b8-9c0f-d8921c89ffb4
+MASSIVE_S3_SECRET_ACCESS_KEY=9CuMnBVcJh16e9O7YAZ__Ye9OIh_gqn1
+MASSIVE_S3_ENDPOINT=https://files.massive.com
+MASSIVE_S3_BUCKET=flatfiles
+root@srv1329180:~/bluewave# grep NODE_ENV /root/bluewave/.env
+NODE_ENV=production
+root@srv1329180:~/bluewave#
