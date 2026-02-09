@@ -25,6 +25,8 @@ const PgSession = connectPgSimple(session);
 const SALT_ROUNDS = 10;
 
 export function setupCustomAuth(app: Express) {
+  app.set("trust proxy", 1);
+
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
   });
