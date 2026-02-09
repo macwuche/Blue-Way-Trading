@@ -31,10 +31,17 @@ export function setupCustomAuth(app: Express) {
     connectionString: process.env.DATABASE_URL,
   });
 
+  pool.on("error", (err) => {
+    console.error("Session pool error:", err.message);
+  });
+
   const sessionStore = new PgSession({
     pool,
     tableName: "sessions",
     createTableIfMissing: true,
+    errorLog: (err: Error) => {
+      console.error("Session store error:", err.message);
+    },
   });
 
   app.use(
@@ -127,8 +134,9 @@ export function registerCustomAuthRoutes(app: Express) {
           },
         });
       });
-    } catch (error) {
-      console.error("Registration error:", error);
+    } catch (error: any) {
+      console.error("Registration error:", error?.message || error);
+      console.error("Registration error stack:", error?.stack);
       res.status(500).json({ message: "Failed to register user" });
     }
   });
@@ -197,8 +205,9 @@ export function registerCustomAuthRoutes(app: Express) {
           },
         });
       });
-    } catch (error) {
-      console.error("Login error:", error);
+    } catch (error: any) {
+      console.error("Login error:", error?.message || error);
+      console.error("Login error stack:", error?.stack);
       res.status(500).json({ message: "Failed to login" });
     }
   });
