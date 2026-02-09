@@ -1,0 +1,102 @@
+root@srv1329180:~/bluewave# sed -i 's/PORT=5000/PORT=5001/' /root/bluewave/.env
+root@srv1329180:~/bluewave# pm2 restart bluewave
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [bluewave](ids: [ 1 ])
+[PM2] [bluewave](1) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 1  │ bluewave           │ cluster  │ 15   │ online    │ 0%       │ 40.3mb   │
+│ 0  │ crypto-trading     │ fork     │ 2    │ online    │ 0%       │ 113.7mb  │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+root@srv1329180:~/bluewave# pm2 logs bluewave --lines 20
+[TAILING] Tailing last 20 lines for [bluewave] process (change the value with --lines option)
+/root/.pm2/logs/bluewave-out-1.log last 20 lines:
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+1|bluewave | [Massive API] Started market data refresh every 5s
+
+/root/.pm2/logs/bluewave-error-1.log last 20 lines:
+1|bluewave |     at process.onInternalMessage (node:internal/cluster/utils:49:5)
+1|bluewave |     at process.emit (node:events:536:35)
+1|bluewave |     at emit (node:internal/child_process:950:14)
+1|bluewave |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+1|bluewave | Error: bind EADDRINUSE 0.0.0.0:5000
+1|bluewave |     at listenOnPrimaryHandle (node:net:1989:18)
+1|bluewave |     at rr (node:internal/cluster/child:163:12)
+1|bluewave |     at Worker.<anonymous> (node:internal/cluster/child:113:7)
+1|bluewave |     at process.onInternalMessage (node:internal/cluster/utils:49:5)
+1|bluewave |     at process.emit (node:events:536:35)
+1|bluewave |     at emit (node:internal/child_process:950:14)
+1|bluewave |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+1|bluewave | Error: bind EADDRINUSE 0.0.0.0:5000
+1|bluewave |     at listenOnPrimaryHandle (node:net:1989:18)
+1|bluewave |     at rr (node:internal/cluster/child:163:12)
+1|bluewave |     at Worker.<anonymous> (node:internal/cluster/child:113:7)
+1|bluewave |     at process.onInternalMessage (node:internal/cluster/utils:49:5)
+1|bluewave |     at process.emit (node:events:536:35)
+1|bluewave |     at emit (node:internal/child_process:950:14)
+1|bluewave |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+
+1|bluewave  | [Massive API] Started market data refresh every 5s
+1|bluewave  | Error: bind EADDRINUSE 0.0.0.0:5000
+1|bluewave  |     at listenOnPrimaryHandle (node:net:1989:18)
+1|bluewave  |     at rr (node:internal/cluster/child:163:12)
+1|bluewave  |     at Worker.<anonymous> (node:internal/cluster/child:113:7)
+1|bluewave  |     at process.onInternalMessage (node:internal/cluster/utils:49:5)
+1|bluewave  |     at process.emit (node:events:536:35)
+1|bluewave  |     at emit (node:internal/child_process:950:14)
+1|bluewave  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+1|bluewave  | [Massive API] Started market data refresh every 5s
+1|bluewave  | Error: bind EADDRINUSE 0.0.0.0:5000
+1|bluewave  |     at listenOnPrimaryHandle (node:net:1989:18)
+1|bluewave  |     at rr (node:internal/cluster/child:163:12)
+1|bluewave  |     at Worker.<anonymous> (node:internal/cluster/child:113:7)
+1|bluewave  |     at process.onInternalMessage (node:internal/cluster/utils:49:5)
+1|bluewave  |     at process.emit (node:events:536:35)
+1|bluewave  |     at emit (node:internal/child_process:950:14)
+1|bluewave  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+1|bluewave  | [Massive API] Started market data refresh every 5s
+1|bluewave  | Error: bind EADDRINUSE 0.0.0.0:5000
+1|bluewave  |     at listenOnPrimaryHandle (node:net:1989:18)
+1|bluewave  |     at rr (node:internal/cluster/child:163:12)
+1|bluewave  |     at Worker.<anonymous> (node:internal/cluster/child:113:7)
+1|bluewave  |     at process.onInternalMessage (node:internal/cluster/utils:49:5)
+1|bluewave  |     at process.emit (node:events:536:35)
+1|bluewave  |     at emit (node:internal/child_process:950:14)
+1|bluewave  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+1|bluewave  | [Massive API] Started market data refresh every 5s
+1|bluewave  | Error: bind EADDRINUSE 0.0.0.0:5000
+1|bluewave  |     at listenOnPrimaryHandle (node:net:1989:18)
+1|bluewave  |     at rr (node:internal/cluster/child:163:12)
+1|bluewave  |     at Worker.<anonymous> (node:internal/cluster/child:113:7)
+1|bluewave  |     at process.onInternalMessage (node:internal/cluster/utils:49:5)
+1|bluewave  |     at process.emit (node:events:536:35)
+1|bluewave  |     at emit (node:internal/child_process:950:14)
+1|bluewave  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+1|bluewave  | [Massive API] Started market data refresh every 5s
+1|bluewave  | Error: bind EADDRINUSE 0.0.0.0:5000
+1|bluewave  |     at listenOnPrimaryHandle (node:net:1989:18)
+1|bluewave  |     at rr (node:internal/cluster/child:163:12)
+1|bluewave  |     at Worker.<anonymous> (node:internal/cluster/child:113:7)
+1|bluewave  |     at process.onInternalMessage (node:internal/cluster/utils:49:5)
+1|bluewave  |     at process.emit (node:events:536:35)
+1|bluewave  |     at emit (node:internal/child_process:950:14)
+1|bluewave  |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21)

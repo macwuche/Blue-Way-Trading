@@ -1,0 +1,35 @@
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+root@srv1329180:~/bluewave# # First, verify the .env file has the correct URL
+root@srv1329180:~/bluewave# cat /root/bluewave/.env | grep DATABASE_URL
+DATABASE_URL=postgresql://bluewave:BlueWave2026Secure@localhost:5432/bluewave_db
+root@srv1329180:~/bluewave#
+root@srv1329180:~/bluewave# # Then stop and delete the old PM2 process
+root@srv1329180:~/bluewave# pm2 delete bluewave
+art fresh
+export $(cat /root/bluewave/.env | xargs) && pm2 start /root/bluewave/dist/index.cjs --name bluewave -i 1
+
+# Save the PM2 config
+pm2 save[PM2] Applying action deleteProcessId on app [bluewave](ids: [ 2 ])
+[PM2] [bluewave](2) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ crypto-trading     │ fork     │ 2    │ online    │ 0%       │ 113.1mb  │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+root@srv1329180:~/bluewave#
+root@srv1329180:~/bluewave# # Export all env vars from the .env file, then start fresh
+root@srv1329180:~/bluewave# export $(cat /root/bluewave/.env | xargs) && pm2 start /root/bluewave/dist/index.cjs --name bluewave -i 1
+[PM2] Starting /root/bluewave/dist/index.cjs in cluster_mode (1 instance)
+[PM2] Done.
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 3  │ bluewave           │ cluster  │ 0    │ online    │ 0%       │ 40.3mb   │
+│ 0  │ crypto-trading     │ fork     │ 2    │ online    │ 0%       │ 113.1mb  │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+root@srv1329180:~/bluewave#
+root@srv1329180:~/bluewave# # Save the PM2 config
+root@srv1329180:~/bluewave# pm2 save
+[PM2] Saving current process list...
+[PM2] Successfully saved in /root/.pm2/dump.pm2
+root@srv1329180:~/bluewave#

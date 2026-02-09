@@ -1,0 +1,82 @@
+root@srv1329180:~/bluewave# certbot certonly --manual --preferred-challenges dns -d accessbluewave.site -d www.accessbluewave.site
+Saving debug log to /var/log/letsencrypt/letsencrypt.log
+Requesting a certificate for accessbluewave.site and www.accessbluewave.site
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Please deploy a DNS TXT record under the name:
+
+_acme-challenge.accessbluewave.site.
+
+with the following value:
+
+lmtU_pNGmHGJATOkS_qOdmcOTej4cXTdg9WIgGBV3fU
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Press Enter to Continue
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Please deploy a DNS TXT record under the name:
+
+_acme-challenge.www.accessbluewave.site.
+
+with the following value:
+
+l2as0Zn-Y5Pa_5PUHTcRy2VUuIEv5ooxkkHg78BGNVg
+
+(This must be set up in addition to the previous challenges; do not remove,
+replace, or undo the previous challenge tasks yet. Note that you might be
+asked to create multiple distinct TXT records with the same name. This is
+permitted by DNS standards.)
+
+Before continuing, verify the TXT record has been deployed. Depending on the DNS
+provider, this may take some time, from a few seconds to multiple minutes. You can
+check if it has finished deploying with aid of online tools, such as the Google
+Admin Toolbox: https://toolbox.googleapps.com/apps/dig/#TXT/_acme-challenge.www.accessbluewave.site.
+Look for one or more bolded line(s) below the line ';ANSWER'. It should show the
+value(s) you've just added.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Press Enter to Continue
+
+Certbot failed to authenticate some domains (authenticator: manual). The Certificate Authority reported these problems:
+  Domain: www.accessbluewave.site
+  Type:   dns
+  Detail: DNS problem: NXDOMAIN looking up TXT for _acme-challenge.www.accessbluewave.site - check that a DNS record exists for this domain
+
+Hint: The Certificate Authority failed to verify the manually created DNS TXT records. Ensure that you created these in the correct location, or try waiting longer for DNS propagation on the next attempt.
+
+Some challenges have failed.
+Ask for help or search for solutions at https://community.letsencrypt.org. See the logfile /var/log/letsencrypt/letsencrypt.log or re-run Certbot with -v for more details.
+root@srv1329180:~/bluewave# certbot certonly --manual --preferred-challenges dns -d accessbluewave.site -d www.accessbluewave.site
+Saving debug log to /var/log/letsencrypt/letsencrypt.log
+Requesting a certificate for accessbluewave.site and www.accessbluewave.site
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Please deploy a DNS TXT record under the name:
+
+_acme-challenge.www.accessbluewave.site.
+
+with the following value:
+
+mZXZSfTXghLjjoTVq4zHwdFBZ3m-aj14jRiuNOwZbS8
+
+Before continuing, verify the TXT record has been deployed. Depending on the DNS
+provider, this may take some time, from a few seconds to multiple minutes. You can
+check if it has finished deploying with aid of online tools, such as the Google
+Admin Toolbox: https://toolbox.googleapps.com/apps/dig/#TXT/_acme-challenge.www.accessbluewave.site.
+Look for one or more bolded line(s) below the line ';ANSWER'. It should show the
+value(s) you've just added.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Press Enter to Continue
+
+Certbot failed to authenticate some domains (authenticator: manual). The Certificate Authority reported these problems:
+  Domain: www.accessbluewave.site
+  Type:   dns
+  Detail: DNS problem: NXDOMAIN looking up TXT for _acme-challenge.www.accessbluewave.site - check that a DNS record exists for this domain
+
+Hint: The Certificate Authority failed to verify the manually created DNS TXT records. Ensure that you created these in the correct location, or try waiting longer for DNS propagation on the next attempt.
+
+Some challenges have failed.
+Ask for help or search for solutions at https://community.letsencrypt.org. See the logfile /var/log/letsencrypt/letsencrypt.log or re-run Certbot with -v for more details.
+root@srv1329180:~/bluewave#

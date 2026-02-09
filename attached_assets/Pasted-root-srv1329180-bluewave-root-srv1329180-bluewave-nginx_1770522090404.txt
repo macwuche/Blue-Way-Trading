@@ -1,0 +1,45 @@
+root@srv1329180:~/bluewave#
+root@srv1329180:~/bluewave# nginx -t
+ -d accessbluewave.site -d www.accessbluewave.sitenginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+root@srv1329180:~/bluewave# systemctl restart nginx
+root@srv1329180:~/bluewave# certbot --nginx -d accessbluewave.site -d www.accessbluewave.site
+Saving debug log to /var/log/letsencrypt/letsencrypt.log
+Requesting a certificate for accessbluewave.site and www.accessbluewave.site
+
+Certbot failed to authenticate some domains (authenticator: nginx). The Certificate Authority reported these problems:
+  Domain: accessbluewave.site
+  Type:   unauthorized
+  Detail: 76.13.139.24: Invalid response from https://accessbluewave.site/.well-known/acme-challenge/b2Cs5bEaJdI12Rwib5K4VuYCDnA4TtmIlRnF36NYU9Y: 404
+
+  Domain: www.accessbluewave.site
+  Type:   unauthorized
+  Detail: 76.13.139.24: Invalid response from https://www.accessbluewave.site/.well-known/acme-challenge/XJsDRb27burMQs_SFrr1o5rQSOseHhawQJEi3Vd4CXw: 404
+
+Hint: The Certificate Authority failed to verify the temporary nginx configuration changes made by Certbot. Ensure the listed domains point to this nginx server and that it is accessible from the internet.
+
+Some challenges have failed.
+Ask for help or search for solutions at https://community.letsencrypt.org. See the logfile /var/log/letsencrypt/letsencrypt.log or re-run Certbot with -v for more details.
+root@srv1329180:~/bluewave#
+root@srv1329180:~/bluewave#
+root@srv1329180:~/bluewave# systemctl stop nginx
+cessbluewave.site -d www.accessbluewave.site
+systemctl start nginxroot@srv1329180:~/bluewave# certbot certonly --standalone -d accessbluewave.site -d www.accessbluewave.site
+Saving debug log to /var/log/letsencrypt/letsencrypt.log
+Requesting a certificate for accessbluewave.site and www.accessbluewave.site
+
+Certbot failed to authenticate some domains (authenticator: standalone). The Certificate Authority reported these problems:
+  Domain: accessbluewave.site
+  Type:   unauthorized
+  Detail: 76.13.139.24: Invalid response from https://accessbluewave.site/.well-known/acme-challenge/k71Lthqzx6-i0DC8Fl09vha-lU1enfuJ90YM_g2c5Co: 404
+
+  Domain: www.accessbluewave.site
+  Type:   unauthorized
+  Detail: 76.13.139.24: Invalid response from https://www.accessbluewave.site/.well-known/acme-challenge/v93zBiZGGvRe20S7Me9hB_zncIeUlvfizg5w63Jt6SM: 404
+
+Hint: The Certificate Authority failed to download the challenge files from the temporary standalone webserver started by Certbot on port 80. Ensure that the listed domains point to this machine and that it can accept inbound connections from the internet.
+
+Some challenges have failed.
+Ask for help or search for solutions at https://community.letsencrypt.org. See the logfile /var/log/letsencrypt/letsencrypt.log or re-run Certbot with -v for more details.
+root@srv1329180:~/bluewave# systemctl start nginx
+root@srv1329180:~/bluewave#

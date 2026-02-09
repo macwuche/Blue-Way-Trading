@@ -1,0 +1,160 @@
+root@srv1329180:~/bluewave# pm2 logs --lines 30
+[TAILING] Tailing last 30 lines for [all] processes (change the value with --lines option)
+/root/.pm2/pm2.log last 30 lines:
+PM2        | 2026-02-08T03:16:18: PM2 log: App [bluewave:1] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-08T03:16:18: PM2 log: App [bluewave:1] starting in -cluster mode-
+PM2        | 2026-02-08T03:16:18: PM2 log: App [bluewave:1] online
+PM2        | 2026-02-08T03:16:18: PM2 log: App name:bluewave id:1 disconnected
+PM2        | 2026-02-08T03:16:18: PM2 log: App [bluewave:1] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-08T03:16:18: PM2 log: App [bluewave:1] starting in -cluster mode-
+PM2        | 2026-02-08T03:16:18: PM2 log: App [bluewave:1] online
+PM2        | 2026-02-08T03:16:19: PM2 log: App name:bluewave id:1 disconnected
+PM2        | 2026-02-08T03:16:19: PM2 log: App [bluewave:1] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-08T03:16:19: PM2 log: App [bluewave:1] starting in -cluster mode-
+PM2        | 2026-02-08T03:16:19: PM2 log: App [bluewave:1] online
+PM2        | 2026-02-08T03:16:19: PM2 log: App name:bluewave id:1 disconnected
+PM2        | 2026-02-08T03:16:19: PM2 log: App [bluewave:1] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-08T03:16:19: PM2 log: App [bluewave:1] starting in -cluster mode-
+PM2        | 2026-02-08T03:16:19: PM2 log: App [bluewave:1] online
+PM2        | 2026-02-08T03:16:19: PM2 log: App name:bluewave id:1 disconnected
+PM2        | 2026-02-08T03:16:19: PM2 log: App [bluewave:1] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-08T03:16:19: PM2 log: App [bluewave:1] starting in -cluster mode-
+PM2        | 2026-02-08T03:16:19: PM2 log: App [bluewave:1] online
+PM2        | 2026-02-08T03:16:20: PM2 log: App name:bluewave id:1 disconnected
+PM2        | 2026-02-08T03:16:20: PM2 log: App [bluewave:1] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-08T03:16:20: PM2 log: App [bluewave:1] starting in -cluster mode-
+PM2        | 2026-02-08T03:16:20: PM2 log: App [bluewave:1] online
+PM2        | 2026-02-08T03:16:20: PM2 log: App name:bluewave id:1 disconnected
+PM2        | 2026-02-08T03:16:20: PM2 log: App [bluewave:1] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-08T03:16:20: PM2 log: Script /root/bluewave/dist/index.cjs had too many unstable restarts (16). Stopped. "errored"
+PM2        | 2026-02-08T03:18:00: PM2 log: Stopping app:bluewave id:1
+PM2        | 2026-02-08T03:18:00: PM2 error: app=bluewave id=1 does not have a pid
+PM2        | 2026-02-08T03:18:00: PM2 log: App [bluewave:2] starting in -cluster mode-
+PM2        | 2026-02-08T03:18:00: PM2 log: App [bluewave:2] online
+
+/root/.pm2/logs/crypto-trading-error.log last 30 lines:
+0|crypto-t | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|crypto-t |     at file:///var/www/crypto-trading/dist/index.js:571:9
+0|crypto-t |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|crypto-t |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|crypto-t | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|crypto-t |     at file:///var/www/crypto-trading/dist/index.js:571:9
+0|crypto-t |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|crypto-t |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|crypto-t | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|crypto-t |     at file:///var/www/crypto-trading/dist/index.js:571:9
+0|crypto-t |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|crypto-t |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|crypto-t | [Bot Engine] Fatal error: Error: Connection terminated due to connection timeout
+0|crypto-t |     at /var/www/crypto-trading/node_modules/pg-pool/index.js:45:11
+0|crypto-t |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|crypto-t |     at async file:///var/www/crypto-trading/node_modules/drizzle-orm/node-postgres/session.js:83:22
+0|crypto-t |     at async DatabaseStorage.listAiBots (file:///var/www/crypto-trading/dist/index.js:923:12)
+0|crypto-t |     at async processHourlyTrades (file:///var/www/crypto-trading/dist/index.js:1349:21)
+0|crypto-t |     at async Timeout._onTimeout (file:///var/www/crypto-trading/dist/index.js:1608:7)
+0|crypto-t | [Bot Engine] Fatal error: Error: Connection terminated due to connection timeout
+0|crypto-t |     at /var/www/crypto-trading/node_modules/pg-pool/index.js:45:11
+0|crypto-t |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|crypto-t |     at async file:///var/www/crypto-trading/node_modules/drizzle-orm/node-postgres/session.js:83:22
+0|crypto-t |     at async DatabaseStorage.listAiBots (file:///var/www/crypto-trading/dist/index.js:923:12)
+0|crypto-t |     at async processHourlyTrades (file:///var/www/crypto-trading/dist/index.js:1349:21)
+0|crypto-t |     at async Timeout._onTimeout (file:///var/www/crypto-trading/dist/index.js:1608:7)
+
+/root/.pm2/logs/crypto-trading-out.log last 30 lines:
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | 8:14:12 PM [express] POST /api 200 in 2ms
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | 8:54:05 PM [express] POST /api 200 in 4ms
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+
+/root/.pm2/logs/bluewave-error-2.log last 30 lines:
+2|bluewave |   internalPosition: undefined,
+2|bluewave |   internalQuery: undefined,
+2|bluewave |   where: undefined,
+2|bluewave |   schema: undefined,
+2|bluewave |   table: undefined,
+2|bluewave |   column: undefined,
+2|bluewave |   dataType: undefined,
+2|bluewave |   constraint: undefined,
+2|bluewave |   file: 'auth.c',
+2|bluewave |   line: '317',
+2|bluewave |   routine: 'auth_failed'
+2|bluewave | }
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+
+/root/.pm2/logs/bluewave-out-2.log last 30 lines:
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | 9:08:29 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"Not authenticated"}
+2|bluewave | 9:08:31 PM [express] GET /api/admin/auth 401 in 1ms :: {"isAdmin":false,"message":"Not authenticated"}
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | 9:08:43 PM [express] GET /api/auth/user 401 in 0ms :: {"message":"Not authenticated"}
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | 9:08:47 PM [express] POST /api/auth/logout 500 in 14ms :: {"message":"Failed to logout"}
+2|bluewave | 9:08:48 PM [express] POST /api/auth/login 500 in 11ms :: {"message":"Failed to login"}
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+2|bluewave | [Massive API] Refreshed market data: 24 assets
+
+2|bluewave  | [Massive API] Error for X:BNBUSD: NOT_FOUND
+2|bluewave  | [Massive API] Refreshed market data: 24 assets

@@ -1,0 +1,45 @@
+root@srv1329180:~/bluewave# ping accessbluewave.site
+PING accessbluewave.site (76.13.139.24) 56(84) bytes of data.
+64 bytes from srv1328033.hstgr.cloud (76.13.139.24): icmp_seq=1 ttl=64 time=6.56 ms
+64 bytes from srv1328033.hstgr.cloud (76.13.139.24): icmp_seq=2 ttl=64 time=0.359 ms
+64 bytes from srv1328033.hstgr.cloud (76.13.139.24): icmp_seq=3 ttl=64 time=0.352 ms
+64 bytes from srv1328033.hstgr.cloud (76.13.139.24): icmp_seq=4 ttl=64 time=0.350 ms
+64 bytes from srv1328033.hstgr.cloud (76.13.139.24): icmp_seq=5 ttl=64 time=0.399 ms
+64 bytes from srv1328033.hstgr.cloud (76.13.139.24): icmp_seq=6 ttl=64 time=0.380 ms
+64 bytes from srv1328033.hstgr.cloud (76.13.139.24): icmp_seq=7 ttl=64 time=0.414 ms
+64 bytes from srv1328033.hstgr.cloud (76.13.139.24): icmp_seq=8 ttl=64 time=0.429 ms
+64 bytes from srv1328033.hstgr.cloud (76.13.139.24): icmp_seq=9 ttl=64 time=0.374 ms
+64 bytes from srv1328033.hstgr.cloud (76.13.139.24): icmp_seq=10 ttl=64 time=0.385 ms
+^C
+--- accessbluewave.site ping statistics ---
+10 packets transmitted, 10 received, 0% packet loss, time 9193ms
+rtt min/avg/max/mdev = 0.350/1.000/6.563/1.854 ms
+root@srv1329180:~/bluewave# apt install -y certbot python3-certbot-nginx
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+certbot is already the newest version (2.9.0-1).
+python3-certbot-nginx is already the newest version (2.9.0-1).
+The following packages were automatically installed and are no longer required:
+  linux-headers-6.8.0-94 linux-headers-6.8.0-94-generic linux-image-6.8.0-94-generic linux-modules-6.8.0-94-generic
+  linux-tools-6.8.0-94 linux-tools-6.8.0-94-generic
+Use 'apt autoremove' to remove them.
+0 upgraded, 0 newly installed, 0 to remove and 2 not upgraded.
+root@srv1329180:~/bluewave# certbot --nginx -d accessbluewave.site -d www.accessbluewave.site
+Saving debug log to /var/log/letsencrypt/letsencrypt.log
+Requesting a certificate for accessbluewave.site and www.accessbluewave.site
+
+Certbot failed to authenticate some domains (authenticator: nginx). The Certificate Authority reported these problems:
+  Domain: accessbluewave.site
+  Type:   unauthorized
+  Detail: 76.13.139.24: Invalid response from https://accessbluewave.site/.well-known/acme-challenge/0kqut6cCHS7x912usDTE1ZjUiaevNnd0nZV8XC5laLQ: 404
+
+  Domain: www.accessbluewave.site
+  Type:   unauthorized
+  Detail: 76.13.139.24: Invalid response from https://www.accessbluewave.site/.well-known/acme-challenge/Udz9wTU_LbQgspA6XlBwaCMtWrIgYQ76SMZ0bjMIpjQ: 404
+
+Hint: The Certificate Authority failed to verify the temporary nginx configuration changes made by Certbot. Ensure the listed domains point to this nginx server and that it is accessible from the internet.
+
+Some challenges have failed.
+Ask for help or search for solutions at https://community.letsencrypt.org. See the logfile /var/log/letsencrypt/letsencrypt.log or re-run Certbot with -v for more details.
+root@srv1329180:~/bluewave#
