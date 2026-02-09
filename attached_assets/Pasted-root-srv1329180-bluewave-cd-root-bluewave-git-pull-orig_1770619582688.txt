@@ -1,0 +1,126 @@
+root@srv1329180:~/bluewave# cd /root/bluewave && git pull origin main && npm run build && pm2 delete bluewave && export $(cat /root/bluewave/.env | xargs) && pm2 start /root/bluewave/dist/index.cjs --name bluewave -i 1 && pm2 save
+remote: Enumerating objects: 23, done.
+remote: Counting objects: 100% (23/23), done.
+remote: Compressing objects: 100% (9/9), done.
+remote: Total 19 (delta 15), reused 14 (delta 10), pack-reused 0 (from 0)
+Unpacking objects: 100% (19/19), 318.48 KiB | 16.76 MiB/s, done.
+From https://github.com/macwuche/Blue-Way-Trading
+ * branch            main       -> FETCH_HEAD
+   f14c00e..9c6454a  main       -> origin/main
+Updating f14c00e..9c6454a
+Fast-forward
+ ...oot-srv1329180-bluewave-cat-root-bluewave-scripts-setu_1770618503701.txt |  51 +++++++++++++++
+ ...oot-srv1329180-bluewave-pm2-logs-bluewave-lines-5-nost_1770618966618.txt | 120 ++++++++++++++++++++++++++++++++++++
+ attached_assets/image_1770618736102.png                                     | Bin 0 -> 343225 bytes
+ server/auth.ts                                                              |  19 ++++--
+ 4 files changed, 186 insertions(+), 4 deletions(-)
+ create mode 100644 attached_assets/Pasted-root-srv1329180-bluewave-cat-root-bluewave-scripts-setu_1770618503701.txt
+ create mode 100644 attached_assets/Pasted-root-srv1329180-bluewave-pm2-logs-bluewave-lines-5-nost_1770618966618.txt
+ create mode 100644 attached_assets/image_1770618736102.png
+
+> rest-express@1.0.0 build
+> tsx script/build.ts
+
+building client...
+vite v7.3.0 building client environment for production...
+transforming (4) src/App.tsx
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+✓ 3047 modules transformed.
+../dist/public/index.html                                              1.31 kB │ gzip:   0.57 kB
+../dist/public/assets/GmbuHuHbRYpTPJt5_1768481770485-DL5FOx8Z.png  2,291.07 kB
+../dist/public/assets/index-DPusTJRP.css                             116.75 kB │ gzip:  18.09 kB
+../dist/public/assets/index-DWbZvxbN.js                            1,495.05 kB │ gzip: 426.14 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 10.55s
+building server...
+
+  dist/index.cjs  1.1mb ⚠️
+
+⚡ Done in 236ms
+[PM2] Applying action deleteProcessId on app [bluewave](ids: [ 4 ])
+[PM2] [bluewave](4) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ crypto-trading     │ fork     │ 2    │ online    │ 0%       │ 113.5mb  │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[PM2] Starting /root/bluewave/dist/index.cjs in cluster_mode (1 instance)
+[PM2] Done.
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 5  │ bluewave           │ cluster  │ 0    │ online    │ 0%       │ 40.0mb   │
+│ 0  │ crypto-trading     │ fork     │ 2    │ online    │ 0%       │ 113.5mb  │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[PM2] Saving current process list...
+[PM2] Successfully saved in /root/.pm2/dump.pm2
+root@srv1329180:~/bluewave# pm2 logs bluewave --lines 20 --nostream
+[TAILING] Tailing last 20 lines for [bluewave] process (change the value with --lines option)
+/root/.pm2/logs/bluewave-error-5.log last 20 lines:
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+
+/root/.pm2/logs/bluewave-out-5.log last 20 lines:
+5|bluewave | [Massive API] Started market data refresh every 5s
+5|bluewave | 6:41:34 AM [express] serving on port 5001
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+
+root@srv1329180:~/bluewave#
+root@srv1329180:~/bluewave# pm2 logs bluewave --lines 20 --nostream
+[TAILING] Tailing last 20 lines for [bluewave] process (change the value with --lines option)
+/root/.pm2/logs/bluewave-out-5.log last 20 lines:
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+
+/root/.pm2/logs/bluewave-error-5.log last 20 lines:
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+
+root@srv1329180:~/bluewave#
