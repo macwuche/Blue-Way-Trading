@@ -32,7 +32,7 @@ export function setupCustomAuth(app: Express) {
   const sessionStore = new PgSession({
     pool,
     tableName: "sessions",
-    createTableIfMissing: false,
+    createTableIfMissing: true,
   });
 
   app.use(
