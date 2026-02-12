@@ -57,6 +57,9 @@ interface ActiveTrade {
   entryPrice: number;
   expiryTime: number;
   startTime: number;
+  stopLoss: number | null;
+  takeProfit: number | null;
+  volume: number;
 }
 
 interface TradeResult {
@@ -118,6 +121,10 @@ export default function TradeRoom() {
   const [countdown, setCountdown] = useState(0);
   const [tradeResult, setTradeResult] = useState<TradeResult | null>(null);
   const [showResultDialog, setShowResultDialog] = useState(false);
+  const [volume, setVolume] = useState<number>(0);
+  const [stopLoss, setStopLoss] = useState<string>("");
+  const [takeProfit, setTakeProfit] = useState<string>("");
+  const [executionType, setExecutionType] = useState("market");
   const [indicators, setIndicators] = useState<IndicatorSettings>({
     alligator: false,
     movingAverage: false,
@@ -145,6 +152,12 @@ export default function TradeRoom() {
       }
     }
   }, [allAssets, selectedAsset]);
+
+  useEffect(() => {
+    if (selectedAsset && selectedAsset.volume24h !== undefined) {
+      setVolume(selectedAsset.volume24h || 0);
+    }
+  }, [selectedAsset?.symbol]);
 
   const { data: dashboardData } = useQuery<DashboardData>({
     queryKey: ["/api/dashboard"],
@@ -244,6 +257,18 @@ export default function TradeRoom() {
       return;
     }
 
+    const parsedSL = stopLoss ? parseFloat(stopLoss) : null;
+    const parsedTP = takeProfit ? parseFloat(takeProfit) : null;
+
+    if (parsedSL !== null && parsedSL <= 0) {
+      toast({ title: "Invalid Stop Loss", description: "Stop loss must be a positive number.", variant: "destructive" });
+      return;
+    }
+    if (parsedTP !== null && parsedTP <= 0) {
+      toast({ title: "Invalid Take Profit", description: "Take profit must be a positive number.", variant: "destructive" });
+      return;
+    }
+
     const expiryMs = getExpiryMs();
     const now = Date.now();
     
@@ -255,6 +280,9 @@ export default function TradeRoom() {
       entryPrice: selectedAsset.price,
       expiryTime: now + expiryMs,
       startTime: now,
+      stopLoss: parsedSL,
+      takeProfit: parsedTP,
+      volume: volume,
     };
     
     setActiveTrade(newTrade);
@@ -271,7 +299,7 @@ export default function TradeRoom() {
   };
 
   const handleDoubleUp = () => {
-    if (!activeTrade) return;
+    if (!activeTrade || !selectedAsset) return;
     
     if (amount > balance) {
       toast({
@@ -334,28 +362,70 @@ export default function TradeRoom() {
   useEffect(() => {
     if (!activeTrade || !selectedAsset) return;
 
+    const closeTrade = (exitPrice: number, reason: "expiry" | "sl" | "tp") => {
+      const priceChange = exitPrice - activeTrade.entryPrice;
+      let isWin: boolean;
+      let profit: number;
+
+      if (reason === "sl") {
+        isWin = false;
+        profit = -activeTrade.amount;
+      } else if (reason === "tp") {
+        isWin = true;
+        profit = activeTrade.amount * 0.87;
+      } else {
+        isWin = activeTrade.direction === "higher" ? priceChange > 0 : priceChange < 0;
+        profit = isWin ? activeTrade.amount * 0.87 : -activeTrade.amount;
+      }
+
+      setTradeResult({
+        isWin,
+        profit,
+        entryPrice: activeTrade.entryPrice,
+        exitPrice,
+        direction: activeTrade.direction,
+      });
+
+      setActiveTrade(null);
+      setShowResultDialog(true);
+    };
+
     const interval = setInterval(() => {
       const remaining = Math.max(0, Math.floor((activeTrade.expiryTime - Date.now()) / 1000));
       setCountdown(remaining);
 
+      const currentPrice = selectedAsset.price;
+
+      if (activeTrade.stopLoss !== null) {
+        if (activeTrade.direction === "higher" && currentPrice <= activeTrade.stopLoss) {
+          clearInterval(interval);
+          closeTrade(currentPrice, "sl");
+          return;
+        }
+        if (activeTrade.direction === "lower" && currentPrice >= activeTrade.stopLoss) {
+          clearInterval(interval);
+          closeTrade(currentPrice, "sl");
+          return;
+        }
+      }
+
+      if (activeTrade.takeProfit !== null) {
+        if (activeTrade.direction === "higher" && currentPrice >= activeTrade.takeProfit) {
+          clearInterval(interval);
+          closeTrade(currentPrice, "tp");
+          return;
+        }
+        if (activeTrade.direction === "lower" && currentPrice <= activeTrade.takeProfit) {
+          clearInterval(interval);
+          closeTrade(currentPrice, "tp");
+          return;
+        }
+      }
+
       if (remaining <= 0) {
         clearInterval(interval);
-        
-        const exitPrice = selectedAsset.price + (Math.random() - 0.5) * selectedAsset.price * 0.001;
-        const priceChange = exitPrice - activeTrade.entryPrice;
-        const isWin = activeTrade.direction === "higher" ? priceChange > 0 : priceChange < 0;
-        const profit = isWin ? activeTrade.amount * 0.87 : -activeTrade.amount;
-        
-        setTradeResult({
-          isWin,
-          profit,
-          entryPrice: activeTrade.entryPrice,
-          exitPrice,
-          direction: activeTrade.direction,
-        });
-        
-        setActiveTrade(null);
-        setShowResultDialog(true);
+        const exitPrice = currentPrice + (Math.random() - 0.5) * currentPrice * 0.001;
+        closeTrade(exitPrice, "expiry");
       }
     }, 100);
 
@@ -874,16 +944,29 @@ export default function TradeRoom() {
             </div>
           </div>
 
-          {/* Desktop Trading Panel */}
-          <div className="hidden md:flex w-72 border-l border-white/10 flex-col p-4 glass-dark">
-            <div className="mb-6">
-              <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-                <span>Expiration</span>
-              </div>
+          {/* Desktop Trading Panel - MetaTrader Style */}
+          <div className="hidden md:flex w-80 border-l border-white/10 flex-col glass-dark overflow-y-auto">
+            {/* Market Execution Header */}
+            <div className="p-3 border-b border-white/10">
+              <Select value={executionType} onValueChange={setExecutionType} disabled={!!activeTrade}>
+                <SelectTrigger className="glass-light border-0 h-10" data-testid="select-execution-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="glass-dark border-white/10">
+                  <SelectItem value="market">Market Execution</SelectItem>
+                  <SelectItem value="limit">Limit Order</SelectItem>
+                  <SelectItem value="stop">Stop Order</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Expiration */}
+            <div className="px-3 pt-3">
+              <div className="text-xs text-muted-foreground mb-1">Expiration</div>
               <Select value={expiration} onValueChange={setExpiration} disabled={!!activeTrade}>
-                <SelectTrigger className="glass-light border-0" data-testid="select-expiration">
+                <SelectTrigger className="glass-light border-0 h-9" data-testid="select-expiration">
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <Clock className="w-3.5 h-3.5 text-muted-foreground" />
                     <SelectValue />
                   </div>
                 </SelectTrigger>
@@ -897,12 +980,136 @@ export default function TradeRoom() {
               </Select>
             </div>
 
-            <div className="mb-6">
-              <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-                <span>Amount</span>
-                <span>${amount.toFixed(0)}</span>
+            {/* Volume */}
+            <div className="px-3 pt-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-muted-foreground">Volume</span>
+                <span className="text-xs text-muted-foreground">{selectedAsset?.type === "forex" ? "Lots" : selectedAsset?.type === "crypto" ? "Units" : "Shares"}</span>
               </div>
-              <div className="space-y-3">
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setVolume(Math.max(0, volume - (selectedAsset?.type === "forex" ? 0.01 : 1)))}
+                  disabled={!!activeTrade}
+                  data-testid="button-volume-minus"
+                  className="glass-light rounded px-2 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                </button>
+                <input
+                  type="number"
+                  value={volume}
+                  onChange={(e) => setVolume(Math.max(0, parseFloat(e.target.value) || 0))}
+                  disabled={!!activeTrade}
+                  data-testid="input-volume"
+                  className="glass-light rounded px-2 py-1.5 text-sm text-center flex-1 bg-transparent outline-none disabled:opacity-50"
+                />
+                <button
+                  onClick={() => setVolume(volume + (selectedAsset?.type === "forex" ? 0.01 : 1))}
+                  disabled={!!activeTrade}
+                  data-testid="button-volume-plus"
+                  className="glass-light rounded px-2 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Stop Loss & Take Profit */}
+            <div className="px-3 pt-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <div className="text-xs text-muted-foreground mb-1">Stop Loss</div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        const val = parseFloat(stopLoss) || selectedAsset.price;
+                        setStopLoss((val - (selectedAsset.price * 0.001)).toFixed(selectedAsset.price < 1 ? 5 : 2));
+                      }}
+                      disabled={!!activeTrade}
+                      data-testid="button-sl-minus"
+                      className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                    >
+                      <Minus className="w-3 h-3" />
+                    </button>
+                    <input
+                      type="number"
+                      value={stopLoss}
+                      onChange={(e) => setStopLoss(e.target.value)}
+                      placeholder="---"
+                      disabled={!!activeTrade}
+                      data-testid="input-stop-loss"
+                      className="glass-light rounded px-1 py-1.5 text-xs text-center flex-1 bg-transparent outline-none min-w-0 disabled:opacity-50 placeholder:text-muted-foreground/50"
+                    />
+                    <button
+                      onClick={() => {
+                        const val = parseFloat(stopLoss) || selectedAsset.price;
+                        setStopLoss((val + (selectedAsset.price * 0.001)).toFixed(selectedAsset.price < 1 ? 5 : 2));
+                      }}
+                      disabled={!!activeTrade}
+                      data-testid="button-sl-plus"
+                      className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground mb-1">Take Profit</div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        const val = parseFloat(takeProfit) || selectedAsset.price;
+                        setTakeProfit((val - (selectedAsset.price * 0.001)).toFixed(selectedAsset.price < 1 ? 5 : 2));
+                      }}
+                      disabled={!!activeTrade}
+                      data-testid="button-tp-minus"
+                      className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                    >
+                      <Minus className="w-3 h-3" />
+                    </button>
+                    <input
+                      type="number"
+                      value={takeProfit}
+                      onChange={(e) => setTakeProfit(e.target.value)}
+                      placeholder="---"
+                      disabled={!!activeTrade}
+                      data-testid="input-take-profit"
+                      className="glass-light rounded px-1 py-1.5 text-xs text-center flex-1 bg-transparent outline-none min-w-0 disabled:opacity-50 placeholder:text-muted-foreground/50"
+                    />
+                    <button
+                      onClick={() => {
+                        const val = parseFloat(takeProfit) || selectedAsset.price;
+                        setTakeProfit((val + (selectedAsset.price * 0.001)).toFixed(selectedAsset.price < 1 ? 5 : 2));
+                      }}
+                      disabled={!!activeTrade}
+                      data-testid="button-tp-plus"
+                      className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Trading Amount */}
+            <div className="px-3 pt-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-muted-foreground">Trading Amount</span>
+                <span className="text-xs text-muted-foreground">Max: ${formatPrice(balance)}</span>
+              </div>
+              <div className="space-y-2">
+                <div className="glass-light rounded-lg p-2 flex items-center gap-2">
+                  <span className="text-muted-foreground text-sm">$</span>
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(Math.min(balance, Math.max(1, parseFloat(e.target.value) || 1)))}
+                    disabled={!!activeTrade}
+                    data-testid="input-amount"
+                    className="bg-transparent text-lg font-semibold text-center flex-1 outline-none disabled:opacity-50"
+                  />
+                </div>
                 <Slider
                   value={[amount]}
                   onValueChange={handleSliderChange}
@@ -911,68 +1118,101 @@ export default function TradeRoom() {
                   step={1}
                   disabled={!!activeTrade}
                   data-testid="slider-amount"
-                  className="py-2"
                 />
-                <div className="glass-light rounded-lg p-2 flex items-center gap-2">
-                  <span className="text-muted-foreground">$</span>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(Math.min(balance, Math.max(1, parseFloat(e.target.value) || 1)))}
-                    disabled={!!activeTrade}
-                    data-testid="input-amount"
-                    className="bg-transparent text-xl font-semibold text-center flex-1 outline-none disabled:opacity-50"
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>$1</span>
-                  <span>Max: ${formatPrice(balance)}</span>
-                </div>
               </div>
             </div>
 
-            <div className="mt-auto space-y-3">
-              <Button
-                onClick={() => handleTrade("higher")}
-                disabled={executeTradeMutation.isPending || !!activeTrade}
-                data-testid="button-buy"
-                className="w-full h-16 bg-success hover:bg-success/90 text-white text-lg font-bold flex items-center justify-center gap-3"
-              >
-                <ArrowUp className="w-6 h-6" />
-                BUY
-              </Button>
+            {/* Bid/Ask Prices & Buy/Sell Buttons */}
+            <div className="px-3 pt-4">
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  onClick={() => handleTrade("lower")}
+                  disabled={executeTradeMutation.isPending || !!activeTrade}
+                  data-testid="button-sell"
+                  className="h-14 bg-destructive hover:bg-destructive/90 text-white font-bold flex flex-col items-center justify-center gap-0.5 rounded-md"
+                >
+                  <span className="text-lg font-mono">{formatPrice(selectedAsset.price * 0.9999)}</span>
+                  <span className="text-[10px] uppercase tracking-wider opacity-80">Sell by Market</span>
+                </Button>
 
-              <Button
-                onClick={() => handleTrade("lower")}
-                disabled={executeTradeMutation.isPending || !!activeTrade}
-                data-testid="button-sell"
-                className="w-full h-16 bg-destructive hover:bg-destructive/90 text-white text-lg font-bold flex items-center justify-center gap-3"
-              >
-                <ArrowDown className="w-6 h-6" />
-                SELL
-              </Button>
+                <Button
+                  onClick={() => handleTrade("higher")}
+                  disabled={executeTradeMutation.isPending || !!activeTrade}
+                  data-testid="button-buy"
+                  className="h-14 bg-[#2196F3] hover:bg-[#1976D2] text-white font-bold flex flex-col items-center justify-center gap-0.5 rounded-md"
+                >
+                  <span className="text-lg font-mono">{formatPrice(selectedAsset.price * 1.0001)}</span>
+                  <span className="text-[10px] uppercase tracking-wider opacity-80">Buy by Market</span>
+                </Button>
+              </div>
             </div>
 
+            {/* Active Trade Indicator */}
+            {activeTrade && (
+              <div className="px-3 pt-3">
+                <div className={cn(
+                  "glass-light rounded-lg p-3 border",
+                  activeTrade.direction === "higher" ? "border-[#2196F3]/50" : "border-destructive/50"
+                )}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-muted-foreground">
+                      {activeTrade.direction === "higher" ? "BUY" : "SELL"} - ${activeTrade.amount}
+                    </span>
+                    <span className={cn(
+                      "text-xl font-bold font-mono",
+                      activeTrade.direction === "higher" ? "text-[#2196F3]" : "text-destructive"
+                    )} data-testid="text-countdown">
+                      {formatCountdown(countdown)}
+                    </span>
+                  </div>
+                  {activeTrade.stopLoss && (
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-muted-foreground">SL:</span>
+                      <span className="text-destructive">{formatPrice(activeTrade.stopLoss)}</span>
+                    </div>
+                  )}
+                  {activeTrade.takeProfit && (
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-muted-foreground">TP:</span>
+                      <span className="text-success">{formatPrice(activeTrade.takeProfit)}</span>
+                    </div>
+                  )}
+                  <div className="flex gap-2 mt-2">
+                    <Button size="sm" variant="outline" onClick={handleDoubleUp} data-testid="button-double-up" className="flex-1 text-xs">
+                      <Copy className="w-3 h-3 mr-1" />
+                      Double
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={handleSellEarly} data-testid="button-sell-early" className="flex-1 text-xs">
+                      <X className="w-3 h-3 mr-1" />
+                      Close
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Account Margin Section */}
-            <div className="glass-light rounded-lg p-3 mt-4">
-              <div className="grid grid-cols-1 gap-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Equity</span>
-                  <span className="text-sm font-semibold" data-testid="text-equity">
-                    ${formatPrice(balance)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Orders Margin</span>
-                  <span className="text-sm font-semibold text-warning" data-testid="text-orders-margin">
-                    ${formatPrice(activeTrade ? activeTrade.amount : 0)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Account Margin</span>
-                  <span className="text-sm font-semibold text-success" data-testid="text-account-margin">
-                    ${formatPrice(balance - (activeTrade ? activeTrade.amount : 0))}
-                  </span>
+            <div className="px-3 pt-3 mt-auto">
+              <div className="glass-light rounded-lg p-3">
+                <div className="grid grid-cols-1 gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Equity</span>
+                    <span className="text-sm font-semibold" data-testid="text-equity">
+                      ${formatPrice(balance)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Orders Margin</span>
+                    <span className="text-sm font-semibold text-warning" data-testid="text-orders-margin">
+                      ${formatPrice(activeTrade ? activeTrade.amount : 0)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Account Margin</span>
+                    <span className="text-sm font-semibold text-success" data-testid="text-account-margin">
+                      ${formatPrice(balance - (activeTrade ? activeTrade.amount : 0))}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -981,7 +1221,7 @@ export default function TradeRoom() {
               asset={selectedAsset} 
               profitPercent={profitPercent}
               potentialProfit={potentialProfit}
-              className="mt-4" 
+              className="p-3" 
             />
           </div>
         </div>
@@ -1074,6 +1314,34 @@ export default function TradeRoom() {
             </div>
           </div>
 
+          {/* SL/TP Row Mobile */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <div className="text-xs text-muted-foreground text-center mb-1">Stop Loss</div>
+              <input
+                type="number"
+                value={stopLoss}
+                onChange={(e) => setStopLoss(e.target.value)}
+                placeholder="---"
+                disabled={!!activeTrade}
+                data-testid="input-stop-loss-mobile"
+                className="glass-light rounded-lg w-full h-10 px-3 text-sm text-center bg-transparent outline-none disabled:opacity-50 placeholder:text-muted-foreground/50"
+              />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground text-center mb-1">Take Profit</div>
+              <input
+                type="number"
+                value={takeProfit}
+                onChange={(e) => setTakeProfit(e.target.value)}
+                placeholder="---"
+                disabled={!!activeTrade}
+                data-testid="input-take-profit-mobile"
+                className="glass-light rounded-lg w-full h-10 px-3 text-sm text-center bg-transparent outline-none disabled:opacity-50 placeholder:text-muted-foreground/50"
+              />
+            </div>
+          </div>
+
           {/* Amount Slider Mobile */}
           <div className="px-1">
             <Slider
@@ -1091,26 +1359,26 @@ export default function TradeRoom() {
             </div>
           </div>
 
-          {/* Sell/Buy Buttons Row */}
+          {/* Sell/Buy Buttons Row - MetaTrader Style */}
           <div className="grid grid-cols-2 gap-3">
             <Button
               onClick={() => handleTrade("lower")}
               disabled={executeTradeMutation.isPending || !!activeTrade}
               data-testid="button-sell-mobile"
-              className="h-14 bg-destructive hover:bg-destructive/90 text-white text-lg font-bold flex items-center justify-center gap-2"
+              className="h-14 bg-destructive hover:bg-destructive/90 text-white font-bold flex flex-col items-center justify-center gap-0.5"
             >
-              Sell
-              <TrendingDown className="w-5 h-5" />
+              <span className="text-base font-mono">{selectedAsset ? formatPrice(selectedAsset.price * 0.9999) : "---"}</span>
+              <span className="text-[9px] uppercase tracking-wider opacity-80">Sell by Market</span>
             </Button>
 
             <Button
               onClick={() => handleTrade("higher")}
               disabled={executeTradeMutation.isPending || !!activeTrade}
               data-testid="button-buy-mobile"
-              className="h-14 bg-success hover:bg-success/90 text-white text-lg font-bold flex items-center justify-center gap-2"
+              className="h-14 bg-[#2196F3] hover:bg-[#1976D2] text-white font-bold flex flex-col items-center justify-center gap-0.5"
             >
-              Buy
-              <TrendingUp className="w-5 h-5" />
+              <span className="text-base font-mono">{selectedAsset ? formatPrice(selectedAsset.price * 1.0001) : "---"}</span>
+              <span className="text-[9px] uppercase tracking-wider opacity-80">Buy by Market</span>
             </Button>
           </div>
 
