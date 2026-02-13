@@ -1217,12 +1217,13 @@ export default function TradeRoom() {
               </div>
             </div>
 
-            <AssetInfoPanel 
-              asset={selectedAsset} 
-              profitPercent={profitPercent}
-              potentialProfit={potentialProfit}
-              className="p-3" 
-            />
+            <div className="px-3 pt-3 pb-3">
+              <AssetInfoPanel 
+                asset={selectedAsset} 
+                profitPercent={profitPercent}
+                potentialProfit={potentialProfit}
+              />
+            </div>
           </div>
         </div>
 
