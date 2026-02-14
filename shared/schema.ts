@@ -169,3 +169,20 @@ export const adminTrades = pgTable("admin_trades", {
 export type AdminTradeSession = typeof adminTradeSessions.$inferSelect;
 export type AdminTradeSessionUser = typeof adminTradeSessionUsers.$inferSelect;
 export type AdminTrade = typeof adminTrades.$inferSelect;
+
+export const tradeLogic = pgTable("trade_logic", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  totalTrades: integer("total_trades").notNull().default(10),
+  winTrades: integer("win_trades").notNull().default(5),
+  lossTrades: integer("loss_trades").notNull().default(5),
+  currentWins: integer("current_wins").notNull().default(0),
+  currentLosses: integer("current_losses").notNull().default(0),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertTradeLogicSchema = createInsertSchema(tradeLogic).omit({ id: true, createdAt: true, updatedAt: true, currentWins: true, currentLosses: true });
+export type TradeLogic = typeof tradeLogic.$inferSelect;
+export type InsertTradeLogic = z.infer<typeof insertTradeLogicSchema>;
