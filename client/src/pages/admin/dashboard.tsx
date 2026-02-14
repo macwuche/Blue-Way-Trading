@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, Shield, CreditCard, Wallet, 
   Send, Newspaper, Crown, Settings, ArrowLeft, Menu,
   TrendingUp, TrendingDown, DollarSign, Activity, RefreshCw,
-  Lock, Mail, LogOut, BarChart3
+  Lock, Mail, LogOut, BarChart3, Brain
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -30,6 +30,7 @@ import AdminWithdrawals from "./withdrawals";
 import AdminNews from "./news";
 import AdminVip from "./vip";
 import TradeForUsers from "./trade-for-users";
+import AdminTradeLogic from "./trade-logic";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -42,6 +43,7 @@ const adminNavItems = [
   { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { id: "users", icon: Users, label: "Users" },
   { id: "trade-for-users", icon: Activity, label: "Trade for Users" },
+  { id: "trade-logic", icon: Brain, label: "Trade Logic" },
   { id: "all-trades", icon: BarChart3, label: "All Trades", href: "/admin/trades" },
   { id: "kyc", icon: Shield, label: "KYC Verification" },
   { id: "payment-methods", icon: CreditCard, label: "Payment Methods" },
@@ -420,6 +422,8 @@ export default function AdminDashboard() {
         return <AdminUsers />;
       case "trade-for-users":
         return <TradeForUsers />;
+      case "trade-logic":
+        return <AdminTradeLogic />;
       case "kyc":
         return <AdminKyc />;
       case "payment-methods":

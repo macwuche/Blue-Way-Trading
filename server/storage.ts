@@ -1,13 +1,14 @@
 import { 
   portfolios, holdings, trades, watchlist, deposits, withdrawals,
-  users, adminTradeSessions, adminTradeSessionUsers, adminTrades,
+  users, adminTradeSessions, adminTradeSessionUsers, adminTrades, tradeLogic,
   type Portfolio, type InsertPortfolio,
   type Holding, type InsertHolding,
   type Trade, type InsertTrade,
   type WatchlistItem, type InsertWatchlistItem,
   type User, type Deposit, type InsertDeposit,
   type Withdrawal, type InsertWithdrawal,
-  type AdminTradeSession, type AdminTradeSessionUser, type AdminTrade
+  type AdminTradeSession, type AdminTradeSessionUser, type AdminTrade,
+  type TradeLogic, type InsertTradeLogic
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, or, sql } from "drizzle-orm";
@@ -69,6 +70,14 @@ export interface IStorage {
   getWithdrawalById(id: string): Promise<Withdrawal | undefined>;
   createWithdrawal(data: InsertWithdrawal): Promise<Withdrawal>;
   updateWithdrawalStatus(id: string, status: string, processedBy: string, rejectionReason?: string): Promise<Withdrawal>;
+
+  // Trade Logic
+  getAllTradeLogic(): Promise<(TradeLogic & { user?: User })[]>;
+  getTradeLogicByUserId(userId: string): Promise<TradeLogic | undefined>;
+  upsertTradeLogic(data: InsertTradeLogic): Promise<TradeLogic>;
+  updateTradeLogicCounters(id: string, currentWins: number, currentLosses: number): Promise<TradeLogic>;
+  resetTradeLogicCounters(id: string): Promise<TradeLogic>;
+  deleteTradeLogic(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -578,6 +587,56 @@ export class DatabaseStorage implements IStorage {
     }));
     
     return usersWithBalance.filter(u => parseFloat(u.balance) > 0);
+  }
+
+  async getAllTradeLogic(): Promise<(TradeLogic & { user?: User })[]> {
+    const allLogic = await db.select().from(tradeLogic).orderBy(desc(tradeLogic.createdAt));
+    const withUsers = await Promise.all(allLogic.map(async (logic) => {
+      const user = await this.getUserById(logic.userId);
+      return { ...logic, user: user || undefined };
+    }));
+    return withUsers;
+  }
+
+  async getTradeLogicByUserId(userId: string): Promise<TradeLogic | undefined> {
+    const [logic] = await db.select().from(tradeLogic).where(eq(tradeLogic.userId, userId));
+    return logic;
+  }
+
+  async upsertTradeLogic(data: InsertTradeLogic): Promise<TradeLogic> {
+    const existing = await this.getTradeLogicByUserId(data.userId);
+    if (existing) {
+      const [updated] = await db
+        .update(tradeLogic)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(tradeLogic.id, existing.id))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(tradeLogic).values(data).returning();
+    return created;
+  }
+
+  async updateTradeLogicCounters(id: string, currentWins: number, currentLosses: number): Promise<TradeLogic> {
+    const [updated] = await db
+      .update(tradeLogic)
+      .set({ currentWins, currentLosses, updatedAt: new Date() })
+      .where(eq(tradeLogic.id, id))
+      .returning();
+    return updated;
+  }
+
+  async resetTradeLogicCounters(id: string): Promise<TradeLogic> {
+    const [updated] = await db
+      .update(tradeLogic)
+      .set({ currentWins: 0, currentLosses: 0, updatedAt: new Date() })
+      .where(eq(tradeLogic.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteTradeLogic(id: string): Promise<void> {
+    await db.delete(tradeLogic).where(eq(tradeLogic.id, id));
   }
 }
 

@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupCustomAuth, registerCustomAuthRoutes, isAuthenticated } from "./auth";
-import { tradeExecutionSchema, insertWatchlistSchema } from "@shared/schema";
+import { tradeExecutionSchema, insertWatchlistSchema, insertTradeLogicSchema } from "@shared/schema";
 import { z } from "zod";
 import { getMarketData, getAllAssetsFromCache, startMarketDataRefresh } from "./massive-api";
 import { fetchMarketNews } from "./marketaux-api";
@@ -1397,6 +1397,72 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching user active trades:", error);
       res.status(500).json({ message: "Failed to fetch active trades" });
+    }
+  });
+
+  // ========= Trade Logic Routes =========
+  app.get("/api/admin/trade-logic", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const allLogic = await storage.getAllTradeLogic();
+      res.json(allLogic);
+    } catch (error) {
+      console.error("Error fetching trade logic:", error);
+      res.status(500).json({ message: "Failed to fetch trade logic" });
+    }
+  });
+
+  app.get("/api/admin/trade-logic/:userId", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const logic = await storage.getTradeLogicByUserId(req.params.userId);
+      if (!logic) {
+        return res.status(404).json({ message: "No trade logic found for this user" });
+      }
+      res.json(logic);
+    } catch (error) {
+      console.error("Error fetching trade logic:", error);
+      res.status(500).json({ message: "Failed to fetch trade logic" });
+    }
+  });
+
+  const tradeLogicBodySchema = insertTradeLogicSchema.extend({
+    totalTrades: z.number().int().min(1).max(100),
+    winTrades: z.number().int().min(0),
+    lossTrades: z.number().int().min(0),
+  }).refine(data => data.winTrades + data.lossTrades === data.totalTrades, {
+    message: "Win trades + Loss trades must equal Total trades",
+  });
+
+  app.post("/api/admin/trade-logic", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const parsed = tradeLogicBodySchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid data" });
+      }
+      const logic = await storage.upsertTradeLogic(parsed.data);
+      res.json(logic);
+    } catch (error) {
+      console.error("Error saving trade logic:", error);
+      res.status(500).json({ message: "Failed to save trade logic" });
+    }
+  });
+
+  app.patch("/api/admin/trade-logic/:id/reset", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const logic = await storage.resetTradeLogicCounters(req.params.id);
+      res.json(logic);
+    } catch (error) {
+      console.error("Error resetting trade logic:", error);
+      res.status(500).json({ message: "Failed to reset trade logic" });
+    }
+  });
+
+  app.delete("/api/admin/trade-logic/:id", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      await storage.deleteTradeLogic(req.params.id);
+      res.json({ message: "Trade logic deleted" });
+    } catch (error) {
+      console.error("Error deleting trade logic:", error);
+      res.status(500).json({ message: "Failed to delete trade logic" });
     }
   });
 
