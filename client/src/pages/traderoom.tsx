@@ -774,48 +774,6 @@ export default function TradeRoom() {
                 chartType={chartType}
               />
 
-              {/* Active Trade Overlay */}
-              {activeTrade && (
-                <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
-                  <div className={cn(
-                    "glass-dark rounded-xl px-6 py-3 text-center border-2",
-                    activeTrade.direction === "buy" ? "border-[#2196F3]" : "border-destructive"
-                  )}>
-                    <div className={cn(
-                      "text-lg font-bold",
-                      activeTrade.direction === "buy" ? "text-[#2196F3]" : "text-destructive"
-                    )} data-testid="text-active-trade">
-                      {activeTrade.direction.toUpperCase()} - ${activeTrade.amount}
-                    </div>
-                    <div className="text-xs text-muted-foreground font-mono">
-                      Entry: {formatPrice(activeTrade.entryPrice)}
-                    </div>
-                    <div className="flex gap-2 mt-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleDoubleUp}
-                        data-testid="button-double-up-overlay"
-                        className="text-xs"
-                      >
-                        <Copy className="w-3 h-3 mr-1" />
-                        Double
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleCloseTrade}
-                        data-testid="button-close-trade-overlay"
-                        className="text-xs"
-                      >
-                        <X className="w-3 h-3 mr-1" />
-                        Close
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <div className="absolute bottom-4 right-4 glass-dark rounded-lg px-3 py-2 text-right">
                 <div className="text-xl md:text-2xl font-mono font-bold" data-testid="text-current-price">
                   {formatPrice(selectedAsset.price)}
