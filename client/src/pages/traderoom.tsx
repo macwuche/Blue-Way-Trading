@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { 
   Wallet, History, BarChart3, MessageCircle, Newspaper, 
-  Settings, Plus, ArrowUp, ArrowDown, Clock, ChevronDown,
-  ChevronLeft, ChevronRight, Minus, TrendingUp, TrendingDown,
+  Settings, Plus, Clock, ChevronDown,
+  ChevronLeft, ChevronRight, Minus,
   Copy, X, Crown, Activity, CandlestickChart as CandlestickIcon, LineChart, AreaChart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,12 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Popover,
   PopoverContent,
@@ -52,40 +46,13 @@ interface DashboardData {
 interface ActiveTrade {
   id: string;
   symbol: string;
-  direction: "higher" | "lower";
+  direction: "buy" | "sell";
   amount: number;
   entryPrice: number;
-  expiryTime: number;
-  startTime: number;
   stopLoss: number | null;
   takeProfit: number | null;
   volume: number;
 }
-
-interface TradeResult {
-  isWin: boolean;
-  profit: number;
-  entryPrice: number;
-  exitPrice: number;
-  direction: "higher" | "lower";
-}
-
-const expiryOptions = [
-  { value: "30s", label: "30 seconds", ms: 30000 },
-  { value: "1m", label: "1 minute", ms: 60000 },
-  { value: "2m", label: "2 minutes", ms: 120000 },
-  { value: "3m", label: "3 minutes", ms: 180000 },
-  { value: "5m", label: "5 minutes", ms: 300000 },
-  { value: "10m", label: "10 minutes", ms: 600000 },
-  { value: "15m", label: "15 minutes", ms: 900000 },
-  { value: "30m", label: "30 minutes", ms: 1800000 },
-  { value: "1h", label: "1 hour", ms: 3600000 },
-  { value: "4h", label: "4 hours", ms: 14400000 },
-  { value: "1d", label: "1 day", ms: 86400000 },
-  { value: "1w", label: "1 week", ms: 604800000 },
-  { value: "1mo", label: "1 month", ms: 2592000000 },
-  { value: "1y", label: "1 year", ms: 31536000000 },
-];
 
 const sidebarItems = [
   { id: "trade", icon: BarChart3, label: "Trade", route: "/" },
@@ -115,12 +82,8 @@ export default function TradeRoom() {
   const [openAssets, setOpenAssets] = useState<Asset[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [marketModalOpen, setMarketModalOpen] = useState(false);
-  const [expiration, setExpiration] = useState("1m");
   const [amount, setAmount] = useState(10);
   const [activeTrade, setActiveTrade] = useState<ActiveTrade | null>(null);
-  const [countdown, setCountdown] = useState(0);
-  const [tradeResult, setTradeResult] = useState<TradeResult | null>(null);
-  const [showResultDialog, setShowResultDialog] = useState(false);
   const [volume, setVolume] = useState<number>(0);
   const [stopLoss, setStopLoss] = useState<string>("");
   const [takeProfit, setTakeProfit] = useState<string>("");
@@ -241,12 +204,8 @@ export default function TradeRoom() {
     }
   };
 
-  const getExpiryMs = useCallback(() => {
-    return expiryOptions.find(o => o.value === expiration)?.ms || 60000;
-  }, [expiration]);
-
-  const handleTrade = (direction: "higher" | "lower") => {
-    if (activeTrade) return;
+  const handleTrade = (direction: "buy" | "sell") => {
+    if (activeTrade || !selectedAsset) return;
     
     if (amount <= 0 || amount > balance) {
       toast({
@@ -269,7 +228,6 @@ export default function TradeRoom() {
       return;
     }
 
-    const expiryMs = getExpiryMs();
     const now = Date.now();
     
     const newTrade: ActiveTrade = {
@@ -278,21 +236,18 @@ export default function TradeRoom() {
       direction,
       amount,
       entryPrice: selectedAsset.price,
-      expiryTime: now + expiryMs,
-      startTime: now,
       stopLoss: parsedSL,
       takeProfit: parsedTP,
       volume: volume,
     };
     
     setActiveTrade(newTrade);
-    setCountdown(Math.floor(expiryMs / 1000));
 
     executeTradeMutation.mutate({
       symbol: selectedAsset.symbol,
       name: selectedAsset.name,
       assetType: selectedAsset.type,
-      type: direction === "higher" ? "buy" : "sell",
+      type: direction,
       quantity: amount,
       price: selectedAsset.price,
     });
@@ -321,7 +276,7 @@ export default function TradeRoom() {
       symbol: selectedAsset.symbol,
       name: selectedAsset.name,
       assetType: selectedAsset.type,
-      type: activeTrade.direction === "higher" ? "buy" : "sell",
+      type: activeTrade.direction,
       quantity: activeTrade.amount,
       price: selectedAsset.price,
     });
@@ -332,119 +287,56 @@ export default function TradeRoom() {
     });
   };
 
-  const handleSellEarly = () => {
+  const handleCloseTrade = () => {
     if (!activeTrade || !selectedAsset) return;
     
-    const currentPrice = selectedAsset.price;
-    const priceChange = currentPrice - activeTrade.entryPrice;
-    const isWinning = activeTrade.direction === "higher" ? priceChange > 0 : priceChange < 0;
-    
-    const timeElapsed = Date.now() - activeTrade.startTime;
-    const totalTime = activeTrade.expiryTime - activeTrade.startTime;
-    const timeRatio = timeElapsed / totalTime;
-    
-    const profitPercent = isWinning ? 87 * timeRatio * 0.7 : -100 * timeRatio * 0.5;
-    const profit = activeTrade.amount * (profitPercent / 100);
-    
-    setTradeResult({
-      isWin: profit > 0,
-      profit,
-      entryPrice: activeTrade.entryPrice,
-      exitPrice: currentPrice,
-      direction: activeTrade.direction,
+    toast({
+      title: "Trade Closed",
+      description: `Closed ${activeTrade.direction.toUpperCase()} position on ${activeTrade.symbol} at ${formatPrice(selectedAsset.price)}`,
     });
     
     setActiveTrade(null);
-    setCountdown(0);
-    setShowResultDialog(true);
   };
 
   useEffect(() => {
     if (!activeTrade || !selectedAsset) return;
 
-    const closeTrade = (exitPrice: number, reason: "expiry" | "sl" | "tp") => {
-      const priceChange = exitPrice - activeTrade.entryPrice;
-      let isWin: boolean;
-      let profit: number;
-
-      if (reason === "sl") {
-        isWin = false;
-        profit = -activeTrade.amount;
-      } else if (reason === "tp") {
-        isWin = true;
-        profit = activeTrade.amount * 0.87;
-      } else {
-        isWin = activeTrade.direction === "higher" ? priceChange > 0 : priceChange < 0;
-        profit = isWin ? activeTrade.amount * 0.87 : -activeTrade.amount;
-      }
-
-      setTradeResult({
-        isWin,
-        profit,
-        entryPrice: activeTrade.entryPrice,
-        exitPrice,
-        direction: activeTrade.direction,
-      });
-
-      setActiveTrade(null);
-      setShowResultDialog(true);
-    };
-
     const interval = setInterval(() => {
-      const remaining = Math.max(0, Math.floor((activeTrade.expiryTime - Date.now()) / 1000));
-      setCountdown(remaining);
-
       const currentPrice = selectedAsset.price;
 
       if (activeTrade.stopLoss !== null) {
-        if (activeTrade.direction === "higher" && currentPrice <= activeTrade.stopLoss) {
+        if (activeTrade.direction === "buy" && currentPrice <= activeTrade.stopLoss) {
           clearInterval(interval);
-          closeTrade(currentPrice, "sl");
+          toast({ title: "Stop Loss Hit", description: `Position closed at ${formatPrice(currentPrice)}`, variant: "destructive" });
+          setActiveTrade(null);
           return;
         }
-        if (activeTrade.direction === "lower" && currentPrice >= activeTrade.stopLoss) {
+        if (activeTrade.direction === "sell" && currentPrice >= activeTrade.stopLoss) {
           clearInterval(interval);
-          closeTrade(currentPrice, "sl");
+          toast({ title: "Stop Loss Hit", description: `Position closed at ${formatPrice(currentPrice)}`, variant: "destructive" });
+          setActiveTrade(null);
           return;
         }
       }
 
       if (activeTrade.takeProfit !== null) {
-        if (activeTrade.direction === "higher" && currentPrice >= activeTrade.takeProfit) {
+        if (activeTrade.direction === "buy" && currentPrice >= activeTrade.takeProfit) {
           clearInterval(interval);
-          closeTrade(currentPrice, "tp");
+          toast({ title: "Take Profit Hit", description: `Position closed at ${formatPrice(currentPrice)}` });
+          setActiveTrade(null);
           return;
         }
-        if (activeTrade.direction === "lower" && currentPrice <= activeTrade.takeProfit) {
+        if (activeTrade.direction === "sell" && currentPrice <= activeTrade.takeProfit) {
           clearInterval(interval);
-          closeTrade(currentPrice, "tp");
+          toast({ title: "Take Profit Hit", description: `Position closed at ${formatPrice(currentPrice)}` });
+          setActiveTrade(null);
           return;
         }
-      }
-
-      if (remaining <= 0) {
-        clearInterval(interval);
-        const exitPrice = currentPrice + (Math.random() - 0.5) * currentPrice * 0.001;
-        closeTrade(exitPrice, "expiry");
       }
     }, 100);
 
     return () => clearInterval(interval);
   }, [activeTrade, selectedAsset]);
-
-  const formatCountdown = (seconds: number) => {
-    if (seconds >= 3600) {
-      const h = Math.floor(seconds / 3600);
-      const m = Math.floor((seconds % 3600) / 60);
-      const s = seconds % 60;
-      return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    } else if (seconds >= 60) {
-      const m = Math.floor(seconds / 60);
-      const s = seconds % 60;
-      return `${m}:${s.toString().padStart(2, '0')}`;
-    }
-    return `0:${seconds.toString().padStart(2, '0')}`;
-  };
 
   const profitPercent = 87;
   const potentialProfit = (amount * (profitPercent / 100)).toFixed(2);
@@ -882,42 +774,42 @@ export default function TradeRoom() {
                 chartType={chartType}
               />
 
-              {/* Active Trade Countdown Overlay */}
+              {/* Active Trade Overlay */}
               {activeTrade && (
                 <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
                   <div className={cn(
-                    "glass-dark rounded-xl px-6 py-4 text-center border-2",
-                    activeTrade.direction === "higher" ? "border-success" : "border-destructive"
+                    "glass-dark rounded-xl px-6 py-3 text-center border-2",
+                    activeTrade.direction === "buy" ? "border-[#2196F3]" : "border-destructive"
                   )}>
-                    <div className="text-sm text-muted-foreground mb-1">
+                    <div className={cn(
+                      "text-lg font-bold",
+                      activeTrade.direction === "buy" ? "text-[#2196F3]" : "text-destructive"
+                    )} data-testid="text-active-trade">
                       {activeTrade.direction.toUpperCase()} - ${activeTrade.amount}
                     </div>
-                    <div className={cn(
-                      "text-4xl font-bold font-mono",
-                      activeTrade.direction === "higher" ? "text-success" : "text-destructive"
-                    )} data-testid="text-countdown">
-                      {formatCountdown(countdown)}
+                    <div className="text-xs text-muted-foreground font-mono">
+                      Entry: {formatPrice(activeTrade.entryPrice)}
                     </div>
-                    <div className="flex gap-2 mt-3">
+                    <div className="flex gap-2 mt-2">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={handleDoubleUp}
-                        data-testid="button-double-up"
+                        data-testid="button-double-up-overlay"
                         className="text-xs"
                       >
                         <Copy className="w-3 h-3 mr-1" />
-                        Double Up
+                        Double
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={handleSellEarly}
-                        data-testid="button-sell-early"
+                        onClick={handleCloseTrade}
+                        data-testid="button-close-trade-overlay"
                         className="text-xs"
                       >
                         <X className="w-3 h-3 mr-1" />
-                        Sell Early
+                        Close
                       </Button>
                     </div>
                   </div>
@@ -956,26 +848,6 @@ export default function TradeRoom() {
                   <SelectItem value="market">Market Execution</SelectItem>
                   <SelectItem value="limit">Limit Order</SelectItem>
                   <SelectItem value="stop">Stop Order</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Expiration */}
-            <div className="px-3 pt-3">
-              <div className="text-xs text-muted-foreground mb-1">Expiration</div>
-              <Select value={expiration} onValueChange={setExpiration} disabled={!!activeTrade}>
-                <SelectTrigger className="glass-light border-0 h-9" data-testid="select-expiration">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                    <SelectValue />
-                  </div>
-                </SelectTrigger>
-                <SelectContent className="glass-dark border-white/10">
-                  {expiryOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -1126,7 +998,7 @@ export default function TradeRoom() {
             <div className="px-3 pt-4">
               <div className="grid grid-cols-2 gap-2">
                 <Button
-                  onClick={() => handleTrade("lower")}
+                  onClick={() => handleTrade("sell")}
                   disabled={executeTradeMutation.isPending || !!activeTrade}
                   data-testid="button-sell"
                   className="h-14 bg-destructive hover:bg-destructive/90 text-white font-bold flex flex-col items-center justify-center gap-0.5 rounded-md"
@@ -1136,7 +1008,7 @@ export default function TradeRoom() {
                 </Button>
 
                 <Button
-                  onClick={() => handleTrade("higher")}
+                  onClick={() => handleTrade("buy")}
                   disabled={executeTradeMutation.isPending || !!activeTrade}
                   data-testid="button-buy"
                   className="h-14 bg-[#2196F3] hover:bg-[#1976D2] text-white font-bold flex flex-col items-center justify-center gap-0.5 rounded-md"
@@ -1152,17 +1024,17 @@ export default function TradeRoom() {
               <div className="px-3 pt-3">
                 <div className={cn(
                   "glass-light rounded-lg p-3 border",
-                  activeTrade.direction === "higher" ? "border-[#2196F3]/50" : "border-destructive/50"
+                  activeTrade.direction === "buy" ? "border-[#2196F3]/50" : "border-destructive/50"
                 )}>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-muted-foreground">
-                      {activeTrade.direction === "higher" ? "BUY" : "SELL"} - ${activeTrade.amount}
-                    </span>
                     <span className={cn(
-                      "text-xl font-bold font-mono",
-                      activeTrade.direction === "higher" ? "text-[#2196F3]" : "text-destructive"
-                    )} data-testid="text-countdown">
-                      {formatCountdown(countdown)}
+                      "text-sm font-semibold",
+                      activeTrade.direction === "buy" ? "text-[#2196F3]" : "text-destructive"
+                    )} data-testid="text-trade-direction">
+                      {activeTrade.direction.toUpperCase()} - ${activeTrade.amount}
+                    </span>
+                    <span className="text-xs text-muted-foreground font-mono">
+                      @ {formatPrice(activeTrade.entryPrice)}
                     </span>
                   </div>
                   {activeTrade.stopLoss && (
@@ -1182,7 +1054,7 @@ export default function TradeRoom() {
                       <Copy className="w-3 h-3 mr-1" />
                       Double
                     </Button>
-                    <Button size="sm" variant="outline" onClick={handleSellEarly} data-testid="button-sell-early" className="flex-1 text-xs">
+                    <Button size="sm" variant="outline" onClick={handleCloseTrade} data-testid="button-close-trade" className="flex-1 text-xs">
                       <X className="w-3 h-3 mr-1" />
                       Close
                     </Button>
@@ -1233,17 +1105,17 @@ export default function TradeRoom() {
           {activeTrade && (
             <div className={cn(
               "glass-light rounded-lg p-3 border-2 text-center",
-              activeTrade.direction === "higher" ? "border-success" : "border-destructive"
+              activeTrade.direction === "buy" ? "border-[#2196F3]" : "border-destructive"
             )}>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">
+                <span className={cn(
+                  "text-sm font-semibold",
+                  activeTrade.direction === "buy" ? "text-[#2196F3]" : "text-destructive"
+                )}>
                   {activeTrade.direction.toUpperCase()} - ${activeTrade.amount}
                 </span>
-                <span className={cn(
-                  "text-2xl font-bold font-mono",
-                  activeTrade.direction === "higher" ? "text-success" : "text-destructive"
-                )} data-testid="text-countdown-mobile">
-                  {formatCountdown(countdown)}
+                <span className="text-xs text-muted-foreground font-mono">
+                  @ {formatPrice(activeTrade.entryPrice)}
                 </span>
               </div>
               <div className="flex gap-2">
@@ -1260,58 +1132,38 @@ export default function TradeRoom() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={handleSellEarly}
-                  data-testid="button-sell-early-mobile"
+                  onClick={handleCloseTrade}
+                  data-testid="button-close-trade-mobile"
                   className="flex-1 text-xs"
                 >
                   <X className="w-3 h-3 mr-1" />
-                  Sell Early
+                  Close
                 </Button>
               </div>
             </div>
           )}
 
-          {/* Time and Amount Row */}
-          <div className="grid grid-cols-2 gap-3">
-            {/* Time Selector */}
-            <div>
-              <div className="text-xs text-muted-foreground text-center mb-1">Time</div>
-              <Select value={expiration} onValueChange={setExpiration} disabled={!!activeTrade}>
-                <SelectTrigger className="glass-light border-0 h-12" data-testid="select-expiration-mobile">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="glass-dark border-white/10 max-h-[200px]">
-                  {expiryOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Amount Input */}
-            <div>
-              <div className="text-xs text-muted-foreground text-center mb-1">Amount ($)</div>
-              <div className="glass-light rounded-lg flex items-center justify-between h-12 px-3">
-                <button 
-                  onClick={() => setAmount(Math.max(1, amount - 10))}
-                  data-testid="button-amount-minus"
-                  className="text-muted-foreground"
-                  disabled={!!activeTrade}
-                >
-                  <Minus className="w-5 h-5" />
-                </button>
-                <span className="text-lg font-semibold" data-testid="text-amount-mobile">{amount}</span>
-                <button 
-                  onClick={() => setAmount(Math.min(balance, amount + 10))}
-                  data-testid="button-amount-plus"
-                  className="text-muted-foreground"
-                  disabled={!!activeTrade}
-                >
-                  <Plus className="w-5 h-5" />
-                </button>
-              </div>
+          {/* Amount Input */}
+          <div>
+            <div className="text-xs text-muted-foreground text-center mb-1">Amount ($)</div>
+            <div className="glass-light rounded-lg flex items-center justify-between h-12 px-3">
+              <button 
+                onClick={() => setAmount(Math.max(1, amount - 10))}
+                data-testid="button-amount-minus"
+                className="text-muted-foreground"
+                disabled={!!activeTrade}
+              >
+                <Minus className="w-5 h-5" />
+              </button>
+              <span className="text-lg font-semibold" data-testid="text-amount-mobile">{amount}</span>
+              <button 
+                onClick={() => setAmount(Math.min(balance, amount + 10))}
+                data-testid="button-amount-plus"
+                className="text-muted-foreground"
+                disabled={!!activeTrade}
+              >
+                <Plus className="w-5 h-5" />
+              </button>
             </div>
           </div>
 
@@ -1363,7 +1215,7 @@ export default function TradeRoom() {
           {/* Sell/Buy Buttons Row - MetaTrader Style */}
           <div className="grid grid-cols-2 gap-3">
             <Button
-              onClick={() => handleTrade("lower")}
+              onClick={() => handleTrade("sell")}
               disabled={executeTradeMutation.isPending || !!activeTrade}
               data-testid="button-sell-mobile"
               className="h-14 bg-destructive hover:bg-destructive/90 text-white font-bold flex flex-col items-center justify-center gap-0.5"
@@ -1373,7 +1225,7 @@ export default function TradeRoom() {
             </Button>
 
             <Button
-              onClick={() => handleTrade("higher")}
+              onClick={() => handleTrade("buy")}
               disabled={executeTradeMutation.isPending || !!activeTrade}
               data-testid="button-buy-mobile"
               className="h-14 bg-[#2196F3] hover:bg-[#1976D2] text-white font-bold flex flex-col items-center justify-center gap-0.5"
@@ -1436,47 +1288,6 @@ export default function TradeRoom() {
         onSelectAsset={handleSelectAsset}
       />
 
-      {/* Trade Result Dialog */}
-      <Dialog open={showResultDialog} onOpenChange={setShowResultDialog}>
-        <DialogContent className="glass-dark border-white/10 max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-center">
-              {tradeResult?.isWin ? "Trade Won!" : "Trade Lost"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="text-center py-6">
-            <div className={cn(
-              "text-6xl font-bold mb-4",
-              tradeResult?.isWin ? "text-success" : "text-destructive"
-            )} data-testid="text-trade-result">
-              {tradeResult?.isWin ? "+" : ""}{tradeResult?.profit.toFixed(2)}$
-            </div>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <div className="flex justify-between">
-                <span>Direction:</span>
-                <span className={tradeResult?.direction === "higher" ? "text-success" : "text-destructive"}>
-                  {tradeResult?.direction?.toUpperCase()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Entry Price:</span>
-                <span>{tradeResult?.entryPrice ? formatPrice(tradeResult.entryPrice) : "-"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Exit Price:</span>
-                <span>{tradeResult?.exitPrice ? formatPrice(tradeResult.exitPrice) : "-"}</span>
-              </div>
-            </div>
-            <Button
-              className="w-full mt-6"
-              onClick={() => setShowResultDialog(false)}
-              data-testid="button-close-result"
-            >
-              Continue Trading
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
