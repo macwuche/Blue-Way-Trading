@@ -36,6 +36,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CandlestickChart, type IndicatorSettings, type ChartType } from "@/components/candlestick-chart";
 import { MarketModal } from "@/components/market-modal";
+import { AssetInfoPanel } from "@/components/asset-info-panel";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -43,7 +44,7 @@ import { type Asset, formatPrice } from "@/lib/market-data";
 import { useMarketData } from "@/hooks/use-market-data";
 import { format } from "date-fns";
 
-interface User {
+interface UserData {
   id: string;
   firstName: string | null;
   lastName: string | null;
@@ -52,7 +53,7 @@ interface User {
   vipLevel: string | null;
 }
 
-interface SelectedUser extends User {
+interface SelectedUser extends UserData {
   tradeAmount: number;
 }
 
@@ -71,66 +72,28 @@ interface AdminTrade {
   status: string;
   createdAt: string;
   closedAt: string | null;
-  user?: User;
+  user?: UserData;
 }
 
 interface ActiveTrade {
   id: string;
   symbol: string;
-  name: string;
-  assetType: string;
-  direction: "higher" | "lower";
+  direction: "buy" | "sell";
   amount: number;
   entryPrice: number;
-  expiryTime: number;
-  startTime: number;
+  stopLoss: number | null;
+  takeProfit: number | null;
+  volume: number;
   tradeIds: string[];
-  durationGroup: string;
-  assets: CompletedAsset[]; // Store individual assets for profit popup
 }
 
-// Extended expiry options from 30 seconds to 2 years
-const expiryOptions = [
-  { value: "30s", label: "30 seconds", ms: 30000 },
-  { value: "1m", label: "1 minute", ms: 60000 },
-  { value: "2m", label: "2 minutes", ms: 120000 },
-  { value: "3m", label: "3 minutes", ms: 180000 },
-  { value: "5m", label: "5 minutes", ms: 300000 },
-  { value: "10m", label: "10 minutes", ms: 600000 },
-  { value: "15m", label: "15 minutes", ms: 900000 },
-  { value: "30m", label: "30 minutes", ms: 1800000 },
-  { value: "1h", label: "1 hour", ms: 3600000 },
-  { value: "2h", label: "2 hours", ms: 7200000 },
-  { value: "4h", label: "4 hours", ms: 14400000 },
-  { value: "8h", label: "8 hours", ms: 28800000 },
-  { value: "12h", label: "12 hours", ms: 43200000 },
-  { value: "1d", label: "1 day", ms: 86400000 },
-  { value: "2d", label: "2 days", ms: 172800000 },
-  { value: "3d", label: "3 days", ms: 259200000 },
-  { value: "1w", label: "1 week", ms: 604800000 },
-  { value: "2w", label: "2 weeks", ms: 1209600000 },
-  { value: "1mo", label: "1 month", ms: 2592000000 },
-  { value: "3mo", label: "3 months", ms: 7776000000 },
-  { value: "6mo", label: "6 months", ms: 15552000000 },
-  { value: "1y", label: "1 year", ms: 31536000000 },
-  { value: "2y", label: "2 years", ms: 63072000000 },
-];
-
-// Asset with individual duration for multi-asset trading
-interface TradingAsset extends Asset {
-  duration: string; // expiry option value like "30s", "1h"
-}
-
-// Asset info for displaying in profit popup
 interface CompletedAsset {
   symbol: string;
   name: string;
   assetType: string;
 }
 
-// Completed duration group awaiting profit
-interface CompletedDurationGroup {
-  durationGroup: string;
+interface CompletedTradeGroup {
   trades: AdminTrade[];
   assets: CompletedAsset[];
   completedAt: Date;
@@ -144,7 +107,6 @@ const getSymbolInitials = (symbol: string): string => {
   return symbol.slice(0, 2);
 };
 
-// Get color class based on asset type
 const getAssetTypeColor = (assetType: string): string => {
   switch (assetType.toLowerCase()) {
     case 'crypto': return 'text-yellow-500 bg-yellow-500/20';
@@ -164,26 +126,26 @@ export default function TradeForUsers() {
   
   const { cryptoAssets, allAssets } = useMarketData({ refreshInterval: 5000 });
 
-  // User selection state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<SelectedUser[]>([]);
   const [defaultAmount, setDefaultAmount] = useState(100);
 
-  // Trade room state - restore sessionId from localStorage on mount
   const [sessionId, setSessionId] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('admin_trade_session_id');
     }
     return null;
   });
-  // Multi-asset trading with individual durations
-  const [tradingAssets, setTradingAssets] = useState<TradingAsset[]>([]);
-  const [selectedAssetIndex, setSelectedAssetIndex] = useState(0);
-  const defaultAsset: TradingAsset = { symbol: "BTC/USDT", name: "Bitcoin", price: 0, change24h: 0, changePercent24h: 0, volume24h: 0, marketCap: 0, type: "crypto", duration: "1m" };
-  const selectedAsset = tradingAssets[selectedAssetIndex] || defaultAsset;
+
+  const [openAssets, setOpenAssets] = useState<Asset[]>([]);
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [marketModalOpen, setMarketModalOpen] = useState(false);
-  const [activeTrades, setActiveTrades] = useState<ActiveTrade[]>([]); // Multiple active trades for multi-asset
-  const [countdowns, setCountdowns] = useState<Record<string, number>>({}); // countdown per duration group
+  const [activeTrade, setActiveTrade] = useState<ActiveTrade | null>(null);
+  const [amount, setAmount] = useState(100);
+  const [volume, setVolume] = useState<number>(0);
+  const [stopLoss, setStopLoss] = useState<string>("");
+  const [takeProfit, setTakeProfit] = useState<string>("");
+  const [executionType, setExecutionType] = useState("market");
   const [showUsersPanel, setShowUsersPanel] = useState(false);
   const [indicators, setIndicators] = useState<IndicatorSettings>({
     alligator: false,
@@ -194,28 +156,20 @@ export default function TradeForUsers() {
   });
   const [chartType, setChartType] = useState<ChartType>("candlestick");
 
-  // Legacy single trade state for backward compatibility
-  const activeTrade = activeTrades.length > 0 ? activeTrades[0] : null;
-  const countdown = activeTrade ? (countdowns[activeTrade.durationGroup] || 0) : 0;
-
-  // Profit popup state - restore from localStorage on mount
   const [profitPopupOpen, setProfitPopupOpen] = useState(false);
-  const [profitDialogOpen, setProfitDialogOpen] = useState(false); // Legacy dialog for backward compat
-  const [completedDurationGroup, setCompletedDurationGroup] = useState<CompletedDurationGroup | null>(() => {
+  const [profitDialogOpen, setProfitDialogOpen] = useState(false);
+  const [completedTradeGroup, setCompletedTradeGroup] = useState<CompletedTradeGroup | null>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('admin_pending_profit_trade');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          // Validate and rehydrate into a properly typed object
-          if (parsed && parsed.durationGroup && Array.isArray(parsed.assets)) {
-            const hydrated: CompletedDurationGroup = {
-              durationGroup: parsed.durationGroup,
+          if (parsed && Array.isArray(parsed.assets)) {
+            return {
               trades: parsed.trades || [],
               assets: parsed.assets,
               completedAt: parsed.completedAt ? new Date(parsed.completedAt) : new Date(),
             };
-            return hydrated;
           }
         } catch { return null; }
       }
@@ -231,47 +185,45 @@ export default function TradeForUsers() {
     }
     return false;
   });
-  const [reopenConfirmDialogOpen, setReopenConfirmDialogOpen] = useState(false); // Dialog when profits already added
-  const [pendingProfitBlockDialogOpen, setPendingProfitBlockDialogOpen] = useState(false); // Block new trade until profit added
-  
-  // Initialize tradingAssets when market data is available
+  const [reopenConfirmDialogOpen, setReopenConfirmDialogOpen] = useState(false);
+
   useEffect(() => {
-    if (cryptoAssets.length > 0 && tradingAssets.length === 0) {
-      setTradingAssets([{ ...cryptoAssets[0], duration: "1m" }]);
+    if (cryptoAssets.length > 0 && !selectedAsset) {
+      setSelectedAsset(cryptoAssets[0]);
+      setOpenAssets([cryptoAssets[0]]);
     }
-  }, [cryptoAssets, tradingAssets.length]);
+  }, [cryptoAssets, selectedAsset]);
 
-  // Update trading assets with live prices
   useEffect(() => {
-    if (allAssets.length > 0 && tradingAssets.length > 0) {
-      setTradingAssets(prev => prev.map(asset => {
-        const updated = allAssets.find(a => a.symbol === asset.symbol);
-        if (updated && updated.price !== asset.price) {
-          return { ...asset, ...updated };
-        }
-        return asset;
-      }));
+    if (selectedAsset && allAssets.length > 0) {
+      const updatedAsset = allAssets.find(a => a.symbol === selectedAsset.symbol);
+      if (updatedAsset && updatedAsset.price !== selectedAsset.price) {
+        setSelectedAsset(updatedAsset);
+        setOpenAssets(prev => prev.map(a => 
+          a.symbol === updatedAsset.symbol ? updatedAsset : a
+        ));
+      }
     }
-  }, [allAssets]);
+  }, [allAssets, selectedAsset]);
 
-  // Helper: get openAssets from tradingAssets (for backward compat)
-  const openAssets = tradingAssets;
-  const expiration = selectedAsset.duration;
-  
-  // Check if live market data is loaded (price > 0)
-  const isMarketDataReady = selectedAsset.price > 0 && tradingAssets.length > 0;
+  useEffect(() => {
+    if (selectedAsset && selectedAsset.volume24h !== undefined) {
+      setVolume(selectedAsset.volume24h || 0);
+    }
+  }, [selectedAsset?.symbol]);
 
-  // Fetch users with balance
-  const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
+  const totalTradeAmount = selectedUsers.reduce((sum, u) => sum + u.tradeAmount, 0);
+  const profitPercent = 87;
+  const potentialProfit = (amount * (profitPercent / 100)).toFixed(2);
+
+  const { data: users = [], isLoading: usersLoading } = useQuery<UserData[]>({
     queryKey: ["/api/admin/users-with-balance"],
   });
 
-  // Fetch trade history
   const { data: tradeHistory = [], isLoading: historyLoading } = useQuery<AdminTrade[]>({
     queryKey: ["/api/admin/trades-history"],
   });
 
-  // Persist sessionId to localStorage whenever it changes
   useEffect(() => {
     if (sessionId) {
       localStorage.setItem('admin_trade_session_id', sessionId);
@@ -280,16 +232,14 @@ export default function TradeForUsers() {
     }
   }, [sessionId]);
 
-  // Persist completedDurationGroup to localStorage for session recovery
   useEffect(() => {
-    if (completedDurationGroup) {
-      localStorage.setItem('admin_pending_profit_trade', JSON.stringify(completedDurationGroup));
+    if (completedTradeGroup) {
+      localStorage.setItem('admin_pending_profit_trade', JSON.stringify(completedTradeGroup));
     } else {
       localStorage.removeItem('admin_pending_profit_trade');
     }
-  }, [completedDurationGroup]);
+  }, [completedTradeGroup]);
 
-  // Persist profitsAlreadyAdded to localStorage
   useEffect(() => {
     if (profitsAlreadyAdded) {
       localStorage.setItem('admin_profits_already_added', 'true');
@@ -298,19 +248,16 @@ export default function TradeForUsers() {
     }
   }, [profitsAlreadyAdded]);
 
-  // Fetch session data if sessionId exists but selectedUsers is empty (page refresh scenario)
   const { data: sessionData, isLoading: sessionLoading, isError: sessionError, isFetched: sessionFetched } = useQuery<{
     id: string;
-    users: { userId: string; tradeAmount: string; user?: User }[];
+    users: { userId: string; tradeAmount: string; user?: UserData }[];
     status: string;
   }>({
     queryKey: ["/api/admin/trade-sessions", sessionId],
     enabled: !!sessionId && selectedUsers.length === 0,
-    retry: false, // Don't retry on error - stale session should be cleared
+    retry: false,
   });
 
-  // Clear stale sessionId from localStorage if session fetch fails or is not found
-  // Only clear if query was actually enabled and fetched (selectedUsers.length === 0)
   useEffect(() => {
     if (sessionId && selectedUsers.length === 0 && sessionFetched && !sessionLoading) {
       if (sessionError || !sessionData) {
@@ -321,7 +268,6 @@ export default function TradeForUsers() {
     }
   }, [sessionError, sessionId, sessionLoading, sessionData, sessionFetched, selectedUsers.length]);
 
-  // Load session users when session data is fetched and navigate to trade room if session is active
   useEffect(() => {
     if (sessionData && sessionData.users && sessionData.users.length > 0 && selectedUsers.length === 0) {
       const loadedUsers: SelectedUser[] = sessionData.users.map((su) => ({
@@ -334,14 +280,12 @@ export default function TradeForUsers() {
         tradeAmount: parseFloat(su.tradeAmount) || 100,
       }));
       setSelectedUsers(loadedUsers);
-      // Navigate to trade room if session is active
       if (sessionData.status === "active" && currentPage === "history") {
         setCurrentPage("trade-room");
       }
     }
   }, [sessionData, selectedUsers.length, currentPage]);
 
-  // Create session mutation
   const createSessionMutation = useMutation({
     mutationFn: async (users: { userId: string; tradeAmount: string }[]) => {
       const res = await apiRequest("POST", "/api/admin/trade-sessions", { users });
@@ -349,7 +293,6 @@ export default function TradeForUsers() {
     },
     onSuccess: (data) => {
       setSessionId(data.id);
-      // Update selected users with data from server to ensure consistency
       if (data.users && data.users.length > 0) {
         const updatedUsers: SelectedUser[] = data.users.map((su: any) => ({
           id: su.userId,
@@ -370,32 +313,41 @@ export default function TradeForUsers() {
     },
   });
 
-  // Execute trade mutation (supports multi-asset)
   const executeTradeMutation = useMutation({
     mutationFn: async (data: {
-      assets?: { symbol: string; name: string; assetType: string; entryPrice: number; durationMs: number; durationLabel: string }[];
-      direction: "higher" | "lower";
-      // Legacy single-asset support
-      symbol?: string;
-      name?: string;
-      assetType?: string;
-      entryPrice?: number;
-      expiryMs?: number;
-    }): Promise<{ success: boolean; trades: { id: string; durationGroup?: string }[] }> => {
+      symbol: string;
+      name: string;
+      assetType: string;
+      direction: "buy" | "sell";
+      entryPrice: number;
+    }): Promise<{ success: boolean; trades: { id: string }[] }> => {
       if (!sessionId) throw new Error("No active session");
-      const res = await apiRequest("POST", `/api/admin/trade-sessions/${sessionId}/trade`, data);
+      const res = await apiRequest("POST", `/api/admin/trade-sessions/${sessionId}/trade`, {
+        symbol: data.symbol,
+        name: data.name,
+        assetType: data.assetType,
+        direction: data.direction === "buy" ? "higher" : "lower",
+        entryPrice: data.entryPrice,
+        assets: [{
+          symbol: data.symbol,
+          name: data.name,
+          assetType: data.assetType,
+          entryPrice: data.entryPrice,
+          durationMs: 0,
+          durationLabel: "manual",
+        }],
+      });
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/trades-history"] });
-      toast({ title: "Trade Executed", description: `Trade placed for ${selectedUsers.length} user(s) across ${tradingAssets.length} asset(s)` });
+      toast({ title: "Trade Executed", description: `Trade placed for ${selectedUsers.length} user(s)` });
     },
     onError: (error: any) => {
       toast({ title: "Trade Failed", description: error?.message || "Failed to execute trade", variant: "destructive" });
     },
   });
 
-  // Complete trades mutation (when countdown ends)
   const completeTradeMutation = useMutation({
     mutationFn: async (data: { tradeIds: string[]; exitPrice: number }) => {
       const res = await apiRequest("POST", "/api/admin/trades/complete", data);
@@ -410,7 +362,6 @@ export default function TradeForUsers() {
     },
   });
 
-  // Add profit mutation
   const addProfitMutation = useMutation({
     mutationFn: async (profitAmounts: { userId: string; amount: number }[]) => {
       if (!sessionId) throw new Error("No active session");
@@ -434,19 +385,19 @@ export default function TradeForUsers() {
     return name.includes(query) || email.includes(query);
   });
 
-  const getUserName = (user: User) => {
+  const getUserName = (user: UserData) => {
     if (user.firstName || user.lastName) {
       return `${user.firstName || ""} ${user.lastName || ""}`.trim();
     }
     return user.email?.split("@")[0] || "Unknown";
   };
 
-  const getInitials = (user: User) => {
+  const getInitials = (user: UserData) => {
     const name = getUserName(user);
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
-  const toggleUserSelection = (user: User) => {
+  const toggleUserSelection = (user: UserData) => {
     const existing = selectedUsers.find(u => u.id === user.id);
     if (existing) {
       setSelectedUsers(selectedUsers.filter(u => u.id !== user.id));
@@ -455,9 +406,9 @@ export default function TradeForUsers() {
     }
   };
 
-  const updateUserAmount = (userId: string, amount: number) => {
+  const updateUserAmount = (userId: string, amt: number) => {
     setSelectedUsers(selectedUsers.map(u => 
-      u.id === userId ? { ...u, tradeAmount: amount } : u
+      u.id === userId ? { ...u, tradeAmount: amt } : u
     ));
   };
 
@@ -491,191 +442,191 @@ export default function TradeForUsers() {
     );
   };
 
-  // Add new asset to trading list with default duration
   const handleSelectAsset = (asset: Asset) => {
-    const existing = tradingAssets.find(a => a.symbol === asset.symbol);
-    if (!existing) {
-      setTradingAssets([...tradingAssets, { ...asset, duration: "1m" }]);
-      setSelectedAssetIndex(tradingAssets.length); // Select the new asset
-    } else {
-      const index = tradingAssets.findIndex(a => a.symbol === asset.symbol);
-      setSelectedAssetIndex(index);
+    if (!openAssets.find(a => a.symbol === asset.symbol)) {
+      setOpenAssets([...openAssets, asset]);
     }
+    setSelectedAsset(asset);
     setMarketModalOpen(false);
   };
 
-  // Close an asset tab
-  const handleCloseAssetTab = (asset: TradingAsset, e: React.MouseEvent) => {
+  const handleCloseAssetTab = (asset: Asset, e: React.MouseEvent) => {
     e.stopPropagation();
-    const newAssets = tradingAssets.filter(a => a.symbol !== asset.symbol);
-    setTradingAssets(newAssets);
-    if (selectedAsset.symbol === asset.symbol && newAssets.length > 0) {
-      setSelectedAssetIndex(0);
+    const newAssets = openAssets.filter(a => a.symbol !== asset.symbol);
+    setOpenAssets(newAssets);
+    if (selectedAsset?.symbol === asset.symbol && newAssets.length > 0) {
+      setSelectedAsset(newAssets[0]);
     }
   };
 
-  // Update duration for a specific asset
-  const updateAssetDuration = (symbol: string, duration: string) => {
-    setTradingAssets(tradingAssets.map(a => 
-      a.symbol === symbol ? { ...a, duration } : a
-    ));
-  };
+  const handleTrade = async (direction: "buy" | "sell") => {
+    if (activeTrade || !selectedAsset) return;
 
-  // Set expiration for current selected asset
-  const setExpiration = (value: string) => {
-    updateAssetDuration(selectedAsset.symbol, value);
-  };
-
-  const getExpiryMs = useCallback((durationValue?: string) => {
-    const dur = durationValue || expiration;
-    return expiryOptions.find(o => o.value === dur)?.ms || 60000;
-  }, [expiration]);
-
-  // Execute trade for ALL selected assets with their individual durations
-  const handleTrade = async (direction: "higher" | "lower") => {
-    if (activeTrades.length > 0) return; // Already trading
-    
-    // Block new trade if there's a pending profit trade that hasn't been resolved
-    if (completedDurationGroup && !profitsAlreadyAdded) {
-      setPendingProfitBlockDialogOpen(true);
+    if (amount <= 0) {
+      toast({ title: "Invalid Amount", description: "Please enter a valid trade amount.", variant: "destructive" });
       return;
     }
-    
-    const now = Date.now();
-    
-    // Group assets by their duration for countdown management
-    const durationGroups = new Map<string, TradingAsset[]>();
-    tradingAssets.forEach(asset => {
-      const group = durationGroups.get(asset.duration) || [];
-      group.push(asset);
-      durationGroups.set(asset.duration, group);
-    });
 
-    // Start countdowns for each duration group
-    const initialCountdowns: Record<string, number> = {};
-    durationGroups.forEach((_, duration) => {
-      const ms = getExpiryMs(duration);
-      initialCountdowns[duration] = Math.floor(ms / 1000);
-    });
-    setCountdowns(initialCountdowns);
+    const parsedSL = stopLoss ? parseFloat(stopLoss) : null;
+    const parsedTP = takeProfit ? parseFloat(takeProfit) : null;
+
+    if (parsedSL !== null && parsedSL <= 0) {
+      toast({ title: "Invalid Stop Loss", description: "Stop loss must be a positive number.", variant: "destructive" });
+      return;
+    }
+    if (parsedTP !== null && parsedTP <= 0) {
+      toast({ title: "Invalid Take Profit", description: "Take profit must be a positive number.", variant: "destructive" });
+      return;
+    }
+
+    const now = Date.now();
+
+    const newTrade: ActiveTrade = {
+      id: `trade-${now}`,
+      symbol: selectedAsset.symbol,
+      direction,
+      amount,
+      entryPrice: selectedAsset.price,
+      stopLoss: parsedSL,
+      takeProfit: parsedTP,
+      volume: volume,
+      tradeIds: [],
+    };
+
+    setActiveTrade(newTrade);
 
     try {
-      // Execute multi-asset trade
-      const assets = tradingAssets.map(asset => ({
-        symbol: asset.symbol,
-        name: asset.name,
-        assetType: asset.type,
-        entryPrice: asset.price,
-        durationMs: getExpiryMs(asset.duration),
-        durationLabel: asset.duration,
-      }));
-
       const result = await executeTradeMutation.mutateAsync({
-        assets,
+        symbol: selectedAsset.symbol,
+        name: selectedAsset.name,
+        assetType: selectedAsset.type,
         direction,
-      } as any);
-      
-      const tradeIds = result.trades?.map((t) => t.id) || [];
-      
-      // Create active trades for each duration group
-      const newActiveTrades: ActiveTrade[] = [];
-      durationGroups.forEach((groupAssets, duration) => {
-        const expiryMs = getExpiryMs(duration);
-        newActiveTrades.push({
-          id: `trade-${now}-${duration}`,
-          symbol: groupAssets.map(a => a.symbol).join(", "),
-          name: groupAssets.map(a => a.name).join(", "),
-          assetType: groupAssets[0].type, // Use first asset's type for color coding
-          direction,
-          amount: selectedUsers.reduce((sum, u) => sum + u.tradeAmount, 0),
-          entryPrice: groupAssets[0].price,
-          expiryTime: now + expiryMs,
-          startTime: now,
-          tradeIds: tradeIds.filter((_, i) => {
-            // Split tradeIds by duration group (approximation)
-            return true; // For now include all
-          }),
-          durationGroup: duration,
-          // Store individual assets for profit popup display
-          assets: groupAssets.map(a => ({ symbol: a.symbol, name: a.name, assetType: a.type })),
-        });
+        entryPrice: selectedAsset.price,
       });
-      
-      setActiveTrades(newActiveTrades);
+
+      const tradeIds = result.trades?.map((t) => t.id) || [];
+      setActiveTrade(prev => prev ? { ...prev, tradeIds } : prev);
     } catch (error) {
-      setCountdowns({});
+      setActiveTrade(null);
     }
   };
 
-  // Countdown effect for multiple active trades
+  const handleDoubleUp = () => {
+    if (!activeTrade || !selectedAsset) return;
+
+    executeTradeMutation.mutate({
+      symbol: selectedAsset.symbol,
+      name: selectedAsset.name,
+      assetType: selectedAsset.type,
+      direction: activeTrade.direction,
+      entryPrice: selectedAsset.price,
+    });
+
+    toast({
+      title: "Double Up",
+      description: `Placed additional ${activeTrade.direction.toUpperCase()} trade for $${activeTrade.amount}`,
+    });
+  };
+
+  const handleCloseTrade = () => {
+    if (!activeTrade || !selectedAsset) return;
+
+    if (activeTrade.tradeIds.length > 0) {
+      completeTradeMutation.mutate({
+        tradeIds: activeTrade.tradeIds,
+        exitPrice: selectedAsset.price,
+      });
+    }
+
+    const assets: CompletedAsset[] = [{
+      symbol: activeTrade.symbol,
+      name: selectedAsset.name,
+      assetType: selectedAsset.type,
+    }];
+
+    setProfitsAlreadyAdded(false);
+    setProfitPopupOpen(true);
+    setCompletedTradeGroup({
+      trades: [],
+      assets,
+      completedAt: new Date(),
+    });
+
+    toast({
+      title: "Trade Closed",
+      description: `Closed ${activeTrade.direction.toUpperCase()} position on ${activeTrade.symbol} at ${formatPrice(selectedAsset.price)}`,
+    });
+
+    setActiveTrade(null);
+  };
+
   useEffect(() => {
-    if (activeTrades.length === 0) return;
+    if (!activeTrade || !selectedAsset) return;
 
     const interval = setInterval(() => {
-      const now = Date.now();
-      const newCountdowns: Record<string, number> = {};
-      const completedGroups: ActiveTrade[] = [];
-      const stillActive: ActiveTrade[] = [];
+      const currentPrice = selectedAsset.price;
 
-      activeTrades.forEach(trade => {
-        const remaining = Math.max(0, Math.floor((trade.expiryTime - now) / 1000));
-        newCountdowns[trade.durationGroup] = remaining;
-
-        if (remaining <= 0) {
-          completedGroups.push(trade);
-        } else {
-          stillActive.push(trade);
+      if (activeTrade.stopLoss !== null) {
+        if (activeTrade.direction === "buy" && currentPrice <= activeTrade.stopLoss) {
+          clearInterval(interval);
+          if (activeTrade.tradeIds.length > 0) {
+            completeTradeMutation.mutate({ tradeIds: activeTrade.tradeIds, exitPrice: currentPrice });
+          }
+          toast({ title: "Stop Loss Hit", description: `Position closed at ${formatPrice(currentPrice)}`, variant: "destructive" });
+          const assets: CompletedAsset[] = [{ symbol: activeTrade.symbol, name: selectedAsset.name, assetType: selectedAsset.type }];
+          setProfitsAlreadyAdded(false);
+          setProfitPopupOpen(true);
+          setCompletedTradeGroup({ trades: [], assets, completedAt: new Date() });
+          setActiveTrade(null);
+          return;
         }
-      });
-
-      setCountdowns(newCountdowns);
-
-      // Handle completed trades
-      completedGroups.forEach(trade => {
-        if (trade.tradeIds && trade.tradeIds.length > 0) {
-          completeTradeMutation.mutate({
-            tradeIds: trade.tradeIds,
-            exitPrice: selectedAsset.price,
-          });
+        if (activeTrade.direction === "sell" && currentPrice >= activeTrade.stopLoss) {
+          clearInterval(interval);
+          if (activeTrade.tradeIds.length > 0) {
+            completeTradeMutation.mutate({ tradeIds: activeTrade.tradeIds, exitPrice: currentPrice });
+          }
+          toast({ title: "Stop Loss Hit", description: `Position closed at ${formatPrice(currentPrice)}`, variant: "destructive" });
+          const assets: CompletedAsset[] = [{ symbol: activeTrade.symbol, name: selectedAsset.name, assetType: selectedAsset.type }];
+          setProfitsAlreadyAdded(false);
+          setProfitPopupOpen(true);
+          setCompletedTradeGroup({ trades: [], assets, completedAt: new Date() });
+          setActiveTrade(null);
+          return;
         }
-        
-        // Show profit popup for completed group
-        toast({ 
-          title: `Trade Completed (${trade.durationGroup})`, 
-          description: "Click to add profit for users" 
-        });
-        
-        // Use assets captured at trade execution time (stored in ActiveTrade)
-        // Trigger profit popup for this duration group
-        setProfitsAlreadyAdded(false); // Reset flag for new completion
-        setProfitPopupOpen(true);
-        setCompletedDurationGroup({
-          durationGroup: trade.durationGroup,
-          trades: [], // Will be fetched from API
-          assets: trade.assets, // Use assets captured at trade execution time
-          completedAt: new Date(),
-        });
-      });
+      }
 
-      setActiveTrades(stillActive);
+      if (activeTrade.takeProfit !== null) {
+        if (activeTrade.direction === "buy" && currentPrice >= activeTrade.takeProfit) {
+          clearInterval(interval);
+          if (activeTrade.tradeIds.length > 0) {
+            completeTradeMutation.mutate({ tradeIds: activeTrade.tradeIds, exitPrice: currentPrice });
+          }
+          toast({ title: "Take Profit Hit", description: `Position closed at ${formatPrice(currentPrice)}` });
+          const assets: CompletedAsset[] = [{ symbol: activeTrade.symbol, name: selectedAsset.name, assetType: selectedAsset.type }];
+          setProfitsAlreadyAdded(false);
+          setProfitPopupOpen(true);
+          setCompletedTradeGroup({ trades: [], assets, completedAt: new Date() });
+          setActiveTrade(null);
+          return;
+        }
+        if (activeTrade.direction === "sell" && currentPrice <= activeTrade.takeProfit) {
+          clearInterval(interval);
+          if (activeTrade.tradeIds.length > 0) {
+            completeTradeMutation.mutate({ tradeIds: activeTrade.tradeIds, exitPrice: currentPrice });
+          }
+          toast({ title: "Take Profit Hit", description: `Position closed at ${formatPrice(currentPrice)}` });
+          const assets: CompletedAsset[] = [{ symbol: activeTrade.symbol, name: selectedAsset.name, assetType: selectedAsset.type }];
+          setProfitsAlreadyAdded(false);
+          setProfitPopupOpen(true);
+          setCompletedTradeGroup({ trades: [], assets, completedAt: new Date() });
+          setActiveTrade(null);
+          return;
+        }
+      }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [activeTrades, selectedAsset.price, completeTradeMutation]);
-
-  const formatCountdown = (seconds: number) => {
-    if (seconds >= 3600) {
-      const h = Math.floor(seconds / 3600);
-      const m = Math.floor((seconds % 3600) / 60);
-      const s = seconds % 60;
-      return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    } else if (seconds >= 60) {
-      const m = Math.floor(seconds / 60);
-      const s = seconds % 60;
-      return `${m}:${s.toString().padStart(2, '0')}`;
-    }
-    return `0:${seconds.toString().padStart(2, '0')}`;
-  };
+  }, [activeTrade, selectedAsset]);
 
   const handleOpenProfitDialog = () => {
     const amounts: Record<string, number> = {};
@@ -686,8 +637,8 @@ export default function TradeForUsers() {
 
   const handleAddProfit = () => {
     const profitList = Object.entries(profitAmounts)
-      .filter(([_, amount]) => amount !== 0)
-      .map(([userId, amount]) => ({ userId, amount }));
+      .filter(([_, amt]) => amt !== 0)
+      .map(([userId, amt]) => ({ userId, amount: amt }));
     
     if (profitList.length === 0) {
       toast({ title: "No Changes", description: "Enter profit amounts first", variant: "destructive" });
@@ -697,22 +648,19 @@ export default function TradeForUsers() {
     addProfitMutation.mutate(profitList);
   };
 
-  // Handle profit from popup dialog (group or singular mode)
   const handlePopupAddProfit = () => {
     let profitList: { userId: string; amount: number }[] = [];
     
     if (profitMode === "group") {
-      // Group mode: apply same profit to all users
       if (groupProfitAmount === 0) {
         toast({ title: "No Profit", description: "Enter a profit amount first", variant: "destructive" });
         return;
       }
       profitList = selectedUsers.map(u => ({ userId: u.id, amount: groupProfitAmount }));
     } else {
-      // Singular mode: individual profits per user
       profitList = Object.entries(profitAmounts)
-        .filter(([_, amount]) => amount !== 0)
-        .map(([userId, amount]) => ({ userId, amount }));
+        .filter(([_, amt]) => amt !== 0)
+        .map(([userId, amt]) => ({ userId, amount: amt }));
       
       if (profitList.length === 0) {
         toast({ title: "No Changes", description: "Enter profit amounts first", variant: "destructive" });
@@ -725,13 +673,11 @@ export default function TradeForUsers() {
         setProfitPopupOpen(false);
         setGroupProfitAmount(0);
         setProfitAmounts({});
-        setProfitsAlreadyAdded(true); // Mark that profits were added for this completion
-        // Keep completedDurationGroup to show reopen button
+        setProfitsAlreadyAdded(true);
       }
     });
   };
 
-  // Group trades by date
   const groupedTrades = tradeHistory.reduce((acc, trade) => {
     const date = format(new Date(trade.createdAt), "yyyy-MM-dd");
     if (!acc[date]) acc[date] = [];
@@ -741,6 +687,10 @@ export default function TradeForUsers() {
 
   const historyActiveTrades = tradeHistory.filter(t => t.status === "active" || t.status === "pending");
   const historyCompletedTrades = tradeHistory.filter(t => t.status === "completed" || t.status === "closed");
+
+  const handleSliderChange = (value: number[]) => {
+    setAmount(value[0]);
+  };
 
   const slideVariants = {
     enter: (direction: "left" | "right") => ({
@@ -760,7 +710,6 @@ export default function TradeForUsers() {
   return (
     <div className="min-h-[calc(100vh-200px)]">
       <AnimatePresence mode="wait" custom={slideDirection}>
-        {/* Page 3: Trade History (Default) */}
         {currentPage === "history" && (
           <motion.div
             key="history"
@@ -916,7 +865,6 @@ export default function TradeForUsers() {
           </motion.div>
         )}
 
-        {/* Page 1: User Selection */}
         {currentPage === "select-users" && (
           <motion.div
             key="select-users"
@@ -1072,8 +1020,7 @@ export default function TradeForUsers() {
           </motion.div>
         )}
 
-        {/* Page 2: Trade Room */}
-        {currentPage === "trade-room" && (
+        {currentPage === "trade-room" && selectedAsset && (
           <motion.div
             key="trade-room"
             custom={slideDirection}
@@ -1084,7 +1031,6 @@ export default function TradeForUsers() {
             transition={{ type: "tween", duration: 0.3 }}
             className="flex flex-col h-[calc(100vh-140px)]"
           >
-            {/* Trade Room Header */}
             <header className="flex items-center gap-2 px-2 h-14 border-b border-white/10 flex-shrink-0">
               <Button 
                 variant="ghost" 
@@ -1096,10 +1042,10 @@ export default function TradeForUsers() {
               </Button>
 
               <div className="flex items-center gap-1 overflow-x-auto flex-1">
-                {tradingAssets.map((asset, index) => (
+                {openAssets.map((asset) => (
                   <button
                     key={asset.symbol}
-                    onClick={() => setSelectedAssetIndex(index)}
+                    onClick={() => setSelectedAsset(asset)}
                     data-testid={`tab-${asset.symbol}`}
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200",
@@ -1112,8 +1058,8 @@ export default function TradeForUsers() {
                       {getSymbolInitials(asset.symbol)}
                     </div>
                     <span>{asset.symbol}</span>
-                    <Badge className="text-[10px] px-1 py-0 bg-primary/20">{asset.duration}</Badge>
-                    {tradingAssets.length > 1 && (
+                    <span className="text-xs opacity-70">{asset.type}</span>
+                    {openAssets.length > 1 && (
                       <button
                         onClick={(e) => handleCloseAssetTab(asset, e)}
                         className="ml-1 hover:text-white"
@@ -1154,11 +1100,8 @@ export default function TradeForUsers() {
               </Button>
             </header>
 
-            {/* Main Trade Area */}
             <div className="flex-1 flex min-h-0">
-              {/* Chart Section */}
               <div className="flex-1 flex flex-col min-h-0">
-                {/* Asset Info */}
                 <div className="flex items-center gap-4 px-4 py-3 border-b border-white/10">
                   <button
                     onClick={() => setMarketModalOpen(true)}
@@ -1178,7 +1121,6 @@ export default function TradeForUsers() {
                   </button>
 
                   <div className="ml-auto flex items-center gap-3">
-                    {/* Chart Type Toggle */}
                     <div className="flex items-center gap-1 glass-light rounded-lg p-1">
                       <Button
                         size="icon"
@@ -1274,19 +1216,34 @@ export default function TradeForUsers() {
                   </div>
                 </div>
 
-                {/* Chart */}
-                <div className="flex-1 p-2 min-h-0">
+                <div className="flex-1 relative p-2 min-h-[200px]">
                   <CandlestickChart 
                     symbol={selectedAsset.symbol}
                     currentPrice={selectedAsset.price}
-                    isPositive={selectedAsset.change24h >= 0}
+                    isPositive={selectedAsset.changePercent24h >= 0}
                     indicators={indicators}
                     chartType={chartType}
                   />
+
+                  <div className="absolute bottom-4 right-4 glass-dark rounded-lg px-3 py-2 text-right">
+                    <div className="text-xl md:text-2xl font-mono font-bold" data-testid="text-current-price">
+                      {formatPrice(selectedAsset.price)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 px-4 py-2 border-t border-white/10">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">ask</span>
+                    <span className="font-mono text-sm">{formatPrice(selectedAsset.price * 1.0001)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">bid</span>
+                    <span className="font-mono text-sm">{formatPrice(selectedAsset.price * 0.9999)}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Users Panel (Collapsible) */}
               <AnimatePresence>
                 {showUsersPanel && (
                   <motion.div
@@ -1323,112 +1280,299 @@ export default function TradeForUsers() {
                 )}
               </AnimatePresence>
 
-              {/* Trading Panel */}
-              <div className="w-72 border-l border-white/10 p-4 flex flex-col gap-4 overflow-y-auto">
-                <div className="glass-light rounded-lg p-3">
-                  <div className="text-sm text-muted-foreground mb-1">Total Trading</div>
-                  <div className="text-2xl font-bold">
-                    ${selectedUsers.reduce((sum, u) => sum + u.tradeAmount, 0).toLocaleString()}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    for {selectedUsers.length} user(s)
-                  </div>
-                </div>
-
-                <div className="glass-light rounded-lg p-3">
-                  <div className="text-sm text-muted-foreground mb-2">Expiry Time</div>
-                  <Select value={expiration} onValueChange={setExpiration}>
-                    <SelectTrigger data-testid="select-expiry">
+              {/* MetaTrader-Style Trading Panel */}
+              <div className="w-80 border-l border-white/10 flex flex-col glass-dark overflow-y-auto">
+                <div className="p-3 border-b border-white/10">
+                  <Select value={executionType} onValueChange={setExecutionType} disabled={!!activeTrade}>
+                    <SelectTrigger className="glass-light border-0 h-10" data-testid="select-execution-type">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      {expiryOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
+                    <SelectContent className="glass-dark border-white/10">
+                      <SelectItem value="market">Market Execution</SelectItem>
+                      <SelectItem value="limit">Limit Order</SelectItem>
+                      <SelectItem value="stop">Stop Order</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                {activeTrade ? (
-                  <div className="glass-light rounded-xl p-4 text-center">
-                    <div className="text-sm text-muted-foreground mb-2">Time Remaining</div>
-                    <div className="text-4xl font-bold text-primary mb-2">
-                      {formatCountdown(countdown)}
+                <div className="p-3 border-b border-white/10">
+                  <div className="glass-light rounded-lg p-3">
+                    <div className="text-sm text-muted-foreground mb-1">Trading for</div>
+                    <div className="text-lg font-bold">{selectedUsers.length} user(s)</div>
+                    <div className="text-xs text-muted-foreground">
+                      Total: ${totalTradeAmount.toLocaleString()}
                     </div>
-                    <Badge className={cn(
-                      "text-sm",
-                      activeTrade.direction === "higher" ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
-                    )}>
-                      {activeTrade.direction.toUpperCase()}
-                    </Badge>
                   </div>
-                ) : (
-                  <>
-                    <Button
-                      className="bg-success hover:bg-success/90 h-14 text-lg font-bold"
-                      onClick={() => handleTrade("higher")}
-                      disabled={executeTradeMutation.isPending || !isMarketDataReady}
-                      data-testid="button-buy"
-                    >
-                      <ArrowUp className="w-5 h-5 mr-2" />
-                      {!isMarketDataReady ? "Loading..." : "BUY"}
-                    </Button>
-                    <Button
-                      className="bg-destructive hover:bg-destructive/90 h-14 text-lg font-bold"
-                      onClick={() => handleTrade("lower")}
-                      disabled={executeTradeMutation.isPending || !isMarketDataReady}
-                      data-testid="button-sell"
-                    >
-                      <ArrowDown className="w-5 h-5 mr-2" />
-                      {!isMarketDataReady ? "Loading..." : "SELL"}
-                    </Button>
-                  </>
-                )}
+                </div>
 
-                {/* Reopen Profit Popup Button - Shows when a trade has completed but popup is closed */}
-                {completedDurationGroup && !profitPopupOpen && !activeTrade && (
-                  <Button
-                    className="bg-primary/80 hover:bg-primary h-12 font-semibold"
-                    onClick={() => {
-                      if (profitsAlreadyAdded) {
-                        setReopenConfirmDialogOpen(true);
-                      } else {
-                        setProfitPopupOpen(true);
-                      }
-                    }}
-                    data-testid="button-reopen-profit-popup"
-                  >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    {profitsAlreadyAdded ? "Trade Completed" : "Add Profits"}
-                  </Button>
-                )}
+                <div className="px-3 pt-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-muted-foreground">Volume</span>
+                    <span className="text-xs text-muted-foreground">{selectedAsset?.type === "forex" ? "Lots" : selectedAsset?.type === "crypto" ? "Units" : "Shares"}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setVolume(Math.max(0, volume - (selectedAsset?.type === "forex" ? 0.01 : 1)))}
+                      disabled={!!activeTrade}
+                      data-testid="button-volume-minus"
+                      className="glass-light rounded px-2 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                    <input
+                      type="number"
+                      value={volume}
+                      onChange={(e) => setVolume(Math.max(0, parseFloat(e.target.value) || 0))}
+                      disabled={!!activeTrade}
+                      data-testid="input-volume"
+                      className="glass-light rounded px-2 py-1.5 text-sm text-center flex-1 bg-transparent outline-none disabled:opacity-50"
+                    />
+                    <button
+                      onClick={() => setVolume(volume + (selectedAsset?.type === "forex" ? 0.01 : 1))}
+                      disabled={!!activeTrade}
+                      data-testid="button-volume-plus"
+                      className="glass-light rounded px-2 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
 
-                <div className="glass-light rounded-lg p-2 mt-auto">
-                  <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="px-3 pt-3">
+                  <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <div className="text-[10px] text-muted-foreground">Users</div>
-                      <div className="text-xs font-semibold">{selectedUsers.length}</div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] text-muted-foreground">Total</div>
-                      <div className="text-xs font-semibold text-warning">
-                        ${selectedUsers.reduce((sum, u) => sum + u.tradeAmount, 0).toLocaleString()}
+                      <div className="text-xs text-muted-foreground mb-1">Stop Loss</div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => {
+                            const val = parseFloat(stopLoss) || selectedAsset.price;
+                            setStopLoss((val - (selectedAsset.price * 0.001)).toFixed(selectedAsset.price < 1 ? 5 : 2));
+                          }}
+                          disabled={!!activeTrade}
+                          data-testid="button-sl-minus"
+                          className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <input
+                          type="number"
+                          value={stopLoss}
+                          onChange={(e) => setStopLoss(e.target.value)}
+                          placeholder="---"
+                          disabled={!!activeTrade}
+                          data-testid="input-stop-loss"
+                          className="glass-light rounded px-1 py-1.5 text-xs text-center flex-1 bg-transparent outline-none min-w-0 disabled:opacity-50 placeholder:text-muted-foreground/50"
+                        />
+                        <button
+                          onClick={() => {
+                            const val = parseFloat(stopLoss) || selectedAsset.price;
+                            setStopLoss((val + (selectedAsset.price * 0.001)).toFixed(selectedAsset.price < 1 ? 5 : 2));
+                          }}
+                          disabled={!!activeTrade}
+                          data-testid="button-sl-plus"
+                          className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
                       </div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-muted-foreground">Payout</div>
-                      <div className="text-xs font-semibold text-success">87%</div>
+                      <div className="text-xs text-muted-foreground mb-1">Take Profit</div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => {
+                            const val = parseFloat(takeProfit) || selectedAsset.price;
+                            setTakeProfit((val - (selectedAsset.price * 0.001)).toFixed(selectedAsset.price < 1 ? 5 : 2));
+                          }}
+                          disabled={!!activeTrade}
+                          data-testid="button-tp-minus"
+                          className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <input
+                          type="number"
+                          value={takeProfit}
+                          onChange={(e) => setTakeProfit(e.target.value)}
+                          placeholder="---"
+                          disabled={!!activeTrade}
+                          data-testid="input-take-profit"
+                          className="glass-light rounded px-1 py-1.5 text-xs text-center flex-1 bg-transparent outline-none min-w-0 disabled:opacity-50 placeholder:text-muted-foreground/50"
+                        />
+                        <button
+                          onClick={() => {
+                            const val = parseFloat(takeProfit) || selectedAsset.price;
+                            setTakeProfit((val + (selectedAsset.price * 0.001)).toFixed(selectedAsset.price < 1 ? 5 : 2));
+                          }}
+                          disabled={!!activeTrade}
+                          data-testid="button-tp-plus"
+                          className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
                   </div>
+                </div>
+
+                <div className="px-3 pt-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-muted-foreground">Trading Amount</span>
+                    <span className="text-xs text-muted-foreground">Per user</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="glass-light rounded-lg p-2 flex items-center gap-2">
+                      <span className="text-muted-foreground text-sm">$</span>
+                      <input
+                        type="number"
+                        value={amount}
+                        onChange={(e) => setAmount(Math.max(1, parseFloat(e.target.value) || 1))}
+                        disabled={!!activeTrade}
+                        data-testid="input-amount"
+                        className="bg-transparent text-lg font-semibold text-center flex-1 outline-none disabled:opacity-50"
+                      />
+                    </div>
+                    <Slider
+                      value={[amount]}
+                      onValueChange={handleSliderChange}
+                      min={1}
+                      max={10000}
+                      step={1}
+                      disabled={!!activeTrade}
+                      data-testid="slider-amount"
+                    />
+                  </div>
+                </div>
+
+                <div className="px-3 pt-4">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      onClick={() => handleTrade("sell")}
+                      disabled={executeTradeMutation.isPending || !!activeTrade}
+                      data-testid="button-sell"
+                      className="h-14 bg-destructive hover:bg-destructive/90 text-white font-bold flex flex-col items-center justify-center gap-0.5 rounded-md"
+                    >
+                      <span className="text-lg font-mono">{formatPrice(selectedAsset.price * 0.9999)}</span>
+                      <span className="text-[10px] uppercase tracking-wider opacity-80">Sell by Market</span>
+                    </Button>
+
+                    <Button
+                      onClick={() => handleTrade("buy")}
+                      disabled={executeTradeMutation.isPending || !!activeTrade}
+                      data-testid="button-buy"
+                      className="h-14 bg-[#2196F3] hover:bg-[#1976D2] text-white font-bold flex flex-col items-center justify-center gap-0.5 rounded-md"
+                    >
+                      <span className="text-lg font-mono">{formatPrice(selectedAsset.price * 1.0001)}</span>
+                      <span className="text-[10px] uppercase tracking-wider opacity-80">Buy by Market</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {activeTrade && (
+                  <div className="px-3 pt-3">
+                    <div className={cn(
+                      "glass-light rounded-lg p-3 border",
+                      activeTrade.direction === "buy" ? "border-[#2196F3]/50" : "border-destructive/50"
+                    )}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={cn(
+                          "text-sm font-semibold",
+                          activeTrade.direction === "buy" ? "text-[#2196F3]" : "text-destructive"
+                        )} data-testid="text-trade-direction">
+                          {activeTrade.direction.toUpperCase()} - ${activeTrade.amount}
+                        </span>
+                        <span className="text-xs text-muted-foreground font-mono">
+                          @ {formatPrice(activeTrade.entryPrice)}
+                        </span>
+                      </div>
+                      {activeTrade.stopLoss && (
+                        <div className="flex justify-between text-[10px]">
+                          <span className="text-muted-foreground">SL:</span>
+                          <span className="text-destructive">{formatPrice(activeTrade.stopLoss)}</span>
+                        </div>
+                      )}
+                      {activeTrade.takeProfit && (
+                        <div className="flex justify-between text-[10px]">
+                          <span className="text-muted-foreground">TP:</span>
+                          <span className="text-success">{formatPrice(activeTrade.takeProfit)}</span>
+                        </div>
+                      )}
+                      <div className="flex gap-2 mt-2">
+                        <Button size="sm" variant="outline" onClick={handleDoubleUp} data-testid="button-double-up" className="flex-1 text-xs">
+                          <Copy className="w-3 h-3 mr-1" />
+                          Double
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleCloseTrade} data-testid="button-close-trade" className="flex-1 text-xs">
+                          <X className="w-3 h-3 mr-1" />
+                          Close
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {completedTradeGroup && !profitPopupOpen && !activeTrade && (
+                  <div className="px-3 pt-3">
+                    <Button
+                      className="w-full bg-primary/80 hover:bg-primary h-12 font-semibold"
+                      onClick={() => {
+                        if (profitsAlreadyAdded) {
+                          setReopenConfirmDialogOpen(true);
+                        } else {
+                          setProfitPopupOpen(true);
+                        }
+                      }}
+                      data-testid="button-reopen-profit-popup"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      {profitsAlreadyAdded ? "Trade Completed" : "Add Profits"}
+                    </Button>
+                  </div>
+                )}
+
+                <div className="px-3 pt-3 mt-auto">
+                  <div className="glass-light rounded-lg p-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-[10px] text-muted-foreground block">Users</span>
+                        <span className="text-sm font-semibold" data-testid="text-users-count">
+                          {selectedUsers.length}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-muted-foreground block">Combined Balance</span>
+                        <span className="text-sm font-semibold" data-testid="text-combined-balance">
+                          ${selectedUsers.reduce((s, u) => s + parseFloat(u.balance), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-muted-foreground block">Orders Margin</span>
+                        <span className="text-sm font-semibold text-warning" data-testid="text-orders-margin">
+                          ${activeTrade ? (activeTrade.amount * selectedUsers.length).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-muted-foreground block">Free Margin</span>
+                        <span className="text-sm font-semibold text-success" data-testid="text-free-margin">
+                          ${(selectedUsers.reduce((s, u) => s + parseFloat(u.balance), 0) - (activeTrade ? activeTrade.amount * selectedUsers.length : 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="px-3 pt-3 pb-3">
+                  <AssetInfoPanel 
+                    asset={selectedAsset} 
+                    profitPercent={profitPercent}
+                    potentialProfit={potentialProfit}
+                  />
                 </div>
               </div>
             </div>
           </motion.div>
         )}
 
-        {/* Page 4: Add Profits - Full page for all users */}
         {currentPage === "add-profits" && (
           <motion.div
             key="add-profits"
@@ -1452,8 +1596,7 @@ export default function TradeForUsers() {
               <div className="flex-1">
                 <h2 className="text-xl font-bold">Add Profits</h2>
                 <div className="flex flex-wrap items-center gap-2 mt-1">
-                  {/* Asset badges */}
-                  {completedDurationGroup?.assets.map((asset, index) => (
+                  {completedTradeGroup?.assets.map((asset, index) => (
                     <div 
                       key={`page-asset-${asset.symbol}-${index}`}
                       className="flex items-center gap-1.5 glass-light rounded-md px-2 py-0.5"
@@ -1467,15 +1610,12 @@ export default function TradeForUsers() {
                       <span className="text-xs font-medium">{asset.symbol}</span>
                     </div>
                   ))}
-                  <span className="text-xs text-muted-foreground">•</span>
+                  <span className="text-xs text-muted-foreground">&bull;</span>
                   <span className="text-xs text-muted-foreground">{selectedUsers.length} users</span>
-                  <span className="text-xs text-muted-foreground">•</span>
-                  <Badge className="text-xs bg-primary/20">{completedDurationGroup?.durationGroup || "N/A"}</Badge>
                 </div>
               </div>
             </div>
 
-            {/* Mode toggle */}
             <div className="flex gap-2 flex-shrink-0">
               <Button
                 variant={profitMode === "group" ? "default" : "outline"}
@@ -1495,7 +1635,6 @@ export default function TradeForUsers() {
               </Button>
             </div>
 
-            {/* Group profit input */}
             {profitMode === "group" && (
               <Card className="glass-card p-4 flex-shrink-0">
                 <label className="text-sm font-medium mb-2 block">
@@ -1515,7 +1654,6 @@ export default function TradeForUsers() {
               </Card>
             )}
 
-            {/* Users list */}
             <div className="flex-1 overflow-y-auto space-y-2">
               {selectedUsers.map((user) => (
                 <Card key={user.id} className="glass-card p-3">
@@ -1528,7 +1666,7 @@ export default function TradeForUsers() {
                     <div className="flex-1">
                       <div className="font-medium">{getUserName(user)}</div>
                       <div className="text-xs text-muted-foreground">
-                        Balance: ${parseFloat(user.balance).toLocaleString()} • Trade: ${user.tradeAmount.toLocaleString()}
+                        Balance: ${parseFloat(user.balance).toLocaleString()} &bull; Trade: ${user.tradeAmount.toLocaleString()}
                       </div>
                     </div>
                     {profitMode === "group" ? (
@@ -1553,7 +1691,6 @@ export default function TradeForUsers() {
               ))}
             </div>
 
-            {/* Action buttons */}
             <div className="flex gap-3 pt-2 border-t border-white/10 flex-shrink-0">
               <Button
                 variant="outline"
@@ -1582,14 +1719,12 @@ export default function TradeForUsers() {
         )}
       </AnimatePresence>
 
-      {/* Market Modal */}
       <MarketModal
         open={marketModalOpen}
         onOpenChange={setMarketModalOpen}
         onSelectAsset={handleSelectAsset}
       />
 
-      {/* Add Profit Dialog (Legacy) */}
       <Dialog open={profitDialogOpen} onOpenChange={setProfitDialogOpen}>
         <DialogContent className="glass-dark border-white/10 max-w-md">
           <DialogHeader>
@@ -1641,7 +1776,6 @@ export default function TradeForUsers() {
         </DialogContent>
       </Dialog>
 
-      {/* Profit Popup Dialog - Appears when a duration group completes */}
       <Dialog open={profitPopupOpen} onOpenChange={setProfitPopupOpen}>
         <DialogContent className="glass-dark border-white/10 max-w-lg">
           <DialogHeader>
@@ -1649,11 +1783,10 @@ export default function TradeForUsers() {
               <DollarSign className="w-5 h-5 text-success" />
               Trade Completed - Add Profits
             </DialogTitle>
-            {completedDurationGroup && (
+            {completedTradeGroup && (
               <div className="space-y-2 mt-2">
-                {/* Asset display */}
                 <div className="flex flex-wrap items-center gap-2">
-                  {completedDurationGroup.assets.map((asset, index) => (
+                  {completedTradeGroup.assets.map((asset, index) => (
                     <div 
                       key={`${asset.symbol}-${index}`}
                       className="flex items-center gap-2 glass-light rounded-lg px-3 py-1.5"
@@ -1672,17 +1805,10 @@ export default function TradeForUsers() {
                     </div>
                   ))}
                 </div>
-                {/* Duration badge */}
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="w-4 h-4" />
-                  <span>Duration:</span>
-                  <Badge className="bg-primary/20">{completedDurationGroup.durationGroup}</Badge>
-                </div>
               </div>
             )}
           </DialogHeader>
           
-          {/* Mode selector */}
           <div className="flex gap-2 mt-2">
             <Button
               variant={profitMode === "group" ? "default" : "outline"}
@@ -1705,7 +1831,6 @@ export default function TradeForUsers() {
           </div>
 
           {profitMode === "group" ? (
-            // Group mode - single profit amount applied to all
             <div className="space-y-4 py-4">
               <div className="glass-light rounded-lg p-4">
                 <label className="text-sm font-medium mb-2 block">
@@ -1727,7 +1852,6 @@ export default function TradeForUsers() {
                 </p>
               </div>
 
-              {/* Preview users */}
               <div className="space-y-2">
                 <p className="text-sm font-medium">Users ({Math.min(selectedUsers.length, 5)} of {selectedUsers.length})</p>
                 {selectedUsers.slice(0, 5).map((user) => (
@@ -1760,7 +1884,6 @@ export default function TradeForUsers() {
               </div>
             </div>
           ) : (
-            // Singular mode - individual profit per user
             <div className="space-y-4 py-4 max-h-[40vh] overflow-y-auto">
               {selectedUsers.slice(0, 5).map((user) => (
                 <div key={user.id} className="flex items-center gap-3 glass-light rounded-lg p-2">
@@ -1834,7 +1957,6 @@ export default function TradeForUsers() {
         </DialogContent>
       </Dialog>
 
-      {/* Reopen Confirmation Dialog - When profits already added */}
       <Dialog open={reopenConfirmDialogOpen} onOpenChange={setReopenConfirmDialogOpen}>
         <DialogContent className="glass-dark border-white/10 max-w-sm">
           <DialogHeader>
@@ -1847,9 +1969,9 @@ export default function TradeForUsers() {
             <p className="text-sm text-muted-foreground">
               You have already added profits for this trade session. What would you like to do?
             </p>
-            {completedDurationGroup && (
+            {completedTradeGroup && (
               <div className="flex flex-wrap items-center gap-2 mt-2">
-                {completedDurationGroup.assets.map((asset, index) => (
+                {completedTradeGroup.assets.map((asset, index) => (
                   <div 
                     key={`confirm-asset-${asset.symbol}-${index}`}
                     className="flex items-center gap-1.5 glass-light rounded-md px-2 py-1"
@@ -1884,7 +2006,7 @@ export default function TradeForUsers() {
               className="w-full"
               onClick={() => {
                 setReopenConfirmDialogOpen(false);
-                setCompletedDurationGroup(null);
+                setCompletedTradeGroup(null);
                 setProfitsAlreadyAdded(false);
               }}
               data-testid="button-start-new-trade"
@@ -1898,77 +2020,6 @@ export default function TradeForUsers() {
               className="w-full text-muted-foreground"
               onClick={() => setReopenConfirmDialogOpen(false)}
               data-testid="button-cancel-reopen"
-            >
-              Cancel
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Pending Profit Block Dialog - Blocks new trade until profit added */}
-      <Dialog open={pendingProfitBlockDialogOpen} onOpenChange={setPendingProfitBlockDialogOpen}>
-        <DialogContent className="glass-dark border-white/10 max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-warning" />
-              Pending Profit Required
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-4">
-            <p className="text-sm text-muted-foreground">
-              You have a completed trade that requires profit to be added before starting a new trade.
-            </p>
-            {completedDurationGroup && (
-              <div className="flex flex-wrap items-center gap-2 mt-2">
-                {completedDurationGroup.assets.map((asset, index) => (
-                  <div 
-                    key={`block-asset-${asset.symbol}-${index}`}
-                    className="flex items-center gap-1.5 glass-light rounded-md px-2 py-1"
-                  >
-                    <div className={cn(
-                      "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold",
-                      getAssetTypeColor(asset.assetType)
-                    )}>
-                      {getSymbolInitials(asset.symbol)}
-                    </div>
-                    <span className="text-xs font-medium">{asset.symbol}</span>
-                  </div>
-                ))}
-                <Badge className="text-xs bg-warning/20 text-warning">Awaiting Profit</Badge>
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col gap-2">
-            <Button
-              className="w-full bg-success hover:bg-success/90"
-              onClick={() => {
-                setPendingProfitBlockDialogOpen(false);
-                setProfitPopupOpen(true);
-              }}
-              data-testid="button-add-profit-now"
-            >
-              <DollarSign className="w-4 h-4 mr-2" />
-              Add Profits Now
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                setPendingProfitBlockDialogOpen(false);
-                setCompletedDurationGroup(null);
-                setProfitsAlreadyAdded(false);
-              }}
-              data-testid="button-skip-and-trade"
-            >
-              <X className="w-4 h-4 mr-2" />
-              Skip & Start New Trade
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full text-muted-foreground"
-              onClick={() => setPendingProfitBlockDialogOpen(false)}
-              data-testid="button-cancel-block"
             >
               Cancel
             </Button>
