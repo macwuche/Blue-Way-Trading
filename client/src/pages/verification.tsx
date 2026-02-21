@@ -102,7 +102,7 @@ export default function Verification() {
   const hasPendingReview = steps.some(s => s.status === "uploaded");
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
+    <div className="h-screen overflow-hidden bg-gradient-to-b from-background to-background/95">
       <header className="sticky top-0 z-50 glass-dark border-b border-border/30 px-4 py-3">
         <div className="flex items-center gap-3">
           <Button 

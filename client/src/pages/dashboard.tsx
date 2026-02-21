@@ -257,7 +257,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="h-screen flex overflow-hidden">
       <aside className={cn(
         "fixed lg:relative inset-y-0 left-0 z-40 w-64 glass-dark border-r border-border/30 transition-transform duration-300",
         sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
@@ -320,7 +320,7 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-0">
         <header className="sticky top-0 z-30 glass border-b border-border/30">
           <div className="flex items-center justify-between gap-4 px-4 lg:px-6 h-16">
             <div className="flex items-center gap-4">

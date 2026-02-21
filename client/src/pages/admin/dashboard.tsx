@@ -463,7 +463,7 @@ export default function AdminDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background/95 flex">
+    <div className="h-screen bg-gradient-to-b from-background to-background/95 flex overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 border-r border-white/10 flex-col glass-dark">
         <div className="p-4 border-b border-white/10">

@@ -182,7 +182,7 @@ export default function Support() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background/95 flex flex-col">
+    <div className="h-screen overflow-hidden bg-gradient-to-b from-background to-background/95 flex flex-col">
       <header className="sticky top-0 z-50 glass-dark border-b border-border/30 px-3 sm:px-4 py-3 flex-shrink-0">
         <div className="flex items-center gap-2 sm:gap-3">
           <Button 

@@ -347,14 +347,14 @@ export default function TradeRoom() {
 
   if (!selectedAsset) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
+      <div className="h-screen flex items-center justify-center bg-[#0a0a0a]">
         <div className="text-white/70">Loading market data...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#0a0a0a]">
+    <div className="h-screen flex flex-col md:flex-row bg-[#0a0a0a] overflow-hidden">
       {/* Desktop Sidebar - Hidden on mobile */}
       <aside className="hidden md:flex w-16 border-r border-white/10 flex-col items-center py-4 glass-dark">
         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF9800] to-[#FF5722] flex items-center justify-center mb-6">
@@ -795,7 +795,7 @@ export default function TradeRoom() {
           </div>
 
           {/* Desktop Trading Panel - MetaTrader Style */}
-          <div className="hidden md:flex w-80 border-l border-white/10 flex-col glass-dark overflow-y-auto">
+          <div className="hidden md:flex w-80 border-l border-white/10 flex-col glass-dark overflow-y-auto max-h-full">
             {/* Market Execution Header */}
             <div className="p-3 border-b border-white/10">
               <Select value={executionType} onValueChange={setExecutionType} disabled={!!activeTrade}>
