@@ -537,11 +537,17 @@ export default function AdminDashboard() {
         </header>
 
         {/* Content Area */}
-        <ScrollArea className="flex-1">
-          <div className="p-4 md:p-6 pb-24 md:pb-6">
+        {currentPage === "trade-for-users" ? (
+          <div className="flex-1 min-h-0">
             {renderContent()}
           </div>
-        </ScrollArea>
+        ) : (
+          <ScrollArea className="flex-1">
+            <div className="p-4 md:p-6 pb-24 md:pb-6">
+              {renderContent()}
+            </div>
+          </ScrollArea>
+        )}
       </div>
     </div>
   );

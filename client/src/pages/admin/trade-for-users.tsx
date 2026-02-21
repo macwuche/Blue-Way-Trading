@@ -708,7 +708,7 @@ export default function TradeForUsers() {
   };
 
   return (
-    <div className="h-[calc(100vh-120px)] flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden">
       <AnimatePresence mode="wait" custom={slideDirection}>
         {currentPage === "history" && (
           <motion.div
