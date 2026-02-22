@@ -43,6 +43,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { type Asset, formatPrice } from "@/lib/market-data";
 import { useMarketData } from "@/hooks/use-market-data";
 import { format } from "date-fns";
+import type { UserPosition } from "@shared/schema";
 
 interface UserData {
   id: string;
@@ -75,18 +76,6 @@ interface AdminTrade {
   user?: UserData;
 }
 
-interface ActiveTrade {
-  id: string;
-  symbol: string;
-  direction: "buy" | "sell";
-  amount: number;
-  entryPrice: number;
-  stopLoss: number | null;
-  takeProfit: number | null;
-  volume: number;
-  tradeIds: string[];
-}
-
 interface CompletedAsset {
   symbol: string;
   name: string;
@@ -97,6 +86,12 @@ interface CompletedTradeGroup {
   trades: AdminTrade[];
   assets: CompletedAsset[];
   completedAt: Date;
+}
+
+interface BatchPositionIds {
+  positionIds: string[];
+  symbol: string;
+  direction: string;
 }
 
 const getSymbolInitials = (symbol: string): string => {
@@ -112,6 +107,7 @@ const getAssetTypeColor = (assetType: string): string => {
     case 'crypto': return 'text-yellow-500 bg-yellow-500/20';
     case 'forex': return 'text-emerald-500 bg-emerald-500/20';
     case 'stocks': return 'text-blue-500 bg-blue-500/20';
+    case 'stock': return 'text-blue-500 bg-blue-500/20';
     case 'etf': return 'text-purple-500 bg-purple-500/20';
     default: return 'text-primary bg-primary/20';
   }
@@ -140,11 +136,11 @@ export default function TradeForUsers() {
   const [openAssets, setOpenAssets] = useState<Asset[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [marketModalOpen, setMarketModalOpen] = useState(false);
-  const [activeTrade, setActiveTrade] = useState<ActiveTrade | null>(null);
   const [amount, setAmount] = useState(100);
   const [volume, setVolume] = useState<number>(0);
   const [stopLoss, setStopLoss] = useState<string>("");
   const [takeProfit, setTakeProfit] = useState<string>("");
+  const [triggerPrice, setTriggerPrice] = useState<string>("");
   const [executionType, setExecutionType] = useState("market");
   const [showUsersPanel, setShowUsersPanel] = useState(false);
   const [indicators, setIndicators] = useState<IndicatorSettings>({
@@ -155,6 +151,8 @@ export default function TradeForUsers() {
     emaPeriod: 12,
   });
   const [chartType, setChartType] = useState<ChartType>("candlestick");
+
+  const [batchPositionIds, setBatchPositionIds] = useState<BatchPositionIds[]>([]);
 
   const [profitPopupOpen, setProfitPopupOpen] = useState(false);
   const [profitDialogOpen, setProfitDialogOpen] = useState(false);
@@ -223,6 +221,35 @@ export default function TradeForUsers() {
   const { data: tradeHistory = [], isLoading: historyLoading } = useQuery<AdminTrade[]>({
     queryKey: ["/api/admin/trades-history"],
   });
+
+  const representativeUserId = selectedUsers.length > 0 ? selectedUsers[0].id : null;
+
+  const { data: openPositions = [] } = useQuery<UserPosition[]>({
+    queryKey: ["/api/admin/positions", representativeUserId, "open"],
+    queryFn: async () => {
+      if (!representativeUserId) return [];
+      const res = await fetch(`/api/admin/positions/${representativeUserId}?status=open`, { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!representativeUserId && currentPage === "trade-room",
+    refetchInterval: 2000,
+  });
+
+  const { data: pendingPositions = [] } = useQuery<UserPosition[]>({
+    queryKey: ["/api/admin/positions", representativeUserId, "pending"],
+    queryFn: async () => {
+      if (!representativeUserId) return [];
+      const res = await fetch(`/api/admin/positions/${representativeUserId}?status=pending`, { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!representativeUserId && currentPage === "trade-room",
+    refetchInterval: 3000,
+  });
+
+  const adminOpenPositions = openPositions.filter(p => p.openedByAdmin);
+  const hasActivePositions = adminOpenPositions.length > 0;
 
   useEffect(() => {
     if (sessionId) {
@@ -313,52 +340,78 @@ export default function TradeForUsers() {
     },
   });
 
-  const executeTradeMutation = useMutation({
+  const openPositionMutation = useMutation({
     mutationFn: async (data: {
       symbol: string;
       name: string;
       assetType: string;
       direction: "buy" | "sell";
+      orderType: string;
       entryPrice: number;
-    }): Promise<{ success: boolean; trades: { id: string }[] }> => {
-      if (!sessionId) throw new Error("No active session");
-      const res = await apiRequest("POST", `/api/admin/trade-sessions/${sessionId}/trade`, {
-        symbol: data.symbol,
-        name: data.name,
-        assetType: data.assetType,
-        direction: data.direction === "buy" ? "higher" : "lower",
-        entryPrice: data.entryPrice,
-        assets: [{
-          symbol: data.symbol,
-          name: data.name,
-          assetType: data.assetType,
-          entryPrice: data.entryPrice,
-          durationMs: 0,
-          durationLabel: "manual",
-        }],
-      });
-      return res.json();
+      volume: number;
+      stopLoss?: number;
+      takeProfit?: number;
+      triggerPrice?: number;
+    }): Promise<{ positionIds: string[] }> => {
+      const positionIds: string[] = [];
+      
+      for (const user of selectedUsers) {
+        try {
+          const res = await apiRequest("POST", "/api/admin/positions/open", {
+            userId: user.id,
+            symbol: data.symbol,
+            name: data.name,
+            assetType: data.assetType,
+            direction: data.direction,
+            orderType: data.orderType,
+            amount: user.tradeAmount,
+            volume: data.volume || 1,
+            entryPrice: data.entryPrice,
+            triggerPrice: data.triggerPrice,
+            stopLoss: data.stopLoss,
+            takeProfit: data.takeProfit,
+          });
+          const result = await res.json();
+          if (result.id) {
+            positionIds.push(result.id);
+          }
+        } catch (err: any) {
+          console.error(`Failed to open position for user ${user.id}:`, err);
+        }
+      }
+      
+      return { positionIds };
     },
-    onSuccess: () => {
+    onSuccess: (result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/positions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/trades-history"] });
-      toast({ title: "Trade Executed", description: `Trade placed for ${selectedUsers.length} user(s)` });
+
+      if (result.positionIds.length > 0) {
+        setBatchPositionIds(prev => [...prev, {
+          positionIds: result.positionIds,
+          symbol: variables.symbol,
+          direction: variables.direction,
+        }]);
+      }
+      
+      toast({ title: "Positions Opened", description: `Opened ${result.positionIds.length} position(s) for ${selectedUsers.length} user(s)` });
     },
     onError: (error: any) => {
-      toast({ title: "Trade Failed", description: error?.message || "Failed to execute trade", variant: "destructive" });
+      toast({ title: "Trade Failed", description: error?.message || "Failed to open positions", variant: "destructive" });
     },
   });
 
-  const completeTradeMutation = useMutation({
-    mutationFn: async (data: { tradeIds: string[]; exitPrice: number }) => {
-      const res = await apiRequest("POST", "/api/admin/trades/complete", data);
+  const closePositionMutation = useMutation({
+    mutationFn: async (positionId: string) => {
+      const res = await apiRequest("POST", `/api/admin/positions/${positionId}/close`, {});
       return res.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/positions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/trades-history"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/trades"] });
     },
     onError: (error: any) => {
-      console.error("Error completing trades:", error);
+      console.error("Error closing position:", error);
     },
   });
 
@@ -428,6 +481,7 @@ export default function TradeForUsers() {
   const handleStartNewTrade = () => {
     setSelectedUsers([]);
     setSessionId(null);
+    setBatchPositionIds([]);
     localStorage.removeItem('admin_trade_session_id');
     navigateTo("select-users");
   };
@@ -460,88 +514,66 @@ export default function TradeForUsers() {
   };
 
   const handleTrade = async (direction: "buy" | "sell") => {
-    if (activeTrade || !selectedAsset) return;
+    if (!selectedAsset) return;
 
     if (amount <= 0) {
       toast({ title: "Invalid Amount", description: "Please enter a valid trade amount.", variant: "destructive" });
       return;
     }
 
-    const parsedSL = stopLoss ? parseFloat(stopLoss) : null;
-    const parsedTP = takeProfit ? parseFloat(takeProfit) : null;
+    const parsedSL = stopLoss ? parseFloat(stopLoss) : undefined;
+    const parsedTP = takeProfit ? parseFloat(takeProfit) : undefined;
+    const parsedTrigger = triggerPrice ? parseFloat(triggerPrice) : undefined;
 
-    if (parsedSL !== null && parsedSL <= 0) {
+    if (parsedSL !== undefined && parsedSL <= 0) {
       toast({ title: "Invalid Stop Loss", description: "Stop loss must be a positive number.", variant: "destructive" });
       return;
     }
-    if (parsedTP !== null && parsedTP <= 0) {
+    if (parsedTP !== undefined && parsedTP <= 0) {
       toast({ title: "Invalid Take Profit", description: "Take profit must be a positive number.", variant: "destructive" });
       return;
     }
 
-    const now = Date.now();
+    if (executionType !== "market" && !parsedTrigger) {
+      toast({ title: "Trigger Price Required", description: `Please set a trigger price for ${executionType} orders.`, variant: "destructive" });
+      return;
+    }
 
-    const newTrade: ActiveTrade = {
-      id: `trade-${now}`,
+    openPositionMutation.mutate({
       symbol: selectedAsset.symbol,
+      name: selectedAsset.name,
+      assetType: selectedAsset.type,
       direction,
-      amount,
+      orderType: executionType,
       entryPrice: selectedAsset.price,
+      volume: volume || 1,
       stopLoss: parsedSL,
       takeProfit: parsedTP,
-      volume: volume,
-      tradeIds: [],
-    };
-
-    setActiveTrade(newTrade);
-
-    try {
-      const result = await executeTradeMutation.mutateAsync({
-        symbol: selectedAsset.symbol,
-        name: selectedAsset.name,
-        assetType: selectedAsset.type,
-        direction,
-        entryPrice: selectedAsset.price,
-      });
-
-      const tradeIds = result.trades?.map((t) => t.id) || [];
-      setActiveTrade(prev => prev ? { ...prev, tradeIds } : prev);
-    } catch (error) {
-      setActiveTrade(null);
-    }
-  };
-
-  const handleDoubleUp = () => {
-    if (!activeTrade || !selectedAsset) return;
-
-    executeTradeMutation.mutate({
-      symbol: selectedAsset.symbol,
-      name: selectedAsset.name,
-      assetType: selectedAsset.type,
-      direction: activeTrade.direction,
-      entryPrice: selectedAsset.price,
-    });
-
-    toast({
-      title: "Double Up",
-      description: `Placed additional ${activeTrade.direction.toUpperCase()} trade for $${activeTrade.amount}`,
+      triggerPrice: parsedTrigger,
     });
   };
 
-  const handleCloseTrade = () => {
-    if (!activeTrade || !selectedAsset) return;
+  const handleClosePosition = async (positionId: string) => {
+    closePositionMutation.mutate(positionId);
+  };
 
-    if (activeTrade.tradeIds.length > 0) {
-      completeTradeMutation.mutate({
-        tradeIds: activeTrade.tradeIds,
-        exitPrice: selectedAsset.price,
-      });
+  const handleCloseBatchPositions = async (batch: BatchPositionIds) => {
+    for (const posId of batch.positionIds) {
+      try {
+        await apiRequest("POST", `/api/admin/positions/${posId}/close`, {});
+      } catch (err) {
+        console.error(`Failed to close position ${posId}:`, err);
+      }
     }
 
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/positions"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/trades-history"] });
+
+    const asset = allAssets.find(a => a.symbol === batch.symbol);
     const assets: CompletedAsset[] = [{
-      symbol: activeTrade.symbol,
-      name: selectedAsset.name,
-      assetType: selectedAsset.type,
+      symbol: batch.symbol,
+      name: asset?.name || batch.symbol,
+      assetType: asset?.type || "crypto",
     }];
 
     setProfitsAlreadyAdded(false);
@@ -552,81 +584,53 @@ export default function TradeForUsers() {
       completedAt: new Date(),
     });
 
-    toast({
-      title: "Trade Closed",
-      description: `Closed ${activeTrade.direction.toUpperCase()} position on ${activeTrade.symbol} at ${formatPrice(selectedAsset.price)}`,
-    });
+    setBatchPositionIds(prev => prev.filter(b => b !== batch));
 
-    setActiveTrade(null);
+    toast({
+      title: "Positions Closed",
+      description: `Closed ${batch.positionIds.length} position(s) on ${batch.symbol}`,
+    });
   };
 
-  useEffect(() => {
-    if (!activeTrade || !selectedAsset) return;
+  const handleCloseAllOpenPositions = async () => {
+    if (adminOpenPositions.length === 0) return;
 
-    const interval = setInterval(() => {
-      const currentPrice = selectedAsset.price;
-
-      if (activeTrade.stopLoss !== null) {
-        if (activeTrade.direction === "buy" && currentPrice <= activeTrade.stopLoss) {
-          clearInterval(interval);
-          if (activeTrade.tradeIds.length > 0) {
-            completeTradeMutation.mutate({ tradeIds: activeTrade.tradeIds, exitPrice: currentPrice });
-          }
-          toast({ title: "Stop Loss Hit", description: `Position closed at ${formatPrice(currentPrice)}`, variant: "destructive" });
-          const assets: CompletedAsset[] = [{ symbol: activeTrade.symbol, name: selectedAsset.name, assetType: selectedAsset.type }];
-          setProfitsAlreadyAdded(false);
-          setProfitPopupOpen(true);
-          setCompletedTradeGroup({ trades: [], assets, completedAt: new Date() });
-          setActiveTrade(null);
-          return;
-        }
-        if (activeTrade.direction === "sell" && currentPrice >= activeTrade.stopLoss) {
-          clearInterval(interval);
-          if (activeTrade.tradeIds.length > 0) {
-            completeTradeMutation.mutate({ tradeIds: activeTrade.tradeIds, exitPrice: currentPrice });
-          }
-          toast({ title: "Stop Loss Hit", description: `Position closed at ${formatPrice(currentPrice)}`, variant: "destructive" });
-          const assets: CompletedAsset[] = [{ symbol: activeTrade.symbol, name: selectedAsset.name, assetType: selectedAsset.type }];
-          setProfitsAlreadyAdded(false);
-          setProfitPopupOpen(true);
-          setCompletedTradeGroup({ trades: [], assets, completedAt: new Date() });
-          setActiveTrade(null);
-          return;
-        }
+    for (const pos of adminOpenPositions) {
+      try {
+        await apiRequest("POST", `/api/admin/positions/${pos.id}/close`, {});
+      } catch (err) {
+        console.error(`Failed to close position ${pos.id}:`, err);
       }
+    }
 
-      if (activeTrade.takeProfit !== null) {
-        if (activeTrade.direction === "buy" && currentPrice >= activeTrade.takeProfit) {
-          clearInterval(interval);
-          if (activeTrade.tradeIds.length > 0) {
-            completeTradeMutation.mutate({ tradeIds: activeTrade.tradeIds, exitPrice: currentPrice });
-          }
-          toast({ title: "Take Profit Hit", description: `Position closed at ${formatPrice(currentPrice)}` });
-          const assets: CompletedAsset[] = [{ symbol: activeTrade.symbol, name: selectedAsset.name, assetType: selectedAsset.type }];
-          setProfitsAlreadyAdded(false);
-          setProfitPopupOpen(true);
-          setCompletedTradeGroup({ trades: [], assets, completedAt: new Date() });
-          setActiveTrade(null);
-          return;
-        }
-        if (activeTrade.direction === "sell" && currentPrice <= activeTrade.takeProfit) {
-          clearInterval(interval);
-          if (activeTrade.tradeIds.length > 0) {
-            completeTradeMutation.mutate({ tradeIds: activeTrade.tradeIds, exitPrice: currentPrice });
-          }
-          toast({ title: "Take Profit Hit", description: `Position closed at ${formatPrice(currentPrice)}` });
-          const assets: CompletedAsset[] = [{ symbol: activeTrade.symbol, name: selectedAsset.name, assetType: selectedAsset.type }];
-          setProfitsAlreadyAdded(false);
-          setProfitPopupOpen(true);
-          setCompletedTradeGroup({ trades: [], assets, completedAt: new Date() });
-          setActiveTrade(null);
-          return;
-        }
-      }
-    }, 100);
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/positions"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/trades-history"] });
 
-    return () => clearInterval(interval);
-  }, [activeTrade, selectedAsset]);
+    const uniqueSymbols = Array.from(new Set(adminOpenPositions.map(p => p.symbol)));
+    const assets: CompletedAsset[] = uniqueSymbols.map(sym => {
+      const pos = adminOpenPositions.find(p => p.symbol === sym);
+      return {
+        symbol: sym,
+        name: pos?.name || sym,
+        assetType: pos?.assetType || "crypto",
+      };
+    });
+
+    setProfitsAlreadyAdded(false);
+    setProfitPopupOpen(true);
+    setCompletedTradeGroup({
+      trades: [],
+      assets,
+      completedAt: new Date(),
+    });
+
+    setBatchPositionIds([]);
+
+    toast({
+      title: "All Positions Closed",
+      description: `Closed ${adminOpenPositions.length} position(s)`,
+    });
+  };
 
   const handleOpenProfitDialog = () => {
     const amounts: Record<string, number> = {};
@@ -692,6 +696,9 @@ export default function TradeForUsers() {
     setAmount(value[0]);
   };
 
+  const totalOpenMargin = adminOpenPositions.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+  const totalUnrealizedPnl = adminOpenPositions.reduce((sum, p) => sum + parseFloat(p.unrealizedPnl || "0"), 0);
+
   const slideVariants = {
     enter: (direction: "left" | "right") => ({
       x: direction === "left" ? "100%" : "-100%",
@@ -724,7 +731,7 @@ export default function TradeForUsers() {
             <div className="space-y-4 sm:space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold">Trade for Users</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold" data-testid="text-page-title">Trade for Users</h2>
                   <p className="text-sm text-muted-foreground">View trade history and start new sessions</p>
                 </div>
                 <Button 
@@ -1186,6 +1193,7 @@ export default function TradeForUsers() {
                               id="alligator"
                               checked={indicators.alligator}
                               onCheckedChange={(checked) => setIndicators(prev => ({ ...prev, alligator: checked }))}
+                              data-testid="switch-alligator-admin"
                             />
                           </div>
                           
@@ -1198,6 +1206,7 @@ export default function TradeForUsers() {
                               id="ma"
                               checked={indicators.movingAverage}
                               onCheckedChange={(checked) => setIndicators(prev => ({ ...prev, movingAverage: checked }))}
+                              data-testid="switch-ma-admin"
                             />
                           </div>
                           
@@ -1210,6 +1219,7 @@ export default function TradeForUsers() {
                               id="ema"
                               checked={indicators.ema}
                               onCheckedChange={(checked) => setIndicators(prev => ({ ...prev, ema: checked }))}
+                              data-testid="switch-ema-admin"
                             />
                           </div>
                         </div>
@@ -1237,11 +1247,11 @@ export default function TradeForUsers() {
                 <div className="flex items-center gap-4 px-4 py-2 border-t border-white/10">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">ask</span>
-                    <span className="font-mono text-sm">{formatPrice(selectedAsset.price * 1.0001)}</span>
+                    <span className="font-mono text-sm" data-testid="text-ask-price">{formatPrice(selectedAsset.price * 1.0001)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">bid</span>
-                    <span className="font-mono text-sm">{formatPrice(selectedAsset.price * 0.9999)}</span>
+                    <span className="font-mono text-sm" data-testid="text-bid-price">{formatPrice(selectedAsset.price * 0.9999)}</span>
                   </div>
                 </div>
               </div>
@@ -1262,7 +1272,7 @@ export default function TradeForUsers() {
                       </h3>
                       <div className="space-y-2 overflow-y-auto flex-1 min-h-0">
                         {selectedUsers.map((user) => (
-                          <div key={user.id} className="glass-light p-3 rounded-lg">
+                          <div key={user.id} className="glass-light p-3 rounded-lg" data-testid={`user-panel-${user.id}`}>
                             <div className="flex items-center gap-2">
                               <Avatar className="w-8 h-8">
                                 <AvatarFallback className="bg-primary/10 text-primary text-xs">
@@ -1285,7 +1295,7 @@ export default function TradeForUsers() {
               {/* MetaTrader-Style Trading Panel */}
               <div className="w-80 border-l border-white/10 flex flex-col glass-dark overflow-y-auto">
                 <div className="p-3 border-b border-white/10">
-                  <Select value={executionType} onValueChange={setExecutionType} disabled={!!activeTrade}>
+                  <Select value={executionType} onValueChange={(val) => { setExecutionType(val); if (val === "market") setTriggerPrice(""); }}>
                     <SelectTrigger className="glass-light border-0 h-10" data-testid="select-execution-type">
                       <SelectValue />
                     </SelectTrigger>
@@ -1300,7 +1310,7 @@ export default function TradeForUsers() {
                 <div className="p-3 border-b border-white/10">
                   <div className="glass-light rounded-lg p-3">
                     <div className="text-sm text-muted-foreground mb-1">Trading for</div>
-                    <div className="text-lg font-bold">{selectedUsers.length} user(s)</div>
+                    <div className="text-lg font-bold" data-testid="text-trading-for-count">{selectedUsers.length} user(s)</div>
                     <div className="text-xs text-muted-foreground">
                       Total: ${totalTradeAmount.toLocaleString()}
                     </div>
@@ -1315,9 +1325,8 @@ export default function TradeForUsers() {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => setVolume(Math.max(0, volume - (selectedAsset?.type === "forex" ? 0.01 : 1)))}
-                      disabled={!!activeTrade}
                       data-testid="button-volume-minus"
-                      className="glass-light rounded px-2 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                      className="glass-light rounded px-2 py-1.5 text-muted-foreground hover:text-white transition-colors"
                     >
                       <Minus className="w-3.5 h-3.5" />
                     </button>
@@ -1325,20 +1334,56 @@ export default function TradeForUsers() {
                       type="number"
                       value={volume}
                       onChange={(e) => setVolume(Math.max(0, parseFloat(e.target.value) || 0))}
-                      disabled={!!activeTrade}
                       data-testid="input-volume"
-                      className="glass-light rounded px-2 py-1.5 text-sm text-center flex-1 bg-transparent outline-none disabled:opacity-50"
+                      className="glass-light rounded px-2 py-1.5 text-sm text-center flex-1 bg-transparent outline-none"
                     />
                     <button
                       onClick={() => setVolume(volume + (selectedAsset?.type === "forex" ? 0.01 : 1))}
-                      disabled={!!activeTrade}
                       data-testid="button-volume-plus"
-                      className="glass-light rounded px-2 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                      className="glass-light rounded px-2 py-1.5 text-muted-foreground hover:text-white transition-colors"
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
+
+                {executionType !== "market" && (
+                  <div className="px-3 pt-3">
+                    <div className="text-xs text-muted-foreground mb-1">
+                      {executionType === "limit" ? "Limit Price" : "Stop Price"}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => {
+                          const val = parseFloat(triggerPrice) || selectedAsset.price;
+                          setTriggerPrice((val - (selectedAsset.price * 0.001)).toFixed(selectedAsset.price < 1 ? 5 : 2));
+                        }}
+                        data-testid="button-trigger-minus"
+                        className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <input
+                        type="number"
+                        value={triggerPrice}
+                        onChange={(e) => setTriggerPrice(e.target.value)}
+                        placeholder={formatPrice(selectedAsset.price)}
+                        data-testid="input-trigger-price"
+                        className="glass-light rounded px-1 py-1.5 text-xs text-center flex-1 bg-transparent outline-none min-w-0 placeholder:text-muted-foreground/50"
+                      />
+                      <button
+                        onClick={() => {
+                          const val = parseFloat(triggerPrice) || selectedAsset.price;
+                          setTriggerPrice((val + (selectedAsset.price * 0.001)).toFixed(selectedAsset.price < 1 ? 5 : 2));
+                        }}
+                        data-testid="button-trigger-plus"
+                        className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="px-3 pt-3">
                   <div className="grid grid-cols-2 gap-2">
@@ -1350,9 +1395,8 @@ export default function TradeForUsers() {
                             const val = parseFloat(stopLoss) || selectedAsset.price;
                             setStopLoss((val - (selectedAsset.price * 0.001)).toFixed(selectedAsset.price < 1 ? 5 : 2));
                           }}
-                          disabled={!!activeTrade}
                           data-testid="button-sl-minus"
-                          className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                          className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors"
                         >
                           <Minus className="w-3 h-3" />
                         </button>
@@ -1361,18 +1405,16 @@ export default function TradeForUsers() {
                           value={stopLoss}
                           onChange={(e) => setStopLoss(e.target.value)}
                           placeholder="---"
-                          disabled={!!activeTrade}
                           data-testid="input-stop-loss"
-                          className="glass-light rounded px-1 py-1.5 text-xs text-center flex-1 bg-transparent outline-none min-w-0 disabled:opacity-50 placeholder:text-muted-foreground/50"
+                          className="glass-light rounded px-1 py-1.5 text-xs text-center flex-1 bg-transparent outline-none min-w-0 placeholder:text-muted-foreground/50"
                         />
                         <button
                           onClick={() => {
                             const val = parseFloat(stopLoss) || selectedAsset.price;
                             setStopLoss((val + (selectedAsset.price * 0.001)).toFixed(selectedAsset.price < 1 ? 5 : 2));
                           }}
-                          disabled={!!activeTrade}
                           data-testid="button-sl-plus"
-                          className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                          className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors"
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -1386,9 +1428,8 @@ export default function TradeForUsers() {
                             const val = parseFloat(takeProfit) || selectedAsset.price;
                             setTakeProfit((val - (selectedAsset.price * 0.001)).toFixed(selectedAsset.price < 1 ? 5 : 2));
                           }}
-                          disabled={!!activeTrade}
                           data-testid="button-tp-minus"
-                          className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                          className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors"
                         >
                           <Minus className="w-3 h-3" />
                         </button>
@@ -1397,18 +1438,16 @@ export default function TradeForUsers() {
                           value={takeProfit}
                           onChange={(e) => setTakeProfit(e.target.value)}
                           placeholder="---"
-                          disabled={!!activeTrade}
                           data-testid="input-take-profit"
-                          className="glass-light rounded px-1 py-1.5 text-xs text-center flex-1 bg-transparent outline-none min-w-0 disabled:opacity-50 placeholder:text-muted-foreground/50"
+                          className="glass-light rounded px-1 py-1.5 text-xs text-center flex-1 bg-transparent outline-none min-w-0 placeholder:text-muted-foreground/50"
                         />
                         <button
                           onClick={() => {
                             const val = parseFloat(takeProfit) || selectedAsset.price;
                             setTakeProfit((val + (selectedAsset.price * 0.001)).toFixed(selectedAsset.price < 1 ? 5 : 2));
                           }}
-                          disabled={!!activeTrade}
                           data-testid="button-tp-plus"
-                          className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
+                          className="glass-light rounded px-1.5 py-1.5 text-muted-foreground hover:text-white transition-colors"
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -1429,9 +1468,8 @@ export default function TradeForUsers() {
                         type="number"
                         value={amount}
                         onChange={(e) => setAmount(Math.max(1, parseFloat(e.target.value) || 1))}
-                        disabled={!!activeTrade}
                         data-testid="input-amount"
-                        className="bg-transparent text-lg font-semibold text-center flex-1 outline-none disabled:opacity-50"
+                        className="bg-transparent text-lg font-semibold text-center flex-1 outline-none"
                       />
                     </div>
                     <Slider
@@ -1440,7 +1478,6 @@ export default function TradeForUsers() {
                       min={1}
                       max={10000}
                       step={1}
-                      disabled={!!activeTrade}
                       data-testid="slider-amount"
                     />
                   </div>
@@ -1450,70 +1487,133 @@ export default function TradeForUsers() {
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       onClick={() => handleTrade("sell")}
-                      disabled={executeTradeMutation.isPending || !!activeTrade}
+                      disabled={openPositionMutation.isPending}
                       data-testid="button-sell"
                       className="h-14 bg-destructive hover:bg-destructive/90 text-white font-bold flex flex-col items-center justify-center gap-0.5 rounded-md"
                     >
                       <span className="text-lg font-mono">{formatPrice(selectedAsset.price * 0.9999)}</span>
-                      <span className="text-[10px] uppercase tracking-wider opacity-80">Sell by Market</span>
+                      <span className="text-[10px] uppercase tracking-wider opacity-80">
+                        {executionType === "market" ? "Sell by Market" : executionType === "limit" ? "Sell Limit" : "Sell Stop"}
+                      </span>
                     </Button>
 
                     <Button
                       onClick={() => handleTrade("buy")}
-                      disabled={executeTradeMutation.isPending || !!activeTrade}
+                      disabled={openPositionMutation.isPending}
                       data-testid="button-buy"
                       className="h-14 bg-[#2196F3] hover:bg-[#1976D2] text-white font-bold flex flex-col items-center justify-center gap-0.5 rounded-md"
                     >
                       <span className="text-lg font-mono">{formatPrice(selectedAsset.price * 1.0001)}</span>
-                      <span className="text-[10px] uppercase tracking-wider opacity-80">Buy by Market</span>
+                      <span className="text-[10px] uppercase tracking-wider opacity-80">
+                        {executionType === "market" ? "Buy by Market" : executionType === "limit" ? "Buy Limit" : "Buy Stop"}
+                      </span>
                     </Button>
                   </div>
                 </div>
 
-                {activeTrade && (
+                {/* Open Positions List */}
+                {adminOpenPositions.length > 0 && (
                   <div className="px-3 pt-3">
-                    <div className={cn(
-                      "glass-light rounded-lg p-3 border",
-                      activeTrade.direction === "buy" ? "border-[#2196F3]/50" : "border-destructive/50"
-                    )}>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className={cn(
-                          "text-sm font-semibold",
-                          activeTrade.direction === "buy" ? "text-[#2196F3]" : "text-destructive"
-                        )} data-testid="text-trade-direction">
-                          {activeTrade.direction.toUpperCase()} - ${activeTrade.amount}
-                        </span>
-                        <span className="text-xs text-muted-foreground font-mono">
-                          @ {formatPrice(activeTrade.entryPrice)}
-                        </span>
-                      </div>
-                      {activeTrade.stopLoss && (
-                        <div className="flex justify-between text-[10px]">
-                          <span className="text-muted-foreground">SL:</span>
-                          <span className="text-destructive">{formatPrice(activeTrade.stopLoss)}</span>
-                        </div>
-                      )}
-                      {activeTrade.takeProfit && (
-                        <div className="flex justify-between text-[10px]">
-                          <span className="text-muted-foreground">TP:</span>
-                          <span className="text-success">{formatPrice(activeTrade.takeProfit)}</span>
-                        </div>
-                      )}
-                      <div className="flex gap-2 mt-2">
-                        <Button size="sm" variant="outline" onClick={handleDoubleUp} data-testid="button-double-up" className="flex-1 text-xs">
-                          <Copy className="w-3 h-3 mr-1" />
-                          Double
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={handleCloseTrade} data-testid="button-close-trade" className="flex-1 text-xs">
-                          <X className="w-3 h-3 mr-1" />
-                          Close
-                        </Button>
-                      </div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-muted-foreground font-medium">Open Positions ({adminOpenPositions.length})</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCloseAllOpenPositions}
+                        data-testid="button-close-all-positions"
+                        className="text-xs h-7"
+                      >
+                        <X className="w-3 h-3 mr-1" />
+                        Close All
+                      </Button>
+                    </div>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {adminOpenPositions.map((pos) => {
+                        const pnl = parseFloat(pos.unrealizedPnl || "0");
+                        return (
+                          <div
+                            key={pos.id}
+                            className={cn(
+                              "glass-light rounded-lg p-2.5 border",
+                              pos.direction === "buy" ? "border-[#2196F3]/30" : "border-destructive/30"
+                            )}
+                            data-testid={`position-card-${pos.id}`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <span className={cn(
+                                  "text-xs font-semibold px-1.5 py-0.5 rounded",
+                                  pos.direction === "buy" ? "bg-[#2196F3]/20 text-[#2196F3]" : "bg-destructive/20 text-destructive"
+                                )}>
+                                  {pos.direction.toUpperCase()}
+                                </span>
+                                <span className="text-sm font-medium">{pos.symbol}</span>
+                              </div>
+                              <span className={cn(
+                                "text-sm font-bold",
+                                pnl >= 0 ? "text-success" : "text-destructive"
+                              )} data-testid={`text-pnl-${pos.id}`}>
+                                {pnl >= 0 ? "+" : ""}{formatPrice(pnl)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                              <span>Entry: {formatPrice(parseFloat(pos.entryPrice))}</span>
+                              <span>${parseFloat(pos.amount).toLocaleString()}</span>
+                            </div>
+                            {(pos.stopLoss || pos.takeProfit) && (
+                              <div className="flex gap-3 text-[10px] mt-0.5">
+                                {pos.stopLoss && <span className="text-destructive">SL: {formatPrice(parseFloat(pos.stopLoss))}</span>}
+                                {pos.takeProfit && <span className="text-success">TP: {formatPrice(parseFloat(pos.takeProfit))}</span>}
+                              </div>
+                            )}
+                            <div className="mt-1.5">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleClosePosition(pos.id)}
+                                data-testid={`button-close-position-${pos.id}`}
+                                className="w-full text-xs h-7"
+                              >
+                                <X className="w-3 h-3 mr-1" />
+                                Close
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
 
-                {completedTradeGroup && !profitPopupOpen && !activeTrade && (
+                {/* Pending Orders */}
+                {pendingPositions.length > 0 && (
+                  <div className="px-3 pt-3">
+                    <span className="text-xs text-muted-foreground font-medium mb-2 block">Pending Orders ({pendingPositions.length})</span>
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {pendingPositions.map((pos) => (
+                        <div
+                          key={pos.id}
+                          className="glass-light rounded-lg p-2.5 border border-warning/30"
+                          data-testid={`pending-order-${pos.id}`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-warning/20 text-warning">
+                                {pos.orderType?.toUpperCase()} {pos.direction.toUpperCase()}
+                              </span>
+                              <span className="text-sm font-medium">{pos.symbol}</span>
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              @ {pos.triggerPrice ? formatPrice(parseFloat(pos.triggerPrice)) : "---"}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {completedTradeGroup && !profitPopupOpen && adminOpenPositions.length === 0 && (
                   <div className="px-3 pt-3">
                     <Button
                       className="w-full bg-primary/80 hover:bg-primary h-12 font-semibold"
@@ -1550,13 +1650,16 @@ export default function TradeForUsers() {
                       <div>
                         <span className="text-[10px] text-muted-foreground block">Orders Margin</span>
                         <span className="text-sm font-semibold text-warning" data-testid="text-orders-margin">
-                          ${activeTrade ? (activeTrade.amount * selectedUsers.length).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00"}
+                          ${(totalOpenMargin * selectedUsers.length).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-muted-foreground block">Free Margin</span>
-                        <span className="text-sm font-semibold text-success" data-testid="text-free-margin">
-                          ${(selectedUsers.reduce((s, u) => s + parseFloat(u.balance), 0) - (activeTrade ? activeTrade.amount * selectedUsers.length : 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <span className="text-[10px] text-muted-foreground block">Unrealized P&L</span>
+                        <span className={cn(
+                          "text-sm font-semibold",
+                          totalUnrealizedPnl >= 0 ? "text-success" : "text-destructive"
+                        )} data-testid="text-unrealized-pnl">
+                          {totalUnrealizedPnl >= 0 ? "+" : ""}${formatPrice(Math.abs(totalUnrealizedPnl))}
                         </span>
                       </div>
                     </div>
@@ -1623,6 +1726,7 @@ export default function TradeForUsers() {
                 variant={profitMode === "group" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setProfitMode("group")}
+                data-testid="button-group-mode-page"
               >
                 <Users className="w-4 h-4 mr-2" />
                 Group
@@ -1631,6 +1735,7 @@ export default function TradeForUsers() {
                 variant={profitMode === "singular" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setProfitMode("singular")}
+                data-testid="button-singular-mode-page"
               >
                 <User className="w-4 h-4 mr-2" />
                 Individual
@@ -1698,6 +1803,7 @@ export default function TradeForUsers() {
                 variant="outline"
                 className="flex-1"
                 onClick={() => navigateTo("trade-room")}
+                data-testid="button-cancel-profits-page"
               >
                 Cancel
               </Button>
@@ -1759,7 +1865,7 @@ export default function TradeForUsers() {
             ))}
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setProfitDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setProfitDialogOpen(false)} data-testid="button-cancel-profit-dialog">
               Cancel
             </Button>
             <Button 

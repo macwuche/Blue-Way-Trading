@@ -96,9 +96,9 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
+    <div className="h-screen flex flex-col md:flex-row overflow-hidden">
       {/* Left Side - Signup Form */}
-      <div className="w-full md:w-1/2 flex flex-col justify-center px-8 py-12 md:px-16 lg:px-24 bg-white dark:bg-[#0a0a0a] order-1 md:order-1">
+      <div className="w-full md:w-1/2 flex flex-col justify-center px-8 py-12 md:px-16 lg:px-24 bg-white dark:bg-[#0a0a0a] order-1 md:order-1 overflow-y-auto">
         {/* Mobile Logo - Above form */}
         <div className="md:hidden flex flex-col items-center mb-8">
           <div className="flex items-center gap-1 text-4xl font-bold">
@@ -344,7 +344,7 @@ export default function SignupPage() {
 
       {/* Right Side - Hero Image & Branding */}
       <div
-        className="w-full md:w-1/2 relative flex flex-col items-center justify-center p-8 md:p-16 min-h-[300px] md:min-h-screen order-2 md:order-2"
+        className="w-full md:w-1/2 relative flex flex-col items-center justify-center p-8 md:p-16 min-h-[300px] md:h-full order-2 md:order-2"
         style={{
           backgroundImage: `url(${loginBgImage})`,
           backgroundSize: "cover",

@@ -1,24 +1,15 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { 
-  Brain, Search, Plus, RotateCcw, Trash2, 
-  CheckCircle2, XCircle, Trophy, Target,
-  ChevronDown
+  Brain, RotateCcw, CheckCircle2, XCircle, Trophy, Target,
+  Shield, Zap, Settings2, AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -30,54 +21,40 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 
-interface User {
+interface GlobalTradeLogicData {
   id: string;
-  firstName: string | null;
-  lastName: string | null;
-  email: string | null;
-}
-
-interface TradeLogicEntry {
-  id: string;
-  userId: string;
   totalTrades: number;
   winTrades: number;
   lossTrades: number;
   currentWins: number;
   currentLosses: number;
+  slTpMode: string;
   active: boolean;
   createdAt: string;
   updatedAt: string;
-  user?: User;
 }
 
 export default function AdminTradeLogic() {
   const { toast } = useToast();
-  const [search, setSearch] = useState("");
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
   const [totalTrades, setTotalTrades] = useState(10);
   const [winTrades, setWinTrades] = useState(7);
-  const [editingEntry, setEditingEntry] = useState<TradeLogicEntry | null>(null);
+  const [slTpMode, setSlTpMode] = useState("admin_override");
+  const [active, setActive] = useState(true);
 
-  const { data: tradeLogicList, isLoading } = useQuery<TradeLogicEntry[]>({
-    queryKey: ["/api/admin/trade-logic"],
+  const { data: logic, isLoading } = useQuery<GlobalTradeLogicData>({
+    queryKey: ["/api/admin/global-trade-logic"],
   });
 
-  const { data: allUsers } = useQuery<User[]>({
-    queryKey: ["/api/admin/users"],
-  });
-
-  const upsertMutation = useMutation({
-    mutationFn: async (data: { userId: string; totalTrades: number; winTrades: number; lossTrades: number; active: boolean }) => {
-      const res = await apiRequest("POST", "/api/admin/trade-logic", data);
+  const saveMutation = useMutation({
+    mutationFn: async (data: { totalTrades: number; winTrades: number; lossTrades: number; slTpMode: string; active: boolean }) => {
+      const res = await apiRequest("POST", "/api/admin/global-trade-logic", data);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/trade-logic"] });
-      setShowAddDialog(false);
-      setEditingEntry(null);
-      toast({ title: "Trade logic saved", description: "Configuration has been updated." });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/global-trade-logic"] });
+      setIsEditing(false);
+      toast({ title: "Trade Logic Updated", description: "Global configuration has been saved." });
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message || "Failed to save", variant: "destructive" });
@@ -85,71 +62,41 @@ export default function AdminTradeLogic() {
   });
 
   const resetMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await apiRequest("PATCH", `/api/admin/trade-logic/${id}/reset`);
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/admin/global-trade-logic/reset");
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/trade-logic"] });
-      toast({ title: "Counters reset", description: "Win/loss counters have been reset to zero." });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/global-trade-logic"] });
+      toast({ title: "Counters Reset", description: "Win/loss counters have been reset to zero." });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message || "Failed to reset", variant: "destructive" });
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/admin/trade-logic/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/trade-logic"] });
-      toast({ title: "Deleted", description: "Trade logic entry removed." });
-    },
-  });
+  const startEditing = () => {
+    if (logic) {
+      setTotalTrades(logic.totalTrades);
+      setWinTrades(logic.winTrades);
+      setSlTpMode(logic.slTpMode);
+      setActive(logic.active);
+    }
+    setIsEditing(true);
+  };
 
   const handleSave = () => {
     const lossTrades = totalTrades - winTrades;
-    const userId = editingEntry ? editingEntry.userId : selectedUserId;
-    if (!userId) {
-      toast({ title: "Error", description: "Please select a user.", variant: "destructive" });
-      return;
-    }
     if (winTrades < 0 || winTrades > totalTrades) {
       toast({ title: "Error", description: "Win trades must be between 0 and total trades.", variant: "destructive" });
       return;
     }
-    upsertMutation.mutate({
-      userId,
-      totalTrades,
-      winTrades,
-      lossTrades,
-      active: true,
-    });
+    saveMutation.mutate({ totalTrades, winTrades, lossTrades, slTpMode, active });
   };
 
-  const openEditDialog = (entry: TradeLogicEntry) => {
-    setEditingEntry(entry);
-    setTotalTrades(entry.totalTrades);
-    setWinTrades(entry.winTrades);
-    setShowAddDialog(true);
-  };
-
-  const openAddDialog = () => {
-    setEditingEntry(null);
-    setSelectedUserId("");
-    setTotalTrades(10);
-    setWinTrades(7);
-    setShowAddDialog(true);
-  };
-
-  const filtered = (tradeLogicList || []).filter((entry) => {
-    if (!search) return true;
-    const name = `${entry.user?.firstName || ""} ${entry.user?.lastName || ""}`.toLowerCase();
-    const email = (entry.user?.email || "").toLowerCase();
-    return name.includes(search.toLowerCase()) || email.includes(search.toLowerCase());
-  });
-
-  const usersWithoutLogic = (allUsers || []).filter(
-    (u) => !(tradeLogicList || []).some((l) => l.userId === u.id)
-  );
+  const completedTrades = (logic?.currentWins || 0) + (logic?.currentLosses || 0);
+  const progress = logic && logic.totalTrades > 0 ? (completedTrades / logic.totalTrades) * 100 : 0;
+  const winRate = logic && logic.totalTrades > 0 ? ((logic.winTrades / logic.totalTrades) * 100).toFixed(0) : "0";
 
   return (
     <div className="space-y-6">
@@ -157,239 +104,101 @@ export default function AdminTradeLogic() {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2" data-testid="text-trade-logic-title">
             <Brain className="w-6 h-6 text-primary" />
-            Trade Logic
+            Global Trade Logic
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Configure win/loss outcomes per user during their trading session
+            Configure win/loss outcomes that apply to all users' trading sessions
           </p>
         </div>
-        <Button onClick={openAddDialog} data-testid="button-add-trade-logic">
-          <Plus className="w-4 h-4 mr-2" />
-          Add User
-        </Button>
-      </div>
-
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Search by name or email..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
-          data-testid="input-search-trade-logic"
-        />
+        <div className="flex items-center gap-2">
+          {!isEditing && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => resetMutation.mutate()} disabled={resetMutation.isPending} data-testid="button-reset-counters">
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Reset Counters
+              </Button>
+              <Button onClick={startEditing} data-testid="button-edit-logic">
+                <Settings2 className="w-4 h-4 mr-2" />
+                Edit Configuration
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {isLoading ? (
         <div className="grid gap-4">
           {[1, 2, 3].map((i) => (
-            <Card key={i} className="p-4 animate-pulse">
-              <div className="h-16 bg-muted rounded" />
+            <Card key={i} className="p-6 animate-pulse">
+              <div className="h-20 bg-muted rounded" />
             </Card>
           ))}
         </div>
-      ) : filtered.length === 0 ? (
-        <Card className="p-8 text-center">
-          <Brain className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-          <p className="text-muted-foreground">
-            {search ? "No matching trade logic entries found." : "No trade logic configured yet. Add a user to get started."}
-          </p>
-        </Card>
-      ) : (
-        <div className="grid gap-3">
-          {filtered.map((entry) => {
-            const completedTrades = entry.currentWins + entry.currentLosses;
-            const progress = entry.totalTrades > 0 ? (completedTrades / entry.totalTrades) * 100 : 0;
-            const userName = `${entry.user?.firstName || "Unknown"} ${entry.user?.lastName || ""}`.trim();
-            const initials = `${(entry.user?.firstName || "U")[0]}${(entry.user?.lastName || "")[0] || ""}`;
-
-            return (
-              <Card key={entry.id} className="p-4" data-testid={`card-trade-logic-${entry.id}`}>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <Avatar className="w-10 h-10">
-                      <AvatarFallback className="bg-primary/20 text-primary text-sm">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <div className="font-semibold truncate" data-testid={`text-user-name-${entry.id}`}>
-                        {userName}
-                      </div>
-                      <div className="text-xs text-muted-foreground truncate">
-                        {entry.user?.email || entry.userId}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4 flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="gap-1">
-                        <Trophy className="w-3 h-3 text-green-500" />
-                        <span data-testid={`text-wins-${entry.id}`}>{entry.winTrades}W</span>
-                      </Badge>
-                      <Badge variant="outline" className="gap-1">
-                        <XCircle className="w-3 h-3 text-red-500" />
-                        <span data-testid={`text-losses-${entry.id}`}>{entry.lossTrades}L</span>
-                      </Badge>
-                      <Badge variant="outline" className="gap-1">
-                        <Target className="w-3 h-3" />
-                        <span>{entry.totalTrades} total</span>
-                      </Badge>
-                    </div>
-
-                    <Badge 
-                      variant={entry.active ? "default" : "secondary"}
-                      data-testid={`badge-status-${entry.id}`}
-                    >
-                      {entry.active ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => openEditDialog(entry)}
-                      data-testid={`button-edit-${entry.id}`}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => resetMutation.mutate(entry.id)}
-                      data-testid={`button-reset-${entry.id}`}
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => deleteMutation.mutate(entry.id)}
-                      data-testid={`button-delete-${entry.id}`}
-                      className="text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="mt-3 space-y-2">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Session Progress</span>
-                    <span>{completedTrades} / {entry.totalTrades} trades completed</span>
-                  </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-300"
-                      style={{
-                        width: `${Math.min(100, progress)}%`,
-                        background: `linear-gradient(90deg, #22c55e ${entry.totalTrades > 0 ? (entry.currentWins / entry.totalTrades) * 100 : 0}%, #ef4444 ${entry.totalTrades > 0 ? (entry.currentWins / entry.totalTrades) * 100 : 0}%)`,
-                      }}
-                    />
-                  </div>
-                  <div className="flex items-center gap-4 text-xs">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-green-500" />
-                      <span className="text-muted-foreground">
-                        Wins: <span className="font-semibold text-foreground" data-testid={`text-current-wins-${entry.id}`}>{entry.currentWins}</span> / {entry.winTrades}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-red-500" />
-                      <span className="text-muted-foreground">
-                        Losses: <span className="font-semibold text-foreground" data-testid={`text-current-losses-${entry.id}`}>{entry.currentLosses}</span> / {entry.lossTrades}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle data-testid="text-dialog-title">
-              {editingEntry ? "Edit Trade Logic" : "Add Trade Logic"}
-            </DialogTitle>
-            <DialogDescription>
-              Configure how many trades will be wins vs losses for this user's trading session.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {!editingEntry && (
+      ) : isEditing ? (
+        <Card className="p-6" data-testid="card-edit-form">
+          <h3 className="text-lg font-semibold mb-4">Edit Global Trade Logic</h3>
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Select User</label>
-                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                  <SelectTrigger data-testid="select-user">
-                    <SelectValue placeholder="Choose a user..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {usersWithoutLogic.map((u) => (
-                      <SelectItem key={u.id} value={u.id}>
-                        {u.firstName || ""} {u.lastName || ""} ({u.email || u.id})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-sm font-medium">Active</Label>
+                <p className="text-xs text-muted-foreground">Enable or disable trade logic globally</p>
               </div>
-            )}
+              <Switch checked={active} onCheckedChange={setActive} data-testid="switch-active" />
+            </div>
 
-            {editingEntry && (
-              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                <Avatar className="w-8 h-8">
-                  <AvatarFallback className="bg-primary/20 text-primary text-xs">
-                    {(editingEntry.user?.firstName || "U")[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <div className="font-medium text-sm">
-                    {editingEntry.user?.firstName} {editingEntry.user?.lastName}
-                  </div>
-                  <div className="text-xs text-muted-foreground">{editingEntry.user?.email}</div>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium mb-1.5 block">Total Trades in Cycle</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={totalTrades}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 1;
+                    setTotalTrades(val);
+                    if (winTrades > val) setWinTrades(val);
+                  }}
+                  data-testid="input-total-trades"
+                />
               </div>
-            )}
-
-            <div>
-              <label className="text-sm font-medium mb-1.5 block">Total Trades in Session</label>
-              <Input
-                type="number"
-                min={1}
-                max={100}
-                value={totalTrades}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value) || 1;
-                  setTotalTrades(val);
-                  if (winTrades > val) setWinTrades(val);
-                }}
-                data-testid="input-total-trades"
-              />
+              <div>
+                <Label className="text-sm font-medium mb-1.5 block">Win Trades</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={totalTrades}
+                  value={winTrades}
+                  onChange={(e) => setWinTrades(Math.min(totalTrades, Math.max(0, parseInt(e.target.value) || 0)))}
+                  data-testid="input-win-trades"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Loss trades: {totalTrades - winTrades} (auto-calculated)
+                </p>
+              </div>
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Win Trades</label>
-              <Input
-                type="number"
-                min={0}
-                max={totalTrades}
-                value={winTrades}
-                onChange={(e) => setWinTrades(Math.min(totalTrades, Math.max(0, parseInt(e.target.value) || 0)))}
-                data-testid="input-win-trades"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Loss trades: {totalTrades - winTrades} (auto-calculated)
+              <Label className="text-sm font-medium mb-1.5 block">SL/TP Mode</Label>
+              <Select value={slTpMode} onValueChange={setSlTpMode}>
+                <SelectTrigger data-testid="select-sl-tp-mode">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin_override">Admin Override</SelectItem>
+                  <SelectItem value="natural_priority">Natural Priority</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                {slTpMode === "admin_override"
+                  ? "Admin's win/loss logic takes priority over user's SL/TP settings."
+                  : "User's SL/TP are honored first; trade logic applies only when SL/TP don't trigger."}
               </p>
             </div>
 
-            <div className="p-3 bg-muted rounded-lg">
+            <div className="p-4 bg-muted rounded-lg">
               <div className="text-sm font-medium mb-2">Preview</div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-green-500" />
                   <span className="text-sm">{winTrades} Wins</span>
@@ -413,22 +222,113 @@ export default function AdminTradeLogic() {
                 Win rate: {totalTrades > 0 ? ((winTrades / totalTrades) * 100).toFixed(0) : 0}%
               </p>
             </div>
-          </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)} data-testid="button-cancel-dialog">
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSave}
-              disabled={upsertMutation.isPending}
-              data-testid="button-save-trade-logic"
-            >
-              {upsertMutation.isPending ? "Saving..." : "Save"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <div className="flex items-center gap-2 justify-end pt-2">
+              <Button variant="outline" onClick={() => setIsEditing(false)} data-testid="button-cancel-edit">
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={saveMutation.isPending} data-testid="button-save-logic">
+                {saveMutation.isPending ? "Saving..." : "Save Configuration"}
+              </Button>
+            </div>
+          </div>
+        </Card>
+      ) : (
+        <div className="grid gap-4">
+          <Card className="p-6" data-testid="card-status-overview">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Status</h3>
+              <Badge variant={logic?.active ? "default" : "secondary"} data-testid="badge-active-status">
+                {logic?.active ? "Active" : "Inactive"}
+              </Badge>
+            </div>
+
+            {!logic?.active && (
+              <div className="flex items-center gap-2 p-3 mb-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-yellow-600 dark:text-yellow-400">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                <p className="text-sm">Trade logic is currently disabled. Trades will execute without win/loss override.</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="p-3 bg-muted rounded-lg text-center">
+                <Trophy className="w-5 h-5 text-green-500 mx-auto mb-1" />
+                <div className="text-2xl font-bold text-green-500" data-testid="text-win-trades">{logic?.winTrades || 0}</div>
+                <div className="text-xs text-muted-foreground">Win Trades</div>
+              </div>
+              <div className="p-3 bg-muted rounded-lg text-center">
+                <XCircle className="w-5 h-5 text-red-500 mx-auto mb-1" />
+                <div className="text-2xl font-bold text-red-500" data-testid="text-loss-trades">{logic?.lossTrades || 0}</div>
+                <div className="text-xs text-muted-foreground">Loss Trades</div>
+              </div>
+              <div className="p-3 bg-muted rounded-lg text-center">
+                <Target className="w-5 h-5 text-primary mx-auto mb-1" />
+                <div className="text-2xl font-bold" data-testid="text-total-trades">{logic?.totalTrades || 0}</div>
+                <div className="text-xs text-muted-foreground">Total Cycle</div>
+              </div>
+              <div className="p-3 bg-muted rounded-lg text-center">
+                <Zap className="w-5 h-5 text-yellow-500 mx-auto mb-1" />
+                <div className="text-2xl font-bold" data-testid="text-win-rate">{winRate}%</div>
+                <div className="text-xs text-muted-foreground">Win Rate</div>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6" data-testid="card-sl-tp-mode">
+            <div className="flex items-center gap-3 mb-2">
+              <Shield className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-semibold">SL/TP Mode</h3>
+            </div>
+            <div className="flex items-center gap-3">
+              <Badge variant="outline" className="text-sm px-3 py-1" data-testid="badge-sl-tp-mode">
+                {logic?.slTpMode === "admin_override" ? "Admin Override" : "Natural Priority"}
+              </Badge>
+              <p className="text-sm text-muted-foreground">
+                {logic?.slTpMode === "admin_override"
+                  ? "Admin's win/loss logic overrides user's SL/TP settings."
+                  : "User's SL/TP are honored first; trade logic applies when SL/TP don't trigger."}
+              </p>
+            </div>
+          </Card>
+
+          <Card className="p-6" data-testid="card-cycle-progress">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold">Cycle Progress</h3>
+              <span className="text-sm text-muted-foreground" data-testid="text-progress-count">
+                {completedTrades} / {logic?.totalTrades || 0} trades
+              </span>
+            </div>
+            <div className="h-3 bg-muted rounded-full overflow-hidden mb-3">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${Math.min(100, progress)}%`,
+                  background: `linear-gradient(90deg, #22c55e 0%, #22c55e ${logic && logic.totalTrades > 0 ? (logic.currentWins / completedTrades * 100) || 0 : 0}%, #ef4444 ${logic && logic.totalTrades > 0 ? (logic.currentWins / completedTrades * 100) || 0 : 0}%, #ef4444 100%)`,
+                }}
+              />
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <span className="text-sm text-muted-foreground">
+                  Wins: <span className="font-semibold text-foreground" data-testid="text-current-wins">{logic?.currentWins || 0}</span> / {logic?.winTrades || 0}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <span className="text-sm text-muted-foreground">
+                  Losses: <span className="font-semibold text-foreground" data-testid="text-current-losses">{logic?.currentLosses || 0}</span> / {logic?.lossTrades || 0}
+                </span>
+              </div>
+            </div>
+            {progress >= 100 && (
+              <div className="mt-3 p-2 bg-primary/10 rounded-lg text-center text-sm text-primary">
+                Cycle complete — counters will auto-reset on next trade.
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
