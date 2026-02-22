@@ -426,6 +426,23 @@ export default function TradeForUsers() {
         description: `${data?.symbol || "Position"} closed`,
         pnl: isNaN(pnl) ? undefined : pnl,
       });
+
+      if (adminOpenPositions.length <= 1) {
+        const closedSymbol = data?.symbol || selectedAsset?.symbol || "Unknown";
+        const asset = allAssets.find(a => a.symbol === closedSymbol);
+        const assets: CompletedAsset[] = [{
+          symbol: closedSymbol,
+          name: asset?.name || closedSymbol,
+          assetType: asset?.type || "crypto",
+        }];
+        setProfitsAlreadyAdded(false);
+        setProfitPopupOpen(true);
+        setCompletedTradeGroup({
+          trades: [],
+          assets,
+          completedAt: new Date(),
+        });
+      }
     },
     onError: (error: any) => {
       notify({ type: "error", title: "Close Failed", description: error?.message || "Failed to close position" });
