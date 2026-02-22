@@ -23,8 +23,8 @@ function TradeNotificationPopup({ notification, onDismiss }: TradeNotificationPo
 
   useEffect(() => {
     const enterTimer = setTimeout(() => setPhase("visible"), 50);
-    const exitTimer = setTimeout(() => setPhase("exit"), 2500);
-    const removeTimer = setTimeout(() => onDismiss(notification.id), 3000);
+    const exitTimer = setTimeout(() => setPhase("exit"), 5500);
+    const removeTimer = setTimeout(() => onDismiss(notification.id), 6000);
     return () => {
       clearTimeout(enterTimer);
       clearTimeout(exitTimer);
@@ -150,7 +150,7 @@ function TradeNotificationPopup({ notification, onDismiss }: TradeNotificationPo
           className={cn("h-full rounded-full", colorScheme.bar)}
           style={{
             width: phase === "exit" ? "0%" : phase === "enter" ? "100%" : "0%",
-            transition: phase === "visible" ? "width 2.5s linear" : "none",
+            transition: phase === "visible" ? "width 5.5s linear" : "none",
           }}
         />
       </div>
@@ -187,7 +187,7 @@ export function TradeNotificationContainer() {
   if (notifications.length === 0) return null;
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[100] flex flex-col items-center justify-start pt-20 gap-3" data-testid="notification-container">
+    <div className="absolute inset-0 pointer-events-none z-[50] flex flex-col items-center justify-center gap-3" data-testid="notification-container">
       {notifications.map((n) => (
         <TradeNotificationPopup key={n.id} notification={n} onDismiss={removeNotification} />
       ))}

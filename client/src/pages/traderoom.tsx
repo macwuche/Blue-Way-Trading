@@ -326,7 +326,6 @@ export default function TradeRoom() {
 
   return (
     <div className="h-screen flex flex-col md:flex-row bg-[#0a0a0a] overflow-hidden">
-      <TradeNotificationContainer />
       {/* Desktop Sidebar - Hidden on mobile */}
       <aside className="hidden md:flex w-16 border-r border-white/10 flex-col items-center py-4 glass-dark">
         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF9800] to-[#FF5722] flex items-center justify-center mb-6">
@@ -701,6 +700,7 @@ export default function TradeRoom() {
 
             {/* Chart */}
             <div className="flex-1 relative p-2 min-h-[200px]">
+              <TradeNotificationContainer />
               {/* Desktop Chart Type Toggle - positioned in top right of chart */}
               <div className="hidden md:flex absolute top-4 right-4 z-10 items-center gap-1 glass-dark rounded-lg p-1">
                 <Button
