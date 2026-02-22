@@ -28,7 +28,7 @@ import { CandlestickChart, type IndicatorSettings, type ChartType } from "@/comp
 import { MarketModal } from "@/components/market-modal";
 import { AssetInfoPanel } from "@/components/asset-info-panel";
 import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
+import { useTradeNotification, TradeNotificationContainer } from "@/components/trade-notification";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { type Asset, formatPrice } from "@/lib/market-data";
 import { useMarketData } from "@/hooks/use-market-data";
@@ -64,7 +64,7 @@ const getSymbolInitials = (symbol: string): string => {
 
 export default function TradeRoom() {
   const { user } = useAuth();
-  const { toast } = useToast();
+  const notify = useTradeNotification();
   const [, setLocation] = useLocation();
   
   const { cryptoAssets, forexAssets, stockAssets, etfAssets, allAssets, getAssetBySymbol } = useMarketData({ refreshInterval: 5000 });
@@ -171,10 +171,12 @@ export default function TradeRoom() {
         }
         if (data.type === "position_closed") {
           const pnl = parseFloat(data.realizedPnl);
-          toast({
+          notify({
+            type: "position_closed",
             title: data.closeReason === "stop_loss" ? "Stop Loss Hit" : data.closeReason === "take_profit" ? "Take Profit Hit" : "Position Closed",
-            description: `${data.symbol} ${data.direction.toUpperCase()} closed at ${formatPrice(parseFloat(data.exitPrice))} | P&L: ${pnl >= 0 ? "+" : ""}$${formatPrice(Math.abs(pnl))}`,
-            variant: pnl >= 0 ? "default" : "destructive",
+            description: `${data.symbol} ${data.direction.toUpperCase()} closed at ${formatPrice(parseFloat(data.exitPrice))}`,
+            pnl,
+            direction: data.direction,
           });
           queryClient.invalidateQueries({ queryKey: ["/api/positions"] });
           queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
@@ -206,14 +208,10 @@ export default function TradeRoom() {
       setStopLoss("");
       setTakeProfit("");
       setTriggerPrice("");
-      toast({ title: "Position Opened", description: "Your trade has been placed successfully." });
+      notify({ type: "position_opened", title: "Position Opened", description: "Your trade has been placed successfully." });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Trade Failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      notify({ type: "error", title: "Trade Failed", description: error.message });
     },
   });
 
@@ -227,7 +225,7 @@ export default function TradeRoom() {
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
     },
     onError: (error: Error) => {
-      toast({ title: "Close Failed", description: error.message, variant: "destructive" });
+      notify({ type: "error", title: "Close Failed", description: error.message });
     },
   });
 
@@ -238,10 +236,10 @@ export default function TradeRoom() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/positions"] });
-      toast({ title: "Order Cancelled" });
+      notify({ type: "info", title: "Order Cancelled" });
     },
     onError: (error: Error) => {
-      toast({ title: "Cancel Failed", description: error.message, variant: "destructive" });
+      notify({ type: "error", title: "Cancel Failed", description: error.message });
     },
   });
 
@@ -266,16 +264,12 @@ export default function TradeRoom() {
     if (!selectedAsset) return;
     
     if (amount <= 0 || amount > balance || !isFinite(amount)) {
-      toast({
-        title: "Invalid Amount",
-        description: "Please enter a valid trade amount.",
-        variant: "destructive",
-      });
+      notify({ type: "error", title: "Invalid Amount", description: "Please enter a valid trade amount." });
       return;
     }
 
     if (selectedAsset.price <= 0) {
-      toast({ title: "Price Unavailable", description: "Cannot trade while price data is unavailable.", variant: "destructive" });
+      notify({ type: "error", title: "Price Unavailable", description: "Cannot trade while price data is unavailable." });
       return;
     }
 
@@ -284,16 +278,16 @@ export default function TradeRoom() {
     const parsedTrigger = triggerPrice ? parseFloat(triggerPrice) : undefined;
 
     if (parsedSL !== undefined && parsedSL <= 0) {
-      toast({ title: "Invalid Stop Loss", description: "Stop loss must be a positive number.", variant: "destructive" });
+      notify({ type: "error", title: "Invalid Stop Loss", description: "Stop loss must be a positive number." });
       return;
     }
     if (parsedTP !== undefined && parsedTP <= 0) {
-      toast({ title: "Invalid Take Profit", description: "Take profit must be a positive number.", variant: "destructive" });
+      notify({ type: "error", title: "Invalid Take Profit", description: "Take profit must be a positive number." });
       return;
     }
 
     if (executionType !== "market" && !parsedTrigger) {
-      toast({ title: "Trigger Price Required", description: `Please set a trigger price for ${executionType} orders.`, variant: "destructive" });
+      notify({ type: "error", title: "Trigger Price Required", description: `Please set a trigger price for ${executionType} orders.` });
       return;
     }
 
@@ -332,6 +326,7 @@ export default function TradeRoom() {
 
   return (
     <div className="h-screen flex flex-col md:flex-row bg-[#0a0a0a] overflow-hidden">
+      <TradeNotificationContainer />
       {/* Desktop Sidebar - Hidden on mobile */}
       <aside className="hidden md:flex w-16 border-r border-white/10 flex-col items-center py-4 glass-dark">
         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF9800] to-[#FF5722] flex items-center justify-center mb-6">
