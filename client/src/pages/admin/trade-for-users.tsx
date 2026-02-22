@@ -1314,6 +1314,15 @@ export default function TradeForUsers() {
                                 <div className="text-sm font-medium truncate">{getUserName(user)}</div>
                                 <div className="text-xs text-muted-foreground">${user.tradeAmount}</div>
                               </div>
+                              {selectedUsers.length > 1 && (
+                                <button
+                                  onClick={() => setSelectedUsers(prev => prev.filter(u => u.id !== user.id))}
+                                  data-testid={`button-remove-user-${user.id}`}
+                                  className="p-1 rounded-md hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))}
