@@ -31,6 +31,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useTradeNotification, TradeNotificationContainer } from "@/components/trade-notification";
 import Lottie from "lottie-react";
 import confettiAnimation from "@/assets/confetti.json";
+import profitSoundUrl from "@assets/Audio_2026_02_22-1_1771787287153.mp3";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { type Asset, formatPrice } from "@/lib/market-data";
 import { useMarketData } from "@/hooks/use-market-data";
@@ -183,6 +184,9 @@ export default function TradeRoom() {
           });
           if (pnl > 0) {
             setShowConfetti(true);
+            const audio = new Audio(profitSoundUrl);
+            audio.volume = 0.7;
+            audio.play().catch(() => {});
           }
           queryClient.invalidateQueries({ queryKey: ["/api/positions"] });
           queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
