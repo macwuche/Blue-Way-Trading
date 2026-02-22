@@ -74,6 +74,7 @@ export default function TradeRoom() {
   const [marketModalOpen, setMarketModalOpen] = useState(false);
   const [amount, setAmount] = useState(10);
   const [volume, setVolume] = useState<number>(0);
+  const [volumeManuallyEdited, setVolumeManuallyEdited] = useState(false);
   const [stopLoss, setStopLoss] = useState<string>("");
   const [takeProfit, setTakeProfit] = useState<string>("");
   const [triggerPrice, setTriggerPrice] = useState<string>("");
@@ -107,10 +108,14 @@ export default function TradeRoom() {
   }, [allAssets, selectedAsset]);
 
   useEffect(() => {
-    if (selectedAsset && selectedAsset.volume24h !== undefined) {
-      setVolume(selectedAsset.volume24h || 0);
-    }
+    setVolumeManuallyEdited(false);
   }, [selectedAsset?.symbol]);
+
+  useEffect(() => {
+    if (!volumeManuallyEdited && selectedAsset && selectedAsset.price > 0) {
+      setVolume(parseFloat((amount / selectedAsset.price).toFixed(8)));
+    }
+  }, [selectedAsset?.symbol, selectedAsset?.price, amount, volumeManuallyEdited]);
 
   const { data: dashboardData } = useQuery<DashboardData>({
     queryKey: ["/api/dashboard"],
@@ -260,12 +265,17 @@ export default function TradeRoom() {
   const handleTrade = (direction: "buy" | "sell") => {
     if (!selectedAsset) return;
     
-    if (amount <= 0 || amount > balance) {
+    if (amount <= 0 || amount > balance || !isFinite(amount)) {
       toast({
         title: "Invalid Amount",
         description: "Please enter a valid trade amount.",
         variant: "destructive",
       });
+      return;
+    }
+
+    if (selectedAsset.price <= 0) {
+      toast({ title: "Price Unavailable", description: "Cannot trade while price data is unavailable.", variant: "destructive" });
       return;
     }
 
@@ -294,7 +304,7 @@ export default function TradeRoom() {
       direction,
       orderType: executionType,
       amount,
-      volume: volume || 1,
+      volume: volume > 0 ? volume : parseFloat((amount / selectedAsset.price).toFixed(8)),
       entryPrice: selectedAsset.price,
       triggerPrice: parsedTrigger,
       stopLoss: parsedSL,
@@ -785,8 +795,11 @@ export default function TradeRoom() {
               </div>
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => setVolume(Math.max(0, volume - (selectedAsset?.type === "forex" ? 0.01 : 1)))}
-                 
+                  onClick={() => {
+                    setVolumeManuallyEdited(true);
+                    const step = selectedAsset ? parseFloat((10 / selectedAsset.price).toFixed(8)) : 1;
+                    setVolume(Math.max(0, parseFloat((volume - step).toFixed(8))));
+                  }}
                   data-testid="button-volume-minus"
                   className="glass-light rounded px-2 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
                 >
@@ -795,14 +808,16 @@ export default function TradeRoom() {
                 <input
                   type="number"
                   value={volume}
-                  onChange={(e) => setVolume(Math.max(0, parseFloat(e.target.value) || 0))}
-                 
+                  onChange={(e) => { setVolumeManuallyEdited(true); setVolume(Math.max(0, parseFloat(e.target.value) || 0)); }}
                   data-testid="input-volume"
                   className="glass-light rounded px-2 py-1.5 text-sm text-center flex-1 bg-transparent outline-none disabled:opacity-50"
                 />
                 <button
-                  onClick={() => setVolume(volume + (selectedAsset?.type === "forex" ? 0.01 : 1))}
-                 
+                  onClick={() => {
+                    setVolumeManuallyEdited(true);
+                    const step = selectedAsset ? parseFloat((10 / selectedAsset.price).toFixed(8)) : 1;
+                    setVolume(parseFloat((volume + step).toFixed(8)));
+                  }}
                   data-testid="button-volume-plus"
                   className="glass-light rounded px-2 py-1.5 text-muted-foreground hover:text-white transition-colors disabled:opacity-50"
                 >
