@@ -38,7 +38,10 @@ import { CandlestickChart, type IndicatorSettings, type ChartType } from "@/comp
 import { MarketModal } from "@/components/market-modal";
 import { AssetInfoPanel } from "@/components/asset-info-panel";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
+import { useTradeNotification, TradeNotificationContainer } from "@/components/trade-notification";
+import Lottie from "lottie-react";
+import confettiAnimation from "@/assets/confetti.json";
+import profitSoundUrl from "@assets/Audio_2026_02_22-1_1771787287153.mp3";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { type Asset, formatPrice } from "@/lib/market-data";
 import { useMarketData } from "@/hooks/use-market-data";
@@ -118,7 +121,8 @@ type PageView = "history" | "select-users" | "trade-room" | "add-profits";
 export default function TradeForUsers() {
   const [currentPage, setCurrentPage] = useState<PageView>("history");
   const [slideDirection, setSlideDirection] = useState<"left" | "right">("left");
-  const { toast } = useToast();
+  const notify = useTradeNotification();
+  const [showConfetti, setShowConfetti] = useState(false);
   
   const { cryptoAssets, allAssets } = useMarketData({ refreshInterval: 5000 });
 
@@ -333,10 +337,10 @@ export default function TradeForUsers() {
         setSelectedUsers(updatedUsers);
       }
       navigateTo("trade-room");
-      toast({ title: "Session Created", description: "You can now trade for the selected users" });
+      notify({ type: "success", title: "Session Created", description: "You can now trade for the selected users" });
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error?.message || "Failed to create session", variant: "destructive" });
+      notify({ type: "error", title: "Error", description: error?.message || "Failed to create session" });
     },
   });
 
@@ -394,10 +398,10 @@ export default function TradeForUsers() {
         }]);
       }
       
-      toast({ title: "Positions Opened", description: `Opened ${result.positionIds.length} position(s) for ${selectedUsers.length} user(s)` });
+      notify({ type: "position_opened", title: "Positions Opened", description: `Opened ${result.positionIds.length} position(s) for ${selectedUsers.length} user(s)` });
     },
     onError: (error: any) => {
-      toast({ title: "Trade Failed", description: error?.message || "Failed to open positions", variant: "destructive" });
+      notify({ type: "error", title: "Trade Failed", description: error?.message || "Failed to open positions" });
     },
   });
 
@@ -406,12 +410,25 @@ export default function TradeForUsers() {
       const res = await apiRequest("POST", `/api/admin/positions/${positionId}/close`, {});
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/positions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/trades-history"] });
+      const pnl = parseFloat(data?.realizedPnl || "0");
+      if (pnl > 0) {
+        setShowConfetti(true);
+        const audio = new Audio(profitSoundUrl);
+        audio.volume = 0.7;
+        audio.play().catch(() => {});
+      }
+      notify({
+        type: "position_closed",
+        title: "Position Closed",
+        description: `${data?.symbol || "Position"} closed`,
+        pnl: isNaN(pnl) ? undefined : pnl,
+      });
     },
     onError: (error: any) => {
-      console.error("Error closing position:", error);
+      notify({ type: "error", title: "Close Failed", description: error?.message || "Failed to close position" });
     },
   });
 
@@ -422,12 +439,12 @@ export default function TradeForUsers() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users-with-balance"] });
-      toast({ title: "Profit Added", description: "User balances updated successfully" });
+      notify({ type: "success", title: "Profit Added", description: "User balances updated successfully" });
       setProfitDialogOpen(false);
       setProfitAmounts({});
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error?.message || "Failed to add profit", variant: "destructive" });
+      notify({ type: "error", title: "Error", description: error?.message || "Failed to add profit" });
     },
   });
 
@@ -488,7 +505,7 @@ export default function TradeForUsers() {
 
   const handleProceedToTrading = () => {
     if (selectedUsers.length === 0) {
-      toast({ title: "No Users Selected", description: "Please select at least one user", variant: "destructive" });
+      notify({ type: "error", title: "No Users Selected", description: "Please select at least one user" });
       return;
     }
     createSessionMutation.mutate(
@@ -517,7 +534,7 @@ export default function TradeForUsers() {
     if (!selectedAsset) return;
 
     if (amount <= 0) {
-      toast({ title: "Invalid Amount", description: "Please enter a valid trade amount.", variant: "destructive" });
+      notify({ type: "error", title: "Invalid Amount", description: "Please enter a valid trade amount." });
       return;
     }
 
@@ -526,16 +543,16 @@ export default function TradeForUsers() {
     const parsedTrigger = triggerPrice ? parseFloat(triggerPrice) : undefined;
 
     if (parsedSL !== undefined && parsedSL <= 0) {
-      toast({ title: "Invalid Stop Loss", description: "Stop loss must be a positive number.", variant: "destructive" });
+      notify({ type: "error", title: "Invalid Stop Loss", description: "Stop loss must be a positive number." });
       return;
     }
     if (parsedTP !== undefined && parsedTP <= 0) {
-      toast({ title: "Invalid Take Profit", description: "Take profit must be a positive number.", variant: "destructive" });
+      notify({ type: "error", title: "Invalid Take Profit", description: "Take profit must be a positive number." });
       return;
     }
 
     if (executionType !== "market" && !parsedTrigger) {
-      toast({ title: "Trigger Price Required", description: `Please set a trigger price for ${executionType} orders.`, variant: "destructive" });
+      notify({ type: "error", title: "Trigger Price Required", description: `Please set a trigger price for ${executionType} orders.` });
       return;
     }
 
@@ -586,7 +603,8 @@ export default function TradeForUsers() {
 
     setBatchPositionIds(prev => prev.filter(b => b !== batch));
 
-    toast({
+    notify({
+      type: "position_closed",
       title: "Positions Closed",
       description: `Closed ${batch.positionIds.length} position(s) on ${batch.symbol}`,
     });
@@ -626,7 +644,8 @@ export default function TradeForUsers() {
 
     setBatchPositionIds([]);
 
-    toast({
+    notify({
+      type: "position_closed",
       title: "All Positions Closed",
       description: `Closed ${adminOpenPositions.length} position(s)`,
     });
@@ -645,7 +664,7 @@ export default function TradeForUsers() {
       .map(([userId, amt]) => ({ userId, amount: amt }));
     
     if (profitList.length === 0) {
-      toast({ title: "No Changes", description: "Enter profit amounts first", variant: "destructive" });
+      notify({ type: "error", title: "No Changes", description: "Enter profit amounts first" });
       return;
     }
     
@@ -657,7 +676,7 @@ export default function TradeForUsers() {
     
     if (profitMode === "group") {
       if (groupProfitAmount === 0) {
-        toast({ title: "No Profit", description: "Enter a profit amount first", variant: "destructive" });
+        notify({ type: "error", title: "No Profit", description: "Enter a profit amount first" });
         return;
       }
       profitList = selectedUsers.map(u => ({ userId: u.id, amount: groupProfitAmount }));
@@ -667,7 +686,7 @@ export default function TradeForUsers() {
         .map(([userId, amt]) => ({ userId, amount: amt }));
       
       if (profitList.length === 0) {
-        toast({ title: "No Changes", description: "Enter profit amounts first", variant: "destructive" });
+        notify({ type: "error", title: "No Changes", description: "Enter profit amounts first" });
         return;
       }
     }
@@ -1229,6 +1248,18 @@ export default function TradeForUsers() {
                 </div>
 
                 <div className="flex-1 relative p-2 min-h-[200px]">
+                  <TradeNotificationContainer />
+                  {showConfetti && (
+                    <div className="absolute inset-0 z-[60] pointer-events-none flex items-center justify-center">
+                      <Lottie
+                        animationData={confettiAnimation}
+                        loop={false}
+                        autoplay={true}
+                        onComplete={() => setShowConfetti(false)}
+                        style={{ width: "80%", height: "80%" }}
+                      />
+                    </div>
+                  )}
                   <CandlestickChart 
                     symbol={selectedAsset.symbol}
                     currentPrice={selectedAsset.price}
