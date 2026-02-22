@@ -128,6 +128,53 @@ export const tradeExecutionSchema = z.object({
 
 export type TradeExecution = z.infer<typeof tradeExecutionSchema>;
 
+export const userPositions = pgTable("user_positions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  symbol: varchar("symbol", { length: 20 }).notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  assetType: varchar("asset_type", { length: 20 }).notNull(),
+  direction: varchar("direction", { length: 10 }).notNull(),
+  orderType: varchar("order_type", { length: 20 }).notNull().default("market"),
+  status: varchar("status", { length: 20 }).notNull().default("open"),
+  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(),
+  volume: decimal("volume", { precision: 18, scale: 8 }).notNull(),
+  entryPrice: decimal("entry_price", { precision: 18, scale: 8 }).notNull(),
+  currentPrice: decimal("current_price", { precision: 18, scale: 8 }),
+  exitPrice: decimal("exit_price", { precision: 18, scale: 8 }),
+  triggerPrice: decimal("trigger_price", { precision: 18, scale: 8 }),
+  stopLoss: decimal("stop_loss", { precision: 18, scale: 8 }),
+  takeProfit: decimal("take_profit", { precision: 18, scale: 8 }),
+  unrealizedPnl: decimal("unrealized_pnl", { precision: 18, scale: 2 }).default("0.00"),
+  realizedPnl: decimal("realized_pnl", { precision: 18, scale: 2 }),
+  closeReason: varchar("close_reason", { length: 30 }),
+  openedByAdmin: boolean("opened_by_admin").default(false),
+  adminId: varchar("admin_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+  openedAt: timestamp("opened_at"),
+  closedAt: timestamp("closed_at"),
+});
+
+export type UserPosition = typeof userPositions.$inferSelect;
+export const insertUserPositionSchema = createInsertSchema(userPositions).omit({ id: true, createdAt: true, closedAt: true, openedAt: true, unrealizedPnl: true, realizedPnl: true, closeReason: true, currentPrice: true, exitPrice: true });
+export type InsertUserPosition = z.infer<typeof insertUserPositionSchema>;
+
+export const openPositionSchema = z.object({
+  symbol: z.string().min(1),
+  name: z.string().min(1),
+  assetType: z.string().min(1),
+  direction: z.enum(["buy", "sell"]),
+  orderType: z.enum(["market", "limit", "stop"]),
+  amount: z.number().positive(),
+  volume: z.number().positive(),
+  entryPrice: z.number().positive(),
+  triggerPrice: z.number().positive().optional(),
+  stopLoss: z.number().positive().optional(),
+  takeProfit: z.number().positive().optional(),
+});
+
+export type OpenPositionInput = z.infer<typeof openPositionSchema>;
+
 // Admin trade sessions for tracking trade-for-users feature
 export const adminTradeSessions = pgTable("admin_trade_sessions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -186,3 +233,20 @@ export const tradeLogic = pgTable("trade_logic", {
 export const insertTradeLogicSchema = createInsertSchema(tradeLogic).omit({ id: true, createdAt: true, updatedAt: true, currentWins: true, currentLosses: true });
 export type TradeLogic = typeof tradeLogic.$inferSelect;
 export type InsertTradeLogic = z.infer<typeof insertTradeLogicSchema>;
+
+export const globalTradeLogic = pgTable("global_trade_logic", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  totalTrades: integer("total_trades").notNull().default(10),
+  winTrades: integer("win_trades").notNull().default(7),
+  lossTrades: integer("loss_trades").notNull().default(3),
+  currentWins: integer("current_wins").notNull().default(0),
+  currentLosses: integer("current_losses").notNull().default(0),
+  slTpMode: varchar("sl_tp_mode", { length: 30 }).notNull().default("admin_override"),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type GlobalTradeLogic = typeof globalTradeLogic.$inferSelect;
+export const insertGlobalTradeLogicSchema = createInsertSchema(globalTradeLogic).omit({ id: true, createdAt: true, updatedAt: true, currentWins: true, currentLosses: true });
+export type InsertGlobalTradeLogic = z.infer<typeof insertGlobalTradeLogicSchema>;

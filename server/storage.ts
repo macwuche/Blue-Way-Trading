@@ -1,6 +1,6 @@
 import { 
   portfolios, holdings, trades, watchlist, deposits, withdrawals,
-  users, adminTradeSessions, adminTradeSessionUsers, adminTrades, tradeLogic,
+  users, adminTradeSessions, adminTradeSessionUsers, adminTrades, tradeLogic, globalTradeLogic, userPositions,
   type Portfolio, type InsertPortfolio,
   type Holding, type InsertHolding,
   type Trade, type InsertTrade,
@@ -8,7 +8,9 @@ import {
   type User, type Deposit, type InsertDeposit,
   type Withdrawal, type InsertWithdrawal,
   type AdminTradeSession, type AdminTradeSessionUser, type AdminTrade,
-  type TradeLogic, type InsertTradeLogic
+  type TradeLogic, type InsertTradeLogic,
+  type GlobalTradeLogic, type InsertGlobalTradeLogic,
+  type UserPosition, type InsertUserPosition
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, or, sql } from "drizzle-orm";
@@ -78,6 +80,21 @@ export interface IStorage {
   updateTradeLogicCounters(id: string, currentWins: number, currentLosses: number): Promise<TradeLogic>;
   resetTradeLogicCounters(id: string): Promise<TradeLogic>;
   deleteTradeLogic(id: string): Promise<void>;
+
+  // Global Trade Logic
+  getGlobalTradeLogic(): Promise<GlobalTradeLogic | undefined>;
+  upsertGlobalTradeLogic(data: Partial<InsertGlobalTradeLogic>): Promise<GlobalTradeLogic>;
+  updateGlobalTradeLogicCounters(currentWins: number, currentLosses: number): Promise<GlobalTradeLogic | undefined>;
+  resetGlobalTradeLogicCounters(): Promise<GlobalTradeLogic | undefined>;
+
+  // User Positions (Trading Engine)
+  createUserPosition(data: InsertUserPosition): Promise<UserPosition>;
+  getUserPositions(userId: string, status?: string): Promise<UserPosition[]>;
+  getUserPositionById(id: string): Promise<UserPosition | undefined>;
+  getAllOpenPositions(): Promise<UserPosition[]>;
+  getAllPendingPositions(): Promise<UserPosition[]>;
+  updateUserPosition(id: string, data: Partial<UserPosition>): Promise<UserPosition>;
+  closeUserPosition(id: string, exitPrice: string, realizedPnl: string, closeReason: string): Promise<UserPosition>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -637,6 +654,107 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTradeLogic(id: string): Promise<void> {
     await db.delete(tradeLogic).where(eq(tradeLogic.id, id));
+  }
+
+  // Global Trade Logic
+  async getGlobalTradeLogic(): Promise<GlobalTradeLogic | undefined> {
+    const [logic] = await db.select().from(globalTradeLogic).limit(1);
+    return logic;
+  }
+
+  async upsertGlobalTradeLogic(data: Partial<InsertGlobalTradeLogic>): Promise<GlobalTradeLogic> {
+    const existing = await this.getGlobalTradeLogic();
+    if (existing) {
+      const [updated] = await db
+        .update(globalTradeLogic)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(globalTradeLogic.id, existing.id))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(globalTradeLogic).values(data as any).returning();
+    return created;
+  }
+
+  async updateGlobalTradeLogicCounters(currentWins: number, currentLosses: number): Promise<GlobalTradeLogic | undefined> {
+    const existing = await this.getGlobalTradeLogic();
+    if (!existing) return undefined;
+    const [updated] = await db
+      .update(globalTradeLogic)
+      .set({ currentWins, currentLosses, updatedAt: new Date() })
+      .where(eq(globalTradeLogic.id, existing.id))
+      .returning();
+    return updated;
+  }
+
+  async resetGlobalTradeLogicCounters(): Promise<GlobalTradeLogic | undefined> {
+    const existing = await this.getGlobalTradeLogic();
+    if (!existing) return undefined;
+    const [updated] = await db
+      .update(globalTradeLogic)
+      .set({ currentWins: 0, currentLosses: 0, updatedAt: new Date() })
+      .where(eq(globalTradeLogic.id, existing.id))
+      .returning();
+    return updated;
+  }
+
+  // User Positions (Trading Engine)
+  async createUserPosition(data: InsertUserPosition): Promise<UserPosition> {
+    const [position] = await db.insert(userPositions).values({
+      ...data,
+      openedAt: data.orderType === "market" ? new Date() : undefined,
+    }).returning();
+    return position;
+  }
+
+  async getUserPositions(userId: string, status?: string): Promise<UserPosition[]> {
+    if (status) {
+      return db.select().from(userPositions)
+        .where(and(eq(userPositions.userId, userId), eq(userPositions.status, status)))
+        .orderBy(desc(userPositions.createdAt));
+    }
+    return db.select().from(userPositions)
+      .where(eq(userPositions.userId, userId))
+      .orderBy(desc(userPositions.createdAt));
+  }
+
+  async getUserPositionById(id: string): Promise<UserPosition | undefined> {
+    const [position] = await db.select().from(userPositions).where(eq(userPositions.id, id));
+    return position;
+  }
+
+  async getAllOpenPositions(): Promise<UserPosition[]> {
+    return db.select().from(userPositions)
+      .where(eq(userPositions.status, "open"))
+      .orderBy(desc(userPositions.createdAt));
+  }
+
+  async getAllPendingPositions(): Promise<UserPosition[]> {
+    return db.select().from(userPositions)
+      .where(eq(userPositions.status, "pending"))
+      .orderBy(desc(userPositions.createdAt));
+  }
+
+  async updateUserPosition(id: string, data: Partial<UserPosition>): Promise<UserPosition> {
+    const [updated] = await db.update(userPositions)
+      .set(data)
+      .where(eq(userPositions.id, id))
+      .returning();
+    return updated;
+  }
+
+  async closeUserPosition(id: string, exitPrice: string, realizedPnl: string, closeReason: string): Promise<UserPosition> {
+    const [updated] = await db.update(userPositions)
+      .set({
+        status: "closed",
+        exitPrice,
+        realizedPnl,
+        closeReason,
+        closedAt: new Date(),
+      })
+      .where(eq(userPositions.id, id))
+      .returning();
+    return updated;
   }
 }
 

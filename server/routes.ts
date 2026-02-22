@@ -2,11 +2,12 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupCustomAuth, registerCustomAuthRoutes, isAuthenticated } from "./auth";
-import { tradeExecutionSchema, insertWatchlistSchema, insertTradeLogicSchema } from "@shared/schema";
+import { tradeExecutionSchema, insertWatchlistSchema, insertTradeLogicSchema, openPositionSchema } from "@shared/schema";
 import { z } from "zod";
 import { getMarketData, getAllAssetsFromCache, startMarketDataRefresh } from "./massive-api";
 import { fetchMarketNews } from "./marketaux-api";
 import { addSSEClient, sendUserUpdate } from "./sse";
+import { openPosition, manualClosePosition, cancelPendingOrder, startTradingEngine } from "./trading-engine";
 
 // Middleware to check if user is admin
 const isAdmin = async (req: any, res: Response, next: Function) => {
@@ -1465,6 +1466,135 @@ export async function registerRoutes(
       res.status(500).json({ message: "Failed to delete trade logic" });
     }
   });
+
+  // ===== USER POSITIONS / TRADING ENGINE =====
+
+  app.post("/api/positions/open", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.claims.sub;
+      const data = openPositionSchema.parse(req.body);
+      const position = await openPosition(userId, data);
+      res.json(position);
+    } catch (error: any) {
+      console.error("Error opening position:", error);
+      res.status(400).json({ message: error.message || "Failed to open position" });
+    }
+  });
+
+  app.get("/api/positions", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.claims.sub;
+      const status = req.query.status as string | undefined;
+      const positions = await storage.getUserPositions(userId, status);
+      res.json(positions);
+    } catch (error) {
+      console.error("Error fetching positions:", error);
+      res.status(500).json({ message: "Failed to fetch positions" });
+    }
+  });
+
+  app.post("/api/positions/:id/close", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const position = await storage.getUserPositionById(req.params.id);
+      if (!position) return res.status(404).json({ message: "Position not found" });
+      if (position.userId !== req.user.claims.sub) return res.status(403).json({ message: "Not authorized" });
+      const closed = await manualClosePosition(req.params.id);
+      res.json(closed);
+    } catch (error: any) {
+      console.error("Error closing position:", error);
+      res.status(400).json({ message: error.message || "Failed to close position" });
+    }
+  });
+
+  app.post("/api/positions/:id/cancel", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const position = await storage.getUserPositionById(req.params.id);
+      if (!position) return res.status(404).json({ message: "Position not found" });
+      if (position.userId !== req.user.claims.sub) return res.status(403).json({ message: "Not authorized" });
+      const cancelled = await cancelPendingOrder(req.params.id);
+      res.json(cancelled);
+    } catch (error: any) {
+      console.error("Error cancelling order:", error);
+      res.status(400).json({ message: error.message || "Failed to cancel order" });
+    }
+  });
+
+  // Admin: open position for a user
+  app.post("/api/admin/positions/open", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const { userId, ...data } = req.body;
+      if (!userId) return res.status(400).json({ message: "userId required" });
+      const parsed = openPositionSchema.parse(data);
+      const position = await openPosition(userId, { ...parsed, openedByAdmin: true, adminId: req.user.claims.sub });
+      res.json(position);
+    } catch (error: any) {
+      console.error("Error opening position for user:", error);
+      res.status(400).json({ message: error.message || "Failed to open position" });
+    }
+  });
+
+  // Admin: close position for a user
+  app.post("/api/admin/positions/:id/close", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const closed = await manualClosePosition(req.params.id);
+      res.json(closed);
+    } catch (error: any) {
+      console.error("Error closing position for user:", error);
+      res.status(400).json({ message: error.message || "Failed to close position" });
+    }
+  });
+
+  // Admin: get positions for a specific user
+  app.get("/api/admin/positions/:userId", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const positions = await storage.getUserPositions(req.params.userId, req.query.status as string | undefined);
+      res.json(positions);
+    } catch (error) {
+      console.error("Error fetching user positions:", error);
+      res.status(500).json({ message: "Failed to fetch positions" });
+    }
+  });
+
+  // ===== GLOBAL TRADE LOGIC =====
+
+  app.get("/api/admin/global-trade-logic", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      let logic = await storage.getGlobalTradeLogic();
+      if (!logic) {
+        logic = await storage.upsertGlobalTradeLogic({});
+      }
+      res.json(logic);
+    } catch (error) {
+      console.error("Error fetching global trade logic:", error);
+      res.status(500).json({ message: "Failed to fetch global trade logic" });
+    }
+  });
+
+  app.post("/api/admin/global-trade-logic", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const { totalTrades, winTrades, lossTrades, slTpMode, active } = req.body;
+      const logic = await storage.upsertGlobalTradeLogic({
+        totalTrades, winTrades, lossTrades, slTpMode, active
+      });
+      res.json(logic);
+    } catch (error) {
+      console.error("Error updating global trade logic:", error);
+      res.status(500).json({ message: "Failed to update global trade logic" });
+    }
+  });
+
+  app.post("/api/admin/global-trade-logic/reset", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const logic = await storage.resetGlobalTradeLogicCounters();
+      res.json(logic);
+    } catch (error) {
+      console.error("Error resetting global trade logic:", error);
+      res.status(500).json({ message: "Failed to reset global trade logic" });
+    }
+  });
+
+  // Start the trading engine
+  startTradingEngine();
 
   return httpServer;
 }
