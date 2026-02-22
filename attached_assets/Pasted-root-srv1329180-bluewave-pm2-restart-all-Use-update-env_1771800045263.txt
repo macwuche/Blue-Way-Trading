@@ -1,0 +1,64 @@
+root@srv1329180:~/bluewave# pm2 restart all
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0, 5 ])
+[PM2] [crypto-trading](0) ✓
+[PM2] [bluewave](5) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 5  │ bluewave           │ cluster  │ 6    │ online    │ 0%       │ 40.0mb   │
+│ 0  │ crypto-trading     │ fork     │ 8    │ online    │ 0%       │ 50.9mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+
+added 2 packages, and audited 504 packages in 2s
+
+70 packages are looking for funding
+  run `npm fund` for details
+
+7 vulnerabilities (1 moderate, 6 high)
+
+To address all issues, run:
+  npm audit fix
+
+Run `npm audit` for details.
+root@srv1329180:~/bluewave#
+root@srv1329180:~/bluewave#
+root@srv1329180:~/bluewave# npm run build
+
+> rest-express@1.0.0 build
+> tsx script/build.ts
+
+building client...
+vite v7.3.0 building client environment for production...
+transforming (7) src/lib/queryClient.ts
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+✓ 3055 modules transformed.
+node_modules/lottie-web/build/player/lottie.js (14422:32): Use of eval in "node_modules/lottie-web/build/player/lottie.js" is strongly discouraged as it poses security risks and may cause issues with minification.
+../dist/public/index.html                                                1.31 kB │ gzip:   0.58 kB
+../dist/public/assets/Audio_2026_02_22-1_1771787287153-DPnsC8Jx.mp3    131.70 kB
+../dist/public/assets/GmbuHuHbRYpTPJt5_1768481770485-DL5FOx8Z.png    2,291.07 kB
+../dist/public/assets/index-C3WGf2Dd.css                               122.55 kB │ gzip:  18.82 kB
+../dist/public/assets/index-Bv0bdM26.js                              2,306.57 kB │ gzip: 563.40 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 14.16s
+building server...
+
+  dist/index.cjs  1.1mb ⚠️
+
+⚡ Done in 611ms
+root@srv1329180:~/bluewave# pm2 restart all
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0, 5 ])
+[PM2] [crypto-trading](0) ✓
+[PM2] [bluewave](5) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 5  │ bluewave           │ cluster  │ 7    │ online    │ 0%       │ 40.0mb   │
+│ 0  │ crypto-trading     │ fork     │ 9    │ online    │ 0%       │ 60.8mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+root@srv1329180:~/bluewave#

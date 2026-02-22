@@ -1,0 +1,264 @@
+root@srv1329180:~/bluewave# npm run db:push
+
+> rest-express@1.0.0 db:push
+> drizzle-kit push
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/root/bluewave/drizzle.config.ts'
+Using 'pg' driver for database querying
+[✓] Pulling schema from database...
+[i] No changes detected
+root@srv1329180:~/bluewave# pm2 restart all
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0, 5 ])
+[PM2] [crypto-trading](0) ✓
+[PM2] [bluewave](5) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 5  │ bluewave           │ cluster  │ 5    │ online    │ 0%       │ 40.0mb   │
+│ 0  │ crypto-trading     │ fork     │ 7    │ online    │ 0%       │ 61.4mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+root@srv1329180:~/bluewave# client_loop: send disconnect: Connection reset
+
+C:\Users\user>shutdown/h
+
+C:\Users\user>ssh root@76.13.139.241
+root@76.13.139.241's password:
+Welcome to Ubuntu 24.04.3 LTS (GNU/Linux 6.8.0-90-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+ System information as of Sun Feb 22 22:34:04 UTC 2026
+
+  System load:  0.0               Processes:             116
+  Usage of /:   9.4% of 47.39GB   Users logged in:       0
+  Memory usage: 19%               IPv4 address for eth0: 76.13.139.241
+  Swap usage:   0%                IPv6 address for eth0: 2a02:4780:41:65d4::1
+
+ * Strictly confined Kubernetes makes edge and IoT secure. Learn how MicroK8s
+   just raised the bar for easy, resilient and secure K8s cluster deployment.
+
+   https://ubuntu.com/engage/secure-kubernetes-at-the-edge
+
+Expanded Security Maintenance for Applications is not enabled.
+
+23 updates can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+1 updates could not be installed automatically. For more details,
+see /var/log/unattended-upgrades/unattended-upgrades.log
+
+*** System restart required ***
+Last login: Sat Feb 21 17:15:13 2026 from 105.116.3.1
+root@srv1329180:~# ls
+bluewave  crypto_backup_20260205.sql
+root@srv1329180:~# cd bluewave
+root@srv1329180:~/bluewave# git pull origin main
+remote: Enumerating objects: 121, done.
+remote: Counting objects: 100% (121/121), done.
+remote: Compressing objects: 100% (22/22), done.
+remote: Total 102 (delta 87), reused 94 (delta 79), pack-reused 0 (from 0)
+Receiving objects: 100% (102/102), 691.16 KiB | 27.65 MiB/s, done.
+Resolving deltas: 100% (87/87), completed with 18 local objects.
+From https://github.com/macwuche/Blue-Way-Trading
+ * branch            main       -> FETCH_HEAD
+   4b4e1fb..da41cba  main       -> origin/main
+Updating 4b4e1fb..da41cba
+Fast-forward
+ attached_assets/Audio_2026_02_22-1_1771787287153.mp3 | Bin 0 -> 131701 bytes
+ attached_assets/Confetti_1771778050736.json          |   1 +
+ attached_assets/Confetti_1771781969575.json          |   1 +
+ attached_assets/image_1771766273227.png              | Bin 0 -> 1648 bytes
+ attached_assets/image_1771770577161.png              | Bin 0 -> 310699 bytes
+ attached_assets/image_1771775496792.png              | Bin 0 -> 256219 bytes
+ client/src/assets/confetti.json                      |   1 +
+ client/src/components/trade-notification.tsx         | 196 ++++++++++++++++++
+ client/src/pages/admin/trade-for-users.tsx           | 648 ++++++++++++++++++++++++++++++++++++-----------------------
+ client/src/pages/admin/trade-logic.tsx               | 526 ++++++++++++++++++++----------------------------
+ client/src/pages/login.tsx                           |   6 +-
+ client/src/pages/signup.tsx                          |   6 +-
+ client/src/pages/traderoom.tsx                       | 599 ++++++++++++++++++++++++++++++------------------------
+ package-lock.json                                    |  20 ++
+ package.json                                         |   1 +
+ server/routes.ts                                     | 132 +++++++++++-
+ server/storage.ts                                    | 122 ++++++++++-
+ server/trading-engine.ts                             | 329 ++++++++++++++++++++++++++++++
+ shared/schema.ts                                     |  64 ++++++
+ 19 files changed, 1813 insertions(+), 839 deletions(-)
+ create mode 100644 attached_assets/Audio_2026_02_22-1_1771787287153.mp3
+ create mode 100644 attached_assets/Confetti_1771778050736.json
+ create mode 100644 attached_assets/Confetti_1771781969575.json
+ create mode 100644 attached_assets/image_1771766273227.png
+ create mode 100644 attached_assets/image_1771770577161.png
+ create mode 100644 attached_assets/image_1771775496792.png
+ create mode 100644 client/src/assets/confetti.json
+ create mode 100644 client/src/components/trade-notification.tsx
+ create mode 100644 server/trading-engine.ts
+root@srv1329180:~/bluewave# npm run db:push
+
+> rest-express@1.0.0 db:push
+> drizzle-kit push
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/root/bluewave/drizzle.config.ts'
+Using 'pg' driver for database querying
+[✓] Pulling schema from database...
+[✓] Changes applied
+root@srv1329180:~/bluewave# npm run db:push
+
+> rest-express@1.0.0 db:push
+> drizzle-kit push
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/root/bluewave/drizzle.config.ts'
+Using 'pg' driver for database querying
+[✓] Pulling schema from database...
+[i] No changes detected
+root@srv1329180:~/bluewave# npm run build
+
+> rest-express@1.0.0 build
+> tsx script/build.ts
+
+building client...
+vite v7.3.0 building client environment for production...
+transforming (5) ../node_modules/wouter/esm/index.js
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+✓ 56 modules transformed.
+✗ Build failed in 3.29s
+[vite]: Rollup failed to resolve import "lottie-react" from "/root/bluewave/client/src/pages/traderoom.tsx".
+This is most likely unintended because it can break your application at runtime.
+If you do want to externalize this module explicitly add it to
+`build.rollupOptions.external`
+    at viteLog (/root/bluewave/node_modules/vite/dist/node/chunks/config.js:33634:57)
+    at <anonymous> (/root/bluewave/node_modules/vite/dist/node/chunks/config.js:33668:73)
+    at onwarn (/root/bluewave/node_modules/@vitejs/plugin-react/dist/index.js:90:7)
+    at <anonymous> (/root/bluewave/node_modules/vite/dist/node/chunks/config.js:33668:28)
+    at onRollupLog (/root/bluewave/node_modules/vite/dist/node/chunks/config.js:33663:63)
+    at onLog (/root/bluewave/node_modules/vite/dist/node/chunks/config.js:33466:4)
+    at <anonymous> (/root/bluewave/node_modules/rollup/dist/es/shared/node-entry.js:21004:32)
+    at Object.logger (/root/bluewave/node_modules/rollup/dist/es/shared/node-entry.js:22891:9)
+    at ModuleLoader.handleInvalidResolvedId (/root/bluewave/node_modules/rollup/dist/es/shared/node-entry.js:21635:26)
+    at <anonymous> (/root/bluewave/node_modules/rollup/dist/es/shared/node-entry.js:21593:26) {
+  watchFiles: [
+    '/root/bluewave/client/index.html',
+    '/root/bluewave/client/src/main.tsx',
+    '/root/bluewave/package.json',
+    '/root/bluewave/node_modules/react-dom/client.js',
+    '/root/bluewave/node_modules/react/jsx-runtime.js',
+    '/root/bluewave/client/src/App.tsx',
+    '/root/bluewave/client/src/index.css',
+    '/root/bluewave/node_modules/react-dom/index.js',
+    '/root/bluewave/node_modules/react/cjs/react-jsx-runtime.production.min.js',
+    '/root/bluewave/node_modules/react/index.js',
+    '/root/bluewave/node_modules/wouter/esm/index.js',
+    '/root/bluewave/node_modules/@tanstack/react-query/build/modern/index.js',
+    '/root/bluewave/client/src/lib/queryClient.ts',
+    '/root/bluewave/client/src/components/ui/toaster.tsx',
+    '/root/bluewave/client/src/components/ui/tooltip.tsx',
+    '/root/bluewave/client/src/hooks/use-auth.ts',
+    '/root/bluewave/client/src/components/onboarding.tsx',
+    '/root/bluewave/client/src/pages/login.tsx',
+    '/root/bluewave/client/src/pages/signup.tsx',
+    '/root/bluewave/client/src/pages/dashboard.tsx',
+    '/root/bluewave/client/src/pages/traderoom.tsx',
+    '/root/bluewave/client/src/pages/portfolio.tsx',
+    '/root/bluewave/client/src/pages/history.tsx',
+    '/root/bluewave/client/src/pages/support.tsx',
+    '/root/bluewave/client/src/pages/news.tsx',
+    '/root/bluewave/client/src/pages/news-detail.tsx',
+    '/root/bluewave/client/src/pages/vip.tsx',
+    '/root/bluewave/client/src/pages/deposit.tsx',
+    '/root/bluewave/client/src/pages/withdrawal.tsx',
+    '/root/bluewave/client/src/pages/verification.tsx',
+    '/root/bluewave/client/src/pages/more.tsx',
+    '/root/bluewave/client/src/pages/admin/dashboard.tsx',
+    '/root/bluewave/client/src/pages/admin/all-trades.tsx',
+    '/root/bluewave/client/src/pages/not-found.tsx',
+    '/root/bluewave/client/src/pages/admin/user-profile.tsx',
+    '/root/bluewave/client/src/hooks/use-market-data.ts',
+    '/root/bluewave/client/src/hooks/use-toast.ts',
+    '/root/bluewave/client/src/lib/auth-utils.ts',
+    '/root/bluewave/client/src/lib/countries.ts',
+    '/root/bluewave/client/src/lib/market-data.ts',
+    '/root/bluewave/client/src/lib/utils.ts',
+    '/root/bluewave/client/src/components/asset-info-panel.tsx',
+    '/root/bluewave/client/src/components/asset-row.tsx',
+    '/root/bluewave/client/src/components/candlestick-chart.tsx',
+    '/root/bluewave/client/src/components/market-modal.tsx',
+    '/root/bluewave/client/src/components/portfolio-card.tsx',
+    '/root/bluewave/client/src/components/price-chart.tsx',
+    '/root/bluewave/client/src/components/trade-history.tsx',
+    '/root/bluewave/client/src/components/trade-notification.tsx',
+    '/root/bluewave/client/src/components/trading-panel.tsx',
+    '/root/bluewave/client/src/components/ui/accordion.tsx',
+    '/root/bluewave/client/src/components/ui/alert-dialog.tsx',
+    '/root/bluewave/client/src/components/ui/alert.tsx',
+    '/root/bluewave/client/src/components/ui/aspect-ratio.tsx',
+    '/root/bluewave/client/src/components/ui/avatar.tsx',
+    '/root/bluewave/client/src/components/ui/badge.tsx',
+    '/root/bluewave/client/src/components/ui/breadcrumb.tsx',
+    '/root/bluewave/client/src/components/ui/button.tsx',
+    '/root/bluewave/client/src/components/ui/calendar.tsx',
+    '/root/bluewave/client/src/components/ui/card.tsx',
+    '/root/bluewave/client/src/components/ui/carousel.tsx',
+    '/root/bluewave/client/src/components/ui/chart.tsx',
+    '/root/bluewave/client/src/components/ui/checkbox.tsx',
+    '/root/bluewave/client/src/components/ui/collapsible.tsx',
+    '/root/bluewave/client/src/components/ui/command.tsx',
+    '/root/bluewave/client/src/components/ui/context-menu.tsx',
+    '/root/bluewave/client/src/components/ui/dialog.tsx',
+    '/root/bluewave/client/src/components/ui/drawer.tsx',
+    '/root/bluewave/client/src/components/ui/dropdown-menu.tsx',
+    '/root/bluewave/client/src/components/ui/form.tsx',
+    '/root/bluewave/client/src/components/ui/glass-card.tsx',
+    '/root/bluewave/client/src/components/ui/hover-card.tsx',
+    '/root/bluewave/client/src/components/ui/input-otp.tsx',
+    '/root/bluewave/client/src/components/ui/input.tsx',
+    '/root/bluewave/client/src/components/ui/label.tsx',
+    '/root/bluewave/client/src/components/ui/menubar.tsx',
+    '/root/bluewave/client/src/components/ui/navigation-menu.tsx',
+    '/root/bluewave/client/src/components/ui/pagination.tsx',
+    '/root/bluewave/client/src/components/ui/popover.tsx',
+    '/root/bluewave/client/src/components/ui/progress.tsx',
+    '/root/bluewave/client/src/components/ui/radio-group.tsx',
+    '/root/bluewave/client/src/components/ui/resizable.tsx',
+    '/root/bluewave/client/src/components/ui/scroll-area.tsx',
+    '/root/bluewave/client/src/components/ui/select.tsx',
+    '/root/bluewave/client/src/components/ui/separator.tsx',
+    '/root/bluewave/client/src/components/ui/sheet.tsx',
+    '/root/bluewave/client/src/components/ui/sidebar.tsx',
+    '/root/bluewave/client/src/components/ui/skeleton.tsx',
+    '/root/bluewave/client/src/components/ui/slider.tsx',
+    '/root/bluewave/client/src/components/ui/switch.tsx',
+    '/root/bluewave/client/src/components/ui/table.tsx',
+    '/root/bluewave/client/src/components/ui/tabs.tsx',
+    '/root/bluewave/client/src/components/ui/textarea.tsx',
+    '/root/bluewave/client/src/components/ui/toast.tsx',
+    '/root/bluewave/client/src/components/ui/toggle-group.tsx',
+    '/root/bluewave/client/src/components/ui/toggle.tsx',
+    '/root/bluewave/client/src/components/watchlist.tsx',
+    '/root/bluewave/client/src/hooks/use-mobile.tsx',
+    '/root/bluewave/client/src/pages/admin/deposits.tsx',
+    '/root/bluewave/client/src/pages/admin/kyc.tsx',
+    ... 34 more items
+  ]
+}
+root@srv1329180:~/bluewave# pm2 restart all
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0, 5 ])
+[PM2] [crypto-trading](0) ✓
+[PM2] [bluewave](5) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 5  │ bluewave           │ cluster  │ 6    │ online    │ 0%       │ 40.0mb   │
+│ 0  │ crypto-trading     │ fork     │ 8    │ online    │ 0%       │ 50.9mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+root@srv1329180:~/bluewave#
