@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, Shield, CreditCard, Wallet, 
   Send, Newspaper, Crown, Settings, ArrowLeft, Menu,
   TrendingUp, TrendingDown, DollarSign, Activity, RefreshCw,
-  Lock, Mail, LogOut, BarChart3, Brain
+  Lock, Mail, LogOut, BarChart3, Brain, ChevronDown, History
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -31,6 +31,7 @@ import AdminNews from "./news";
 import AdminVip from "./vip";
 import TradeForUsers from "./trade-for-users";
 import AdminTradeLogic from "./trade-logic";
+import AdminOrderHistory from "./order-history";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -44,7 +45,10 @@ const adminNavItems = [
   { id: "users", icon: Users, label: "Users" },
   { id: "trade-for-users", icon: Activity, label: "Trade for Users" },
   { id: "trade-logic", icon: Brain, label: "Trade Logic" },
-  { id: "all-trades", icon: BarChart3, label: "All Trades", href: "/admin/trades" },
+  { id: "orders", icon: BarChart3, label: "Orders", children: [
+    { id: "all-trades", icon: BarChart3, label: "All Orders", href: "/admin/trades" },
+    { id: "order-history", icon: History, label: "Order History" },
+  ]},
   { id: "kyc", icon: Shield, label: "KYC Verification" },
   { id: "payment-methods", icon: CreditCard, label: "Payment Methods" },
   { id: "deposits", icon: Wallet, label: "Deposits" },
@@ -365,6 +369,7 @@ export default function AdminDashboard() {
   const currentPage = match ? params?.page : "dashboard";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [adminLoggedIn, setAdminLoggedIn] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const { toast } = useToast();
 
   // Check if admin is already authenticated
@@ -436,29 +441,80 @@ export default function AdminDashboard() {
         return <AdminNews />;
       case "vip":
         return <AdminVip />;
+      case "order-history":
+        return <AdminOrderHistory />;
       default:
         return <DashboardOverview />;
     }
   };
 
+  const toggleMenu = (id: string) => {
+    setExpandedMenus(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]);
+  };
+
   const NavContent = () => (
     <nav className="space-y-1 p-2">
-      {adminNavItems.map((item) => (
-        <button
-          key={item.id}
-          onClick={() => handleNavClick(item.id, (item as any).href)}
-          data-testid={`admin-nav-${item.id}`}
-          className={cn(
-            "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-left",
-            currentPage === item.id || ((item as any).href && locationPath === (item as any).href)
-              ? "bg-primary/20 text-primary"
-              : "text-muted-foreground hover-elevate"
-          )}
-        >
-          <item.icon className="w-5 h-5" />
-          <span>{item.label}</span>
-        </button>
-      ))}
+      {adminNavItems.map((item) => {
+        const children = (item as any).children as typeof adminNavItems | undefined;
+        if (children) {
+          const isExpanded = expandedMenus.includes(item.id);
+          const isChildActive = children.some(
+            (child: any) => currentPage === child.id || (child.href && locationPath === child.href)
+          );
+          return (
+            <div key={item.id}>
+              <button
+                onClick={() => toggleMenu(item.id)}
+                data-testid={`admin-nav-${item.id}`}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-left",
+                  isChildActive ? "bg-primary/20 text-primary" : "text-muted-foreground hover-elevate"
+                )}
+              >
+                <item.icon className="w-5 h-5" />
+                <span className="flex-1">{item.label}</span>
+                <ChevronDown className={cn("w-4 h-4 transition-transform", isExpanded && "rotate-180")} />
+              </button>
+              {isExpanded && (
+                <div className="ml-4 mt-1 space-y-1">
+                  {children.map((child: any) => (
+                    <button
+                      key={child.id}
+                      onClick={() => handleNavClick(child.id, child.href)}
+                      data-testid={`admin-nav-${child.id}`}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-left text-sm",
+                        currentPage === child.id || (child.href && locationPath === child.href)
+                          ? "bg-primary/20 text-primary"
+                          : "text-muted-foreground hover-elevate"
+                      )}
+                    >
+                      <child.icon className="w-4 h-4" />
+                      <span>{child.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        }
+        return (
+          <button
+            key={item.id}
+            onClick={() => handleNavClick(item.id, (item as any).href)}
+            data-testid={`admin-nav-${item.id}`}
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-left",
+              currentPage === item.id || ((item as any).href && locationPath === (item as any).href)
+                ? "bg-primary/20 text-primary"
+                : "text-muted-foreground hover-elevate"
+            )}
+          >
+            <item.icon className="w-5 h-5" />
+            <span>{item.label}</span>
+          </button>
+        );
+      })}
     </nav>
   );
 
@@ -530,7 +586,7 @@ export default function AdminDashboard() {
           </Sheet>
           
           <div className="font-semibold">
-            {adminNavItems.find(n => n.id === currentPage)?.label || "Dashboard"}
+            {adminNavItems.find(n => n.id === currentPage)?.label || adminNavItems.flatMap(n => (n as any).children || []).find((c: any) => c.id === currentPage)?.label || "Dashboard"}
           </div>
           
           <div className="w-9" />
