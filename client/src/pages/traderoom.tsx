@@ -29,6 +29,8 @@ import { MarketModal } from "@/components/market-modal";
 import { AssetInfoPanel } from "@/components/asset-info-panel";
 import { useAuth } from "@/hooks/use-auth";
 import { useTradeNotification, TradeNotificationContainer } from "@/components/trade-notification";
+import Lottie from "lottie-react";
+import confettiAnimation from "@/assets/confetti.json";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { type Asset, formatPrice } from "@/lib/market-data";
 import { useMarketData } from "@/hooks/use-market-data";
@@ -87,6 +89,7 @@ export default function TradeRoom() {
     emaPeriod: 12,
   });
   const [chartType, setChartType] = useState<ChartType>("candlestick");
+  const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
     if (cryptoAssets.length > 0 && !selectedAsset) {
@@ -178,6 +181,9 @@ export default function TradeRoom() {
             pnl,
             direction: data.direction,
           });
+          if (pnl > 0) {
+            setShowConfetti(true);
+          }
           queryClient.invalidateQueries({ queryKey: ["/api/positions"] });
           queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
         }
@@ -701,6 +707,17 @@ export default function TradeRoom() {
             {/* Chart */}
             <div className="flex-1 relative p-2 min-h-[200px]">
               <TradeNotificationContainer />
+              {showConfetti && (
+                <div className="absolute inset-0 z-[60] pointer-events-none flex items-center justify-center">
+                  <Lottie
+                    animationData={confettiAnimation}
+                    loop={false}
+                    autoplay={true}
+                    onComplete={() => setShowConfetti(false)}
+                    style={{ width: "80%", height: "80%" }}
+                  />
+                </div>
+              )}
               {/* Desktop Chart Type Toggle - positioned in top right of chart */}
               <div className="hidden md:flex absolute top-4 right-4 z-10 items-center gap-1 glass-dark rounded-lg p-1">
                 <Button
