@@ -1544,6 +1544,52 @@ export async function registerRoutes(
     }
   });
 
+  // Admin: add profit to a specific position and user's portfolio
+  app.post("/api/admin/positions/:id/add-profit", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const schema = z.object({
+        amount: z.number(),
+      });
+      const result = schema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid data" });
+      }
+
+      const position = await storage.getUserPositionById(req.params.id);
+      if (!position) {
+        return res.status(404).json({ message: "Position not found" });
+      }
+
+      const currentPnl = parseFloat(position.unrealizedPnl || "0");
+      const newPnl = currentPnl + result.data.amount;
+
+      const updatedPosition = await storage.updateUserPosition(req.params.id, {
+        unrealizedPnl: newPnl.toFixed(2),
+      });
+
+      const absAmount = Math.abs(result.data.amount);
+      const operation = result.data.amount >= 0 ? "add" : "subtract";
+      await storage.adjustUserProfit(position.userId, absAmount, operation);
+      await storage.adjustUserBalance(position.userId, absAmount, operation);
+
+      const finalPortfolio = await storage.getPortfolioByUserId(position.userId);
+
+      if (finalPortfolio) {
+        sendUserUpdate(position.userId, {
+          type: "portfolio_update",
+          balance: finalPortfolio.balance,
+          totalProfit: finalPortfolio.totalProfit,
+          totalProfitPercent: finalPortfolio.totalProfitPercent,
+        });
+      }
+
+      res.json({ position: updatedPosition, portfolio: finalPortfolio });
+    } catch (error) {
+      console.error("Error adding profit to position:", error);
+      res.status(500).json({ message: "Failed to add profit to position" });
+    }
+  });
+
   // Admin: get all open positions across all users
   app.get("/api/admin/positions-open", isAuthenticated, isAdmin, async (req: any, res: Response) => {
     try {

@@ -85,8 +85,8 @@ export default function AllAdminTradesPage() {
   });
 
   const addProfitMutation = useMutation({
-    mutationFn: async ({ userId, amount }: { userId: string; amount: number }) => {
-      return apiRequest("POST", `/api/admin/users/${userId}/profit`, { amount: Math.abs(amount), operation: amount >= 0 ? "add" : "subtract" });
+    mutationFn: async ({ positionId, amount }: { positionId: string; amount: number }) => {
+      return apiRequest("POST", `/api/admin/positions/${positionId}/add-profit`, { amount });
     },
     onSuccess: () => {
       setAddProfitDialog(null);
@@ -384,7 +384,7 @@ export default function AllAdminTradesPage() {
                 onClick={() => {
                   const amt = parseFloat(profitAmount);
                   if (!isNaN(amt) && amt !== 0 && addProfitDialog) {
-                    addProfitMutation.mutate({ userId: addProfitDialog.userId, amount: amt });
+                    addProfitMutation.mutate({ positionId: addProfitDialog.id, amount: amt });
                   }
                 }}
                 disabled={addProfitMutation.isPending || !profitAmount}
