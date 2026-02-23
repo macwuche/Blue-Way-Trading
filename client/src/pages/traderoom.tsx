@@ -146,7 +146,7 @@ export default function TradeRoom() {
 
   const balance = parseFloat(dashboardData?.portfolio?.balance || "10000");
 
-  const totalUnrealizedPnl = openPositions.reduce((sum, p) => sum + parseFloat(p.unrealizedPnl || "0"), 0);
+  const totalUnrealizedPnl = openPositions.reduce((sum, p) => sum + parseFloat(p.unrealizedPnl || "0") + parseFloat(p.adminProfit || "0"), 0);
   const totalOrdersMargin = openPositions.reduce((sum, p) => sum + parseFloat(p.amount), 0);
   const equity = balance + totalUnrealizedPnl;
   const accountMargin = equity - totalOrdersMargin;
@@ -1026,7 +1026,7 @@ export default function TradeRoom() {
                 <div className="text-xs text-muted-foreground mb-1.5">Open Positions ({openPositions.length})</div>
                 <div className="space-y-1.5 max-h-[140px] overflow-y-auto">
                   {openPositions.map((pos) => {
-                    const pnl = parseFloat(pos.unrealizedPnl || "0");
+                    const pnl = parseFloat(pos.unrealizedPnl || "0") + parseFloat(pos.adminProfit || "0");
                     return (
                       <div key={pos.id} className={cn(
                         "glass-light rounded-lg p-2 border",
@@ -1139,7 +1139,7 @@ export default function TradeRoom() {
           {hasActivePositions && (
             <div className="space-y-1.5 max-h-[80px] overflow-y-auto">
               {openPositions.slice(0, 2).map((pos) => {
-                const pnl = parseFloat(pos.unrealizedPnl || "0");
+                const pnl = parseFloat(pos.unrealizedPnl || "0") + parseFloat(pos.adminProfit || "0");
                 return (
                   <div key={pos.id} className={cn(
                     "glass-light rounded-lg p-2 border",

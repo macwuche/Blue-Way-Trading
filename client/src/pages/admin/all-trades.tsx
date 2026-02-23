@@ -50,6 +50,7 @@ interface OpenPosition {
   stopLoss: string | null;
   takeProfit: string | null;
   unrealizedPnl: string | null;
+  adminProfit: string | null;
   createdAt: string;
   userName: string;
   userEmail: string | null;
@@ -143,7 +144,7 @@ export default function AllAdminTradesPage() {
           comparison = parseFloat(a.amount) - parseFloat(b.amount);
           break;
         case "unrealizedPnl":
-          comparison = parseFloat(a.unrealizedPnl || "0") - parseFloat(b.unrealizedPnl || "0");
+          comparison = (parseFloat(a.unrealizedPnl || "0") + parseFloat(a.adminProfit || "0")) - (parseFloat(b.unrealizedPnl || "0") + parseFloat(b.adminProfit || "0"));
           break;
       }
       return sortDirection === "asc" ? comparison : -comparison;
@@ -152,7 +153,7 @@ export default function AllAdminTradesPage() {
 
   const openCount = positions.filter(p => p.status === "open").length;
   const pendingCount = positions.filter(p => p.status === "pending").length;
-  const totalPnl = positions.filter(p => p.status === "open").reduce((s, p) => s + parseFloat(p.unrealizedPnl || "0"), 0);
+  const totalPnl = positions.filter(p => p.status === "open").reduce((s, p) => s + parseFloat(p.unrealizedPnl || "0") + parseFloat(p.adminProfit || "0"), 0);
 
   if (isLoading) {
     return (
@@ -270,7 +271,7 @@ export default function AllAdminTradesPage() {
                 </tr>
               ) : (
                 filteredPositions.map((pos) => {
-                  const pnl = parseFloat(pos.unrealizedPnl || "0");
+                  const pnl = parseFloat(pos.unrealizedPnl || "0") + parseFloat(pos.adminProfit || "0");
                   return (
                     <tr key={pos.id} className="border-b border-white/5 hover:bg-white/5 transition-colors" data-testid={`order-row-${pos.id}`}>
                       <td className="p-3 text-xs text-muted-foreground whitespace-nowrap">

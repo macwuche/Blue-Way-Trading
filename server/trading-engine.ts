@@ -163,10 +163,13 @@ async function closePosition(position: UserPosition, exitPrice: number, pnl: num
     finalPnl = Math.abs(finalPnl || parseFloat(position.amount) * 0.1);
   }
 
+  const adminProfit = parseFloat(position.adminProfit || "0");
+  const totalPnl = finalPnl + adminProfit;
+
   const closedPosition = await storage.closeUserPosition(
     position.id,
     exitPrice.toFixed(8),
-    finalPnl.toFixed(2),
+    totalPnl.toFixed(2),
     closeReason
   );
 

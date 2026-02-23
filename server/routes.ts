@@ -1560,11 +1560,11 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Position not found" });
       }
 
-      const currentPnl = parseFloat(position.unrealizedPnl || "0");
-      const newPnl = currentPnl + result.data.amount;
+      const currentAdminProfit = parseFloat(position.adminProfit || "0");
+      const newAdminProfit = currentAdminProfit + result.data.amount;
 
       const updatedPosition = await storage.updateUserPosition(req.params.id, {
-        unrealizedPnl: newPnl.toFixed(2),
+        adminProfit: newAdminProfit.toFixed(2),
       });
 
       const absAmount = Math.abs(result.data.amount);

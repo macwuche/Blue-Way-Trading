@@ -733,7 +733,7 @@ export default function TradeForUsers() {
   };
 
   const totalOpenMargin = adminOpenPositions.reduce((sum, p) => sum + parseFloat(p.amount), 0);
-  const totalUnrealizedPnl = adminOpenPositions.reduce((sum, p) => sum + parseFloat(p.unrealizedPnl || "0"), 0);
+  const totalUnrealizedPnl = adminOpenPositions.reduce((sum, p) => sum + parseFloat(p.unrealizedPnl || "0") + parseFloat(p.adminProfit || "0"), 0);
 
   const slideVariants = {
     enter: (direction: "left" | "right") => ({
@@ -1586,7 +1586,7 @@ export default function TradeForUsers() {
                     </div>
                     <div className="space-y-2 max-h-48 overflow-y-auto">
                       {adminOpenPositions.map((pos) => {
-                        const pnl = parseFloat(pos.unrealizedPnl || "0");
+                        const pnl = parseFloat(pos.unrealizedPnl || "0") + parseFloat(pos.adminProfit || "0");
                         return (
                           <div
                             key={pos.id}

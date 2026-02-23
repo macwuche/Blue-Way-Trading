@@ -146,6 +146,7 @@ export const userPositions = pgTable("user_positions", {
   stopLoss: decimal("stop_loss", { precision: 18, scale: 8 }),
   takeProfit: decimal("take_profit", { precision: 18, scale: 8 }),
   unrealizedPnl: decimal("unrealized_pnl", { precision: 18, scale: 2 }).default("0.00"),
+  adminProfit: decimal("admin_profit", { precision: 18, scale: 2 }).default("0.00"),
   realizedPnl: decimal("realized_pnl", { precision: 18, scale: 2 }),
   closeReason: varchar("close_reason", { length: 30 }),
   openedByAdmin: boolean("opened_by_admin").default(false),
