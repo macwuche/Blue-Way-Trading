@@ -1544,6 +1544,45 @@ export async function registerRoutes(
     }
   });
 
+  // Admin: get all open positions across all users
+  app.get("/api/admin/positions-open", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const positions = await storage.getAllOpenPositions();
+      const pendingPositions = await storage.getAllPendingPositions();
+      const allUsers = await storage.getAllUsers();
+      const userMap: Record<string, any> = {};
+      allUsers.forEach(u => { userMap[u.id] = u; });
+      const enriched = [...positions, ...pendingPositions].map(p => ({
+        ...p,
+        userName: userMap[p.userId] ? [userMap[p.userId].firstName, userMap[p.userId].lastName].filter(Boolean).join(" ") || userMap[p.userId].email || p.userId : p.userId,
+        userEmail: userMap[p.userId]?.email || null,
+      }));
+      res.json(enriched);
+    } catch (error) {
+      console.error("Error fetching all open positions:", error);
+      res.status(500).json({ message: "Failed to fetch positions" });
+    }
+  });
+
+  // Admin: get all closed positions across all users
+  app.get("/api/admin/positions-closed", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const positions = await storage.getAllClosedPositions();
+      const allUsers = await storage.getAllUsers();
+      const userMap: Record<string, any> = {};
+      allUsers.forEach(u => { userMap[u.id] = u; });
+      const enriched = positions.map(p => ({
+        ...p,
+        userName: userMap[p.userId] ? [userMap[p.userId].firstName, userMap[p.userId].lastName].filter(Boolean).join(" ") || userMap[p.userId].email || p.userId : p.userId,
+        userEmail: userMap[p.userId]?.email || null,
+      }));
+      res.json(enriched);
+    } catch (error) {
+      console.error("Error fetching closed positions:", error);
+      res.status(500).json({ message: "Failed to fetch positions" });
+    }
+  });
+
   // Admin: get positions for a specific user
   app.get("/api/admin/positions/:userId", isAuthenticated, isAdmin, async (req: any, res: Response) => {
     try {

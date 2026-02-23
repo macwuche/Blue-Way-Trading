@@ -93,6 +93,7 @@ export interface IStorage {
   getUserPositionById(id: string): Promise<UserPosition | undefined>;
   getAllOpenPositions(): Promise<UserPosition[]>;
   getAllPendingPositions(): Promise<UserPosition[]>;
+  getAllClosedPositions(): Promise<UserPosition[]>;
   updateUserPosition(id: string, data: Partial<UserPosition>): Promise<UserPosition>;
   closeUserPosition(id: string, exitPrice: string, realizedPnl: string, closeReason: string): Promise<UserPosition>;
 }
@@ -733,6 +734,12 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(userPositions)
       .where(eq(userPositions.status, "pending"))
       .orderBy(desc(userPositions.createdAt));
+  }
+
+  async getAllClosedPositions(): Promise<UserPosition[]> {
+    return db.select().from(userPositions)
+      .where(eq(userPositions.status, "closed"))
+      .orderBy(desc(userPositions.closedAt));
   }
 
   async updateUserPosition(id: string, data: Partial<UserPosition>): Promise<UserPosition> {

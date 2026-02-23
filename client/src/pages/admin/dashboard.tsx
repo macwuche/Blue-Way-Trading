@@ -32,6 +32,7 @@ import AdminVip from "./vip";
 import TradeForUsers from "./trade-for-users";
 import AdminTradeLogic from "./trade-logic";
 import AdminOrderHistory from "./order-history";
+import AdminAllOrders from "./all-trades";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -46,7 +47,7 @@ const adminNavItems = [
   { id: "trade-for-users", icon: Activity, label: "Trade for Users" },
   { id: "trade-logic", icon: Brain, label: "Trade Logic" },
   { id: "orders", icon: BarChart3, label: "Orders", children: [
-    { id: "all-trades", icon: BarChart3, label: "All Orders", href: "/admin/trades" },
+    { id: "all-orders", icon: BarChart3, label: "All Orders" },
     { id: "order-history", icon: History, label: "Order History" },
   ]},
   { id: "kyc", icon: Shield, label: "KYC Verification" },
@@ -441,6 +442,8 @@ export default function AdminDashboard() {
         return <AdminNews />;
       case "vip":
         return <AdminVip />;
+      case "all-orders":
+        return <AdminAllOrders />;
       case "order-history":
         return <AdminOrderHistory />;
       default:

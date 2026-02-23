@@ -5,7 +5,6 @@ import {
   Search, ArrowUpDown, ArrowUp, ArrowDown,
   ArrowUpRight, ArrowDownRight, Calendar, Filter
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -19,9 +18,8 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
-interface OrderHistoryTrade {
+interface ClosedPosition {
   id: string;
-  sessionId: string;
   userId: string;
   symbol: string;
   direction: string;
@@ -34,9 +32,11 @@ interface OrderHistoryTrade {
   orderType: string;
   stopLoss: string | null;
   takeProfit: string | null;
-  openedAt: string;
+  closeReason: string | null;
+  createdAt: string;
   closedAt: string | null;
-  userName?: string;
+  userName: string;
+  userEmail: string | null;
 }
 
 type SortField = "closedAt" | "symbol" | "amount" | "realizedPnl" | "userName";
@@ -45,41 +45,28 @@ type SortDir = "asc" | "desc";
 export default function AdminOrderHistory() {
   const [search, setSearch] = useState("");
   const [directionFilter, setDirectionFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("closed");
   const [sortField, setSortField] = useState<SortField>("closedAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-  const { data: trades = [], isLoading } = useQuery<OrderHistoryTrade[]>({
-    queryKey: ["/api/admin/trades-history"],
+  const { data: positions = [], isLoading } = useQuery<ClosedPosition[]>({
+    queryKey: ["/api/admin/positions-closed"],
   });
-
-  const { data: users = [] } = useQuery<any[]>({
-    queryKey: ["/api/admin/users"],
-  });
-
-  const userMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    users.forEach((u: any) => {
-      const name = [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email || u.id;
-      map[u.id] = name;
-    });
-    return map;
-  }, [users]);
 
   const filteredTrades = useMemo(() => {
-    let result = trades.filter(t => {
-      if (statusFilter === "closed" && t.status !== "closed") return false;
-      if (statusFilter === "cancelled" && t.status !== "cancelled") return false;
-      if (directionFilter !== "all" && t.direction !== directionFilter) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        const userName = userMap[t.userId] || "";
-        return t.symbol.toLowerCase().includes(q) || userName.toLowerCase().includes(q);
-      }
-      return true;
-    });
+    let result = positions;
 
-    result.sort((a, b) => {
+    if (directionFilter !== "all") result = result.filter(p => p.direction === directionFilter);
+
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(p =>
+        p.symbol.toLowerCase().includes(q) ||
+        p.userName.toLowerCase().includes(q) ||
+        (p.userEmail && p.userEmail.toLowerCase().includes(q))
+      );
+    }
+
+    result = [...result].sort((a, b) => {
       let aVal: any, bVal: any;
       switch (sortField) {
         case "closedAt":
@@ -99,8 +86,8 @@ export default function AdminOrderHistory() {
           bVal = parseFloat(b.realizedPnl || "0");
           break;
         case "userName":
-          aVal = userMap[a.userId] || "";
-          bVal = userMap[b.userId] || "";
+          aVal = a.userName;
+          bVal = b.userName;
           break;
       }
       if (aVal < bVal) return sortDir === "asc" ? -1 : 1;
@@ -109,7 +96,7 @@ export default function AdminOrderHistory() {
     });
 
     return result;
-  }, [trades, search, directionFilter, statusFilter, sortField, sortDir, userMap]);
+  }, [positions, search, directionFilter, sortField, sortDir]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -126,6 +113,8 @@ export default function AdminOrderHistory() {
   };
 
   const totalPnl = filteredTrades.reduce((sum, t) => sum + parseFloat(t.realizedPnl || "0"), 0);
+  const winCount = filteredTrades.filter(t => parseFloat(t.realizedPnl || "0") > 0).length;
+  const lossCount = filteredTrades.filter(t => parseFloat(t.realizedPnl || "0") < 0).length;
 
   if (isLoading) {
     return (
@@ -145,14 +134,29 @@ export default function AdminOrderHistory() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold" data-testid="text-order-history-title">Order History</h2>
-          <p className="text-sm text-muted-foreground">{filteredTrades.length} orders</p>
+          <p className="text-sm text-muted-foreground">{filteredTrades.length} closed orders</p>
         </div>
-        <div className={cn(
-          "text-lg font-bold",
-          totalPnl >= 0 ? "text-success" : "text-destructive"
-        )} data-testid="text-total-pnl">
-          {totalPnl >= 0 ? "+" : ""}${Math.abs(totalPnl).toFixed(2)}
-        </div>
+      </div>
+
+      <div className="grid grid-cols-4 gap-3">
+        <Card className="glass-card p-3 text-center">
+          <div className="text-2xl font-bold" data-testid="text-total-orders">{filteredTrades.length}</div>
+          <div className="text-xs text-muted-foreground">Total</div>
+        </Card>
+        <Card className="glass-card p-3 text-center">
+          <div className="text-2xl font-bold text-success" data-testid="text-win-count">{winCount}</div>
+          <div className="text-xs text-muted-foreground">Wins</div>
+        </Card>
+        <Card className="glass-card p-3 text-center">
+          <div className="text-2xl font-bold text-destructive" data-testid="text-loss-count">{lossCount}</div>
+          <div className="text-xs text-muted-foreground">Losses</div>
+        </Card>
+        <Card className="glass-card p-3 text-center">
+          <div className={cn("text-2xl font-bold", totalPnl >= 0 ? "text-success" : "text-destructive")} data-testid="text-total-pnl">
+            {totalPnl >= 0 ? "+" : ""}${Math.abs(totalPnl).toFixed(2)}
+          </div>
+          <div className="text-xs text-muted-foreground">Total P&L</div>
+        </Card>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -176,15 +180,6 @@ export default function AdminOrderHistory() {
             <SelectItem value="sell">Sell Only</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[130px] glass-light border-0" data-testid="select-status-filter">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="glass-dark border-white/10">
-            <SelectItem value="closed">Closed</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       <Card className="glass-card overflow-hidden">
@@ -193,32 +188,33 @@ export default function AdminOrderHistory() {
             <thead>
               <tr className="border-b border-white/10 text-muted-foreground">
                 <th className="text-left p-3 cursor-pointer hover:text-white transition-colors" onClick={() => toggleSort("closedAt")}>
-                  <div className="flex items-center gap-1">Date <SortIcon field="closedAt" /></div>
+                  <div className="flex items-center gap-1 text-xs font-medium">Closed <SortIcon field="closedAt" /></div>
                 </th>
                 <th className="text-left p-3 cursor-pointer hover:text-white transition-colors" onClick={() => toggleSort("userName")}>
-                  <div className="flex items-center gap-1">User <SortIcon field="userName" /></div>
+                  <div className="flex items-center gap-1 text-xs font-medium">User <SortIcon field="userName" /></div>
                 </th>
                 <th className="text-left p-3 cursor-pointer hover:text-white transition-colors" onClick={() => toggleSort("symbol")}>
-                  <div className="flex items-center gap-1">Symbol <SortIcon field="symbol" /></div>
+                  <div className="flex items-center gap-1 text-xs font-medium">Symbol <SortIcon field="symbol" /></div>
                 </th>
-                <th className="text-left p-3">Side</th>
-                <th className="text-left p-3">Type</th>
+                <th className="text-left p-3 text-xs font-medium">Side</th>
+                <th className="text-left p-3 text-xs font-medium">Type</th>
                 <th className="text-right p-3 cursor-pointer hover:text-white transition-colors" onClick={() => toggleSort("amount")}>
-                  <div className="flex items-center gap-1 justify-end">Amount <SortIcon field="amount" /></div>
+                  <div className="flex items-center gap-1 justify-end text-xs font-medium">Amount <SortIcon field="amount" /></div>
                 </th>
-                <th className="text-right p-3">Entry</th>
-                <th className="text-right p-3">Exit</th>
-                <th className="text-right p-3">SL / TP</th>
+                <th className="text-right p-3 text-xs font-medium">Entry</th>
+                <th className="text-right p-3 text-xs font-medium">Exit</th>
+                <th className="text-right p-3 text-xs font-medium">SL / TP</th>
+                <th className="text-left p-3 text-xs font-medium">Reason</th>
                 <th className="text-right p-3 cursor-pointer hover:text-white transition-colors" onClick={() => toggleSort("realizedPnl")}>
-                  <div className="flex items-center gap-1 justify-end">P&L <SortIcon field="realizedPnl" /></div>
+                  <div className="flex items-center gap-1 justify-end text-xs font-medium">P&L <SortIcon field="realizedPnl" /></div>
                 </th>
               </tr>
             </thead>
             <tbody>
               {filteredTrades.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="text-center p-8 text-muted-foreground">
-                    No orders found
+                  <td colSpan={11} className="text-center p-8 text-muted-foreground">
+                    No closed orders found
                   </td>
                 </tr>
               ) : (
@@ -232,8 +228,9 @@ export default function AdminOrderHistory() {
                           {trade.closedAt ? format(new Date(trade.closedAt), "MMM dd, HH:mm") : "—"}
                         </div>
                       </td>
-                      <td className="p-3 text-xs truncate max-w-[120px]">
-                        {userMap[trade.userId] || trade.userId.slice(0, 8)}
+                      <td className="p-3">
+                        <div className="text-sm font-medium truncate max-w-[120px]">{trade.userName}</div>
+                        {trade.userEmail && <div className="text-[10px] text-muted-foreground truncate max-w-[120px]">{trade.userEmail}</div>}
                       </td>
                       <td className="p-3 font-medium">{trade.symbol}</td>
                       <td className="p-3">
@@ -241,11 +238,7 @@ export default function AdminOrderHistory() {
                           "text-[10px]",
                           trade.direction === "buy" ? "border-[#2196F3]/40 text-[#2196F3]" : "border-destructive/40 text-destructive"
                         )}>
-                          {trade.direction === "buy" ? (
-                            <ArrowUpRight className="w-3 h-3 mr-0.5" />
-                          ) : (
-                            <ArrowDownRight className="w-3 h-3 mr-0.5" />
-                          )}
+                          {trade.direction === "buy" ? <ArrowUpRight className="w-3 h-3 mr-0.5" /> : <ArrowDownRight className="w-3 h-3 mr-0.5" />}
                           {trade.direction.toUpperCase()}
                         </Badge>
                       </td>
@@ -262,6 +255,20 @@ export default function AdminOrderHistory() {
                         {trade.stopLoss && trade.takeProfit && <span className="text-muted-foreground mx-1">/</span>}
                         {trade.takeProfit && <span className="text-success">TP:{parseFloat(trade.takeProfit).toFixed(2)}</span>}
                         {!trade.stopLoss && !trade.takeProfit && "—"}
+                      </td>
+                      <td className="p-3 text-xs">
+                        <Badge variant="outline" className={cn(
+                          "text-[10px]",
+                          trade.closeReason === "take_profit" ? "border-success/40 text-success" :
+                          trade.closeReason === "stop_loss" ? "border-destructive/40 text-destructive" :
+                          "border-white/20"
+                        )}>
+                          {trade.closeReason === "take_profit" ? "TP Hit" :
+                           trade.closeReason === "stop_loss" ? "SL Hit" :
+                           trade.closeReason === "manual" ? "Manual" :
+                           trade.closeReason === "admin_override" ? "Admin" :
+                           trade.closeReason || "—"}
+                        </Badge>
                       </td>
                       <td className={cn(
                         "p-3 text-right font-mono font-semibold",
