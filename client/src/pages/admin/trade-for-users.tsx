@@ -451,8 +451,13 @@ export default function TradeForUsers() {
 
   const addProfitMutation = useMutation({
     mutationFn: async (profitAmounts: { userId: string; amount: number }[]) => {
-      if (!sessionId) throw new Error("No active session");
-      return apiRequest("POST", `/api/admin/trade-sessions/${sessionId}/add-profit`, { profitAmounts });
+      const results = await Promise.all(profitAmounts.map(async ({ userId, amount }) => {
+        const operation = amount >= 0 ? "add" : "subtract";
+        const absAmount = Math.abs(amount);
+        await apiRequest("POST", `/api/admin/users/${userId}/profit`, { amount: absAmount, operation });
+        return { userId, amount };
+      }));
+      return results;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users-with-balance"] });
