@@ -365,6 +365,12 @@ export default function AllAdminTradesPage() {
               <div className="glass-light rounded-lg p-3 space-y-1">
                 <div className="text-sm font-medium">{addProfitDialog.userName}</div>
                 <div className="text-xs text-muted-foreground">{addProfitDialog.symbol} • {addProfitDialog.direction.toUpperCase()} • ${parseFloat(addProfitDialog.amount).toLocaleString()}</div>
+                <div className="flex items-center gap-1.5 pt-1">
+                  <span className="text-xs text-muted-foreground">Current P&L:</span>
+                  <span className={cn("text-sm font-semibold font-mono", (parseFloat(addProfitDialog.unrealizedPnl || "0") + parseFloat(addProfitDialog.adminProfit || "0")) >= 0 ? "text-success" : "text-destructive")} data-testid="text-current-pnl">
+                    {(parseFloat(addProfitDialog.unrealizedPnl || "0") + parseFloat(addProfitDialog.adminProfit || "0")) >= 0 ? "+" : ""}${Math.abs(parseFloat(addProfitDialog.unrealizedPnl || "0") + parseFloat(addProfitDialog.adminProfit || "0")).toFixed(2)}
+                  </span>
+                </div>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Amount</label>
