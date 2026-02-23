@@ -209,8 +209,8 @@ export default function TradeForUsers() {
   }, [allAssets, selectedAsset]);
 
   useEffect(() => {
-    if (selectedAsset && selectedAsset.volume24h !== undefined) {
-      setVolume(selectedAsset.volume24h || 0);
+    if (selectedAsset) {
+      setVolume(selectedAsset.type === "forex" ? 0.01 : 1);
     }
   }, [selectedAsset?.symbol]);
 
