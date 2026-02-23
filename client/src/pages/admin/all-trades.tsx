@@ -358,7 +358,7 @@ export default function AllAdminTradesPage() {
       <Dialog open={!!addProfitDialog} onOpenChange={(open) => { if (!open) setAddProfitDialog(null); }}>
         <DialogContent className="glass-dark border-white/10 sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Profit</DialogTitle>
+            <DialogTitle>Adjust Profit</DialogTitle>
           </DialogHeader>
           {addProfitDialog && (
             <div className="space-y-4">
@@ -367,32 +367,49 @@ export default function AllAdminTradesPage() {
                 <div className="text-xs text-muted-foreground">{addProfitDialog.symbol} • {addProfitDialog.direction.toUpperCase()} • ${parseFloat(addProfitDialog.amount).toLocaleString()}</div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Profit Amount</label>
+                <label className="text-sm font-medium">Amount</label>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-success">$</span>
+                  <span className="text-lg font-bold text-muted-foreground">$</span>
                   <Input
                     type="number"
                     value={profitAmount}
                     onChange={(e) => setProfitAmount(e.target.value)}
-                    placeholder="Enter profit amount"
+                    placeholder="Enter amount"
                     data-testid="input-profit-amount"
                     className="glass-light border-0"
                   />
                 </div>
               </div>
-              <Button
-                className="w-full"
-                onClick={() => {
-                  const amt = parseFloat(profitAmount);
-                  if (!isNaN(amt) && amt !== 0 && addProfitDialog) {
-                    addProfitMutation.mutate({ positionId: addProfitDialog.id, amount: amt });
-                  }
-                }}
-                disabled={addProfitMutation.isPending || !profitAmount}
-                data-testid="button-submit-profit"
-              >
-                {addProfitMutation.isPending ? "Adding..." : "Add Profit"}
-              </Button>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  className="w-full bg-success/20 text-success hover:bg-success/30 border border-success/30"
+                  variant="outline"
+                  onClick={() => {
+                    const amt = parseFloat(profitAmount);
+                    if (!isNaN(amt) && amt > 0 && addProfitDialog) {
+                      addProfitMutation.mutate({ positionId: addProfitDialog.id, amount: amt });
+                    }
+                  }}
+                  disabled={addProfitMutation.isPending || !profitAmount || parseFloat(profitAmount) <= 0}
+                  data-testid="button-add-profit"
+                >
+                  {addProfitMutation.isPending ? "Processing..." : "Add Profit"}
+                </Button>
+                <Button
+                  className="w-full bg-destructive/20 text-destructive hover:bg-destructive/30 border border-destructive/30"
+                  variant="outline"
+                  onClick={() => {
+                    const amt = parseFloat(profitAmount);
+                    if (!isNaN(amt) && amt > 0 && addProfitDialog) {
+                      addProfitMutation.mutate({ positionId: addProfitDialog.id, amount: -amt });
+                    }
+                  }}
+                  disabled={addProfitMutation.isPending || !profitAmount || parseFloat(profitAmount) <= 0}
+                  data-testid="button-subtract-profit"
+                >
+                  {addProfitMutation.isPending ? "Processing..." : "Subtract Profit"}
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
