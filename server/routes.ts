@@ -130,7 +130,7 @@ export async function registerRoutes(
       if (!portfolio) {
         portfolio = await storage.createPortfolio({
           userId,
-          balance: "10000.00",
+          balance: "0.00",
           totalProfit: "0.00",
           totalProfitPercent: "0.00",
         });
@@ -171,7 +171,7 @@ export async function registerRoutes(
       if (!portfolio) {
         portfolio = await storage.createPortfolio({
           userId,
-          balance: "10000.00",
+          balance: "0.00",
           totalProfit: "0.00",
           totalProfitPercent: "0.00",
         });
@@ -229,9 +229,8 @@ export async function registerRoutes(
         const costBasis = quantity * parseFloat(existingHolding.avgBuyPrice);
         const profit = total - costBasis;
         const newTotalProfit = (parseFloat(portfolio.totalProfit) + profit).toFixed(2);
-        const initialBalance = 10000;
         const totalValue = parseFloat(newBalance);
-        const profitPercent = (((totalValue - initialBalance) / initialBalance) * 100).toFixed(2);
+        const profitPercent = totalValue > 0 ? ((parseFloat(newTotalProfit) / totalValue) * 100).toFixed(2) : "0.00";
         
         await storage.updatePortfolioBalance(portfolio.id, newBalance, newTotalProfit, profitPercent);
 
@@ -625,7 +624,7 @@ export async function registerRoutes(
       if (!portfolio) {
         portfolio = await storage.createPortfolio({
           userId,
-          balance: "10000.00",
+          balance: "0.00",
           totalProfit: "0.00",
           totalProfitPercent: "0.00",
         });
@@ -683,9 +682,8 @@ export async function registerRoutes(
         const costBasis = quantity * parseFloat(existingHolding.avgBuyPrice);
         const profit = total - costBasis;
         const newTotalProfit = (parseFloat(portfolio.totalProfit) + profit).toFixed(2);
-        const initialBalance = 10000;
         const totalValue = parseFloat(newBalance);
-        const profitPercent = (((totalValue - initialBalance) / initialBalance) * 100).toFixed(2);
+        const profitPercent = totalValue > 0 ? ((parseFloat(newTotalProfit) / totalValue) * 100).toFixed(2) : "0.00";
         
         await storage.updatePortfolioBalance(portfolio.id, newBalance, newTotalProfit, profitPercent);
 

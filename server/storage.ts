@@ -310,9 +310,8 @@ export class DatabaseStorage implements IStorage {
     
     console.log(`[Admin] Updating profit for portfolioId ${portfolio.id}: profit ${currentProfit} -> ${newProfit}, balance ${currentBalance} -> ${newBalance}`);
     
-    const initialBalance = 10000;
-    const totalValue = parseFloat(newBalance) + parseFloat(newProfit);
-    const profitPercent = (((totalValue - initialBalance) / initialBalance) * 100).toFixed(2);
+    const totalValue = parseFloat(newBalance);
+    const profitPercent = totalValue > 0 ? ((parseFloat(newProfit) / totalValue) * 100).toFixed(2) : "0.00";
     
     const [updated] = await db
       .update(portfolios)
