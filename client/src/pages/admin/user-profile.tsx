@@ -24,7 +24,14 @@ import {
   Activity,
   ArrowUpRight,
   ArrowDownRight,
-  ExternalLink
+  ExternalLink,
+  Send,
+  BellRing,
+  X,
+  Info,
+  AlertTriangle,
+  CheckCircle,
+  XOctagon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -32,6 +39,10 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
@@ -94,6 +105,15 @@ export default function UserProfilePage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
 
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+
+  const [notifDialogOpen, setNotifDialogOpen] = useState(false);
+  const [notifTitle, setNotifTitle] = useState("");
+  const [notifMessage, setNotifMessage] = useState("");
+  const [notifType, setNotifType] = useState<"info" | "success" | "warning" | "error">("info");
+
   const { data: user, isLoading } = useQuery<UserProfile>({
     queryKey: ["/api/admin/users", userId, "profile"],
     queryFn: async () => {
@@ -129,6 +149,37 @@ export default function UserProfilePage() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to update verification", variant: "destructive" });
+    },
+  });
+
+  const sendEmailMutation = useMutation({
+    mutationFn: async (data: { subject: string; message: string }) => {
+      return apiRequest("POST", `/api/admin/users/${userId}/send-email`, data);
+    },
+    onSuccess: () => {
+      toast({ title: "Email Sent", description: "Email has been sent to the user" });
+      setEmailDialogOpen(false);
+      setEmailSubject("");
+      setEmailMessage("");
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to send email", variant: "destructive" });
+    },
+  });
+
+  const sendNotificationMutation = useMutation({
+    mutationFn: async (data: { title: string; message: string; type: string }) => {
+      return apiRequest("POST", `/api/admin/users/${userId}/send-notification`, data);
+    },
+    onSuccess: () => {
+      toast({ title: "Notification Sent", description: "Push notification has been sent to the user" });
+      setNotifDialogOpen(false);
+      setNotifTitle("");
+      setNotifMessage("");
+      setNotifType("info");
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to send notification", variant: "destructive" });
     },
   });
 
@@ -359,6 +410,33 @@ export default function UserProfilePage() {
                   />
                 </div>
               </div>
+            </div>
+          </Card>
+
+          <Card className="glass-card p-4">
+            <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm">
+              <Send className="w-4 h-4" />
+              Quick Actions
+            </h3>
+            <div className="space-y-2">
+              <Button
+                className="w-full justify-start gap-2"
+                variant="outline"
+                onClick={() => setEmailDialogOpen(true)}
+                data-testid="button-send-email"
+              >
+                <Mail className="w-4 h-4 text-blue-400" />
+                Send Email
+              </Button>
+              <Button
+                className="w-full justify-start gap-2"
+                variant="outline"
+                onClick={() => setNotifDialogOpen(true)}
+                data-testid="button-send-notification"
+              >
+                <BellRing className="w-4 h-4 text-yellow-400" />
+                Push Notification
+              </Button>
             </div>
           </Card>
         </div>
@@ -605,6 +683,128 @@ export default function UserProfilePage() {
           </Card>
         </div>
       </div>
+
+      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <DialogContent className="glass-dark border-white/10 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="w-5 h-5 text-blue-400" />
+              Send Email to {getUserName(user)}
+            </DialogTitle>
+            <DialogDescription>
+              This will send an email to {user.email}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="email-subject">Subject</Label>
+              <Input
+                id="email-subject"
+                placeholder="Enter email subject..."
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                data-testid="input-email-subject"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email-message">Message</Label>
+              <Textarea
+                id="email-message"
+                placeholder="Enter your message..."
+                value={emailMessage}
+                onChange={(e) => setEmailMessage(e.target.value)}
+                rows={5}
+                data-testid="input-email-message"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailDialogOpen(false)} data-testid="button-cancel-email">
+              Cancel
+            </Button>
+            <Button
+              onClick={() => sendEmailMutation.mutate({ subject: emailSubject, message: emailMessage })}
+              disabled={!emailSubject.trim() || !emailMessage.trim() || sendEmailMutation.isPending}
+              data-testid="button-confirm-send-email"
+            >
+              {sendEmailMutation.isPending ? "Sending..." : "Send Email"}
+              <Send className="w-4 h-4 ml-2" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={notifDialogOpen} onOpenChange={setNotifDialogOpen}>
+        <DialogContent className="glass-dark border-white/10 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BellRing className="w-5 h-5 text-yellow-400" />
+              Push Notification to {getUserName(user)}
+            </DialogTitle>
+            <DialogDescription>
+              This notification will appear instantly on the user's dashboard
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="notif-type">Type</Label>
+              <Select value={notifType} onValueChange={(v) => setNotifType(v as any)}>
+                <SelectTrigger data-testid="select-notif-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="info">
+                    <span className="flex items-center gap-2"><Info className="w-3 h-3 text-blue-400" /> Info</span>
+                  </SelectItem>
+                  <SelectItem value="success">
+                    <span className="flex items-center gap-2"><CheckCircle className="w-3 h-3 text-green-400" /> Success</span>
+                  </SelectItem>
+                  <SelectItem value="warning">
+                    <span className="flex items-center gap-2"><AlertTriangle className="w-3 h-3 text-yellow-400" /> Warning</span>
+                  </SelectItem>
+                  <SelectItem value="error">
+                    <span className="flex items-center gap-2"><XOctagon className="w-3 h-3 text-red-400" /> Error</span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notif-title">Title</Label>
+              <Input
+                id="notif-title"
+                placeholder="Notification title..."
+                value={notifTitle}
+                onChange={(e) => setNotifTitle(e.target.value)}
+                data-testid="input-notif-title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notif-message">Message</Label>
+              <Textarea
+                id="notif-message"
+                placeholder="Notification message..."
+                value={notifMessage}
+                onChange={(e) => setNotifMessage(e.target.value)}
+                rows={3}
+                data-testid="input-notif-message"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNotifDialogOpen(false)} data-testid="button-cancel-notif">
+              Cancel
+            </Button>
+            <Button
+              onClick={() => sendNotificationMutation.mutate({ title: notifTitle, message: notifMessage, type: notifType })}
+              disabled={!notifTitle.trim() || !notifMessage.trim() || sendNotificationMutation.isPending}
+              data-testid="button-confirm-send-notif"
+            >
+              {sendNotificationMutation.isPending ? "Sending..." : "Send Notification"}
+              <BellRing className="w-4 h-4 ml-2" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

@@ -253,3 +253,14 @@ export async function sendBalanceAdjustmentEmail(
 
   return sendEmail(to, `Account Update: ${typeLabel}`, html);
 }
+
+export async function sendCustomEmail(to: string, subject: string, messageBody: string) {
+  const html = baseTemplate(`
+    <h2 style="color: #ffffff; font-size: 22px; margin: 0 0 16px;">${subject}</h2>
+    <p style="color: #d1d5db; font-size: 15px; line-height: 1.6; margin: 0; white-space: pre-line;">
+      ${messageBody}
+    </p>
+  `);
+
+  return sendEmail(to, subject, html);
+}

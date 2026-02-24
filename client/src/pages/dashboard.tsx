@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import logoPath from "@assets/WhatsApp_Image_2026-01-22_at_7.2_(1)_1771943319406.png";
 import { 
   LayoutDashboard, TrendingUp, Wallet, History, Star, 
   LogOut, Menu, ChevronDown, Search, Bell, User, BarChart3,
-  Clock, ArrowUp, ArrowDown, RefreshCw
+  Clock, ArrowUp, ArrowDown, RefreshCw, CheckCheck, Info,
+  CheckCircle, AlertTriangle, XOctagon, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -75,6 +76,41 @@ export default function Dashboard() {
   const [marketModalOpen, setMarketModalOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [tradeCountdowns, setTradeCountdowns] = useState<Record<string, number>>({});
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [popupNotification, setPopupNotification] = useState<any>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  interface NotificationItem {
+    id: string;
+    title: string;
+    message: string;
+    type: string;
+    read: boolean;
+    createdAt: string;
+  }
+
+  const { data: notifData, refetch: refetchNotifs } = useQuery<{ notifications: NotificationItem[]; unreadCount: number }>({
+    queryKey: ["/api/notifications"],
+    refetchInterval: 30000,
+  });
+
+  const markReadMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("PATCH", `/api/notifications/${id}/read`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+
+  const markAllReadMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/notifications/mark-all-read");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
 
   const { data: dashboardData, isLoading: dataLoading, refetch: refetchDashboard, isFetching: isDashboardFetching } = useQuery<DashboardData>({
     queryKey: ["/api/dashboard"],
@@ -112,6 +148,11 @@ export default function Dashboard() {
             };
           });
         }
+        if (data.type === "notification") {
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+          setPopupNotification(data.notification);
+          setTimeout(() => setPopupNotification(null), 6000);
+        }
       } catch {
         // Ignore parse errors from keepalive comments
       }
@@ -125,6 +166,36 @@ export default function Dashboard() {
       eventSource.close();
     };
   }, [user]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    }
+    if (notifOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [notifOpen]);
+
+  const getNotifIcon = (type: string) => {
+    switch (type) {
+      case "success": return <CheckCircle className="w-4 h-4 text-green-400 shrink-0" />;
+      case "warning": return <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0" />;
+      case "error": return <XOctagon className="w-4 h-4 text-red-400 shrink-0" />;
+      default: return <Info className="w-4 h-4 text-blue-400 shrink-0" />;
+    }
+  };
+
+  const getNotifBorderColor = (type: string) => {
+    switch (type) {
+      case "success": return "border-l-green-400";
+      case "warning": return "border-l-yellow-400";
+      case "error": return "border-l-red-400";
+      default: return "border-l-blue-400";
+    }
+  };
 
   // Countdown effect for active trades
   useEffect(() => {
@@ -344,6 +415,82 @@ export default function Dashboard() {
                 <Search className="w-4 h-4 mr-2" />
                 Search Markets
               </Button>
+
+              <div className="relative" ref={notifRef}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setNotifOpen(!notifOpen)}
+                  className="relative"
+                  data-testid="button-notifications"
+                >
+                  <Bell className="w-5 h-5" />
+                  {(notifData?.unreadCount || 0) > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-[10px] font-bold flex items-center justify-center text-white" data-testid="badge-unread-count">
+                      {notifData!.unreadCount > 9 ? "9+" : notifData!.unreadCount}
+                    </span>
+                  )}
+                </Button>
+
+                {notifOpen && (
+                  <div className="absolute right-0 top-12 w-80 sm:w-96 glass-dark border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden" data-testid="notification-dropdown">
+                    <div className="flex items-center justify-between p-3 border-b border-white/10">
+                      <h3 className="font-semibold text-sm">Notifications</h3>
+                      {(notifData?.unreadCount || 0) > 0 && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-xs h-7"
+                          onClick={() => markAllReadMutation.mutate()}
+                          data-testid="button-mark-all-read"
+                        >
+                          <CheckCheck className="w-3 h-3 mr-1" />
+                          Mark all read
+                        </Button>
+                      )}
+                    </div>
+                    <ScrollArea className="max-h-80">
+                      {notifData?.notifications && notifData.notifications.length > 0 ? (
+                        <div className="divide-y divide-white/5">
+                          {notifData.notifications.slice(0, 20).map((n) => (
+                            <div
+                              key={n.id}
+                              className={cn(
+                                "p-3 cursor-pointer transition-colors border-l-2",
+                                getNotifBorderColor(n.type),
+                                n.read ? "opacity-60" : "bg-white/5"
+                              )}
+                              onClick={() => {
+                                if (!n.read) markReadMutation.mutate(n.id);
+                              }}
+                              data-testid={`notification-item-${n.id}`}
+                            >
+                              <div className="flex items-start gap-2">
+                                {getNotifIcon(n.type)}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">{n.title}</p>
+                                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{n.message}</p>
+                                  <p className="text-[10px] text-muted-foreground mt-1">
+                                    {new Date(n.createdAt).toLocaleString()}
+                                  </p>
+                                </div>
+                                {!n.read && (
+                                  <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" />
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-8 text-center text-muted-foreground text-sm">
+                          <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                          No notifications yet
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </header>
@@ -617,6 +764,35 @@ export default function Dashboard() {
           className="fixed inset-0 bg-black/60 z-30 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
+      )}
+
+      {popupNotification && (
+        <div
+          className={cn(
+            "fixed top-4 right-4 z-[100] w-80 sm:w-96 rounded-xl border border-white/10 shadow-2xl p-4 animate-in slide-in-from-right-full duration-300",
+            "bg-gradient-to-br from-[#1a1f35]/95 to-[#0d1225]/95 backdrop-blur-xl",
+            popupNotification.type === "success" ? "border-l-4 border-l-green-400" :
+            popupNotification.type === "warning" ? "border-l-4 border-l-yellow-400" :
+            popupNotification.type === "error" ? "border-l-4 border-l-red-400" :
+            "border-l-4 border-l-blue-400"
+          )}
+          data-testid="popup-notification"
+        >
+          <div className="flex items-start gap-3">
+            {getNotifIcon(popupNotification.type)}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white">{popupNotification.title}</p>
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-3">{popupNotification.message}</p>
+            </div>
+            <button
+              onClick={() => setPopupNotification(null)}
+              className="text-muted-foreground hover:text-white transition-colors shrink-0"
+              data-testid="button-close-popup"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

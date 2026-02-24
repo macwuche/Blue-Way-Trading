@@ -251,3 +251,18 @@ export const globalTradeLogic = pgTable("global_trade_logic", {
 export type GlobalTradeLogic = typeof globalTradeLogic.$inferSelect;
 export const insertGlobalTradeLogicSchema = createInsertSchema(globalTradeLogic).omit({ id: true, createdAt: true, updatedAt: true, currentWins: true, currentLosses: true });
 export type InsertGlobalTradeLogic = z.infer<typeof insertGlobalTradeLogicSchema>;
+
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  message: text("message").notNull(),
+  type: varchar("type", { length: 30 }).notNull().default("info"),
+  read: boolean("read").notNull().default(false),
+  sentBy: varchar("sent_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Notification = typeof notifications.$inferSelect;
+export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true, read: true });
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;

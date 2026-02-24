@@ -8,7 +8,7 @@ import { getMarketData, getAllAssetsFromCache, startMarketDataRefresh } from "./
 import { fetchMarketNews } from "./marketaux-api";
 import { addSSEClient, sendUserUpdate } from "./sse";
 import { openPosition, manualClosePosition, cancelPendingOrder, startTradingEngine } from "./trading-engine";
-import { sendTradeOpenedEmail, sendBalanceAdjustmentEmail } from "./email";
+import { sendTradeOpenedEmail, sendBalanceAdjustmentEmail, sendCustomEmail } from "./email";
 
 // Middleware to check if user is admin
 const isAdmin = async (req: any, res: Response, next: Function) => {
@@ -455,6 +455,121 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching user profile:", error);
       res.status(500).json({ message: "Failed to fetch user profile" });
+    }
+  });
+
+  // Admin: Send custom email to user
+  app.post("/api/admin/users/:id/send-email", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const schema = z.object({
+        subject: z.string().min(1, "Subject is required"),
+        message: z.string().min(1, "Message is required"),
+      });
+      const result = schema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: result.error.errors[0]?.message || "Invalid input" });
+      }
+
+      const user = await storage.getUserById(req.params.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      if (!user.email) {
+        return res.status(400).json({ message: "User has no email address" });
+      }
+
+      const emailResult = await sendCustomEmail(user.email, result.data.subject, result.data.message);
+      if (emailResult.success) {
+        res.json({ success: true, message: "Email sent successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to send email" });
+      }
+    } catch (error) {
+      console.error("Error sending email to user:", error);
+      res.status(500).json({ message: "Failed to send email" });
+    }
+  });
+
+  // Admin: Send push notification to user
+  app.post("/api/admin/users/:id/send-notification", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const schema = z.object({
+        title: z.string().min(1, "Title is required"),
+        message: z.string().min(1, "Message is required"),
+        type: z.enum(["info", "success", "warning", "error"]).optional().default("info"),
+      });
+      const result = schema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: result.error.errors[0]?.message || "Invalid input" });
+      }
+
+      const user = await storage.getUserById(req.params.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const notification = await storage.createNotification({
+        userId: user.id,
+        title: result.data.title,
+        message: result.data.message,
+        type: result.data.type,
+        sentBy: req.user.claims.sub,
+      });
+
+      sendUserUpdate(user.id, {
+        type: "notification",
+        notification: {
+          ...notification,
+          createdAt: notification.createdAt?.toISOString(),
+        },
+      });
+
+      res.json({ success: true, notification });
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      res.status(500).json({ message: "Failed to send notification" });
+    }
+  });
+
+  // User: Get my notifications
+  app.get("/api/notifications", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.claims.sub;
+      const notifs = await storage.getNotificationsByUserId(userId);
+      const unreadCount = await storage.getUnreadNotificationCount(userId);
+      res.json({
+        notifications: notifs.map(n => ({
+          ...n,
+          createdAt: n.createdAt?.toISOString(),
+        })),
+        unreadCount,
+      });
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  // User: Mark notification as read
+  app.patch("/api/notifications/:id/read", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const notification = await storage.markNotificationRead(req.params.id);
+      res.json(notification);
+    } catch (error) {
+      console.error("Error marking notification read:", error);
+      res.status(500).json({ message: "Failed to update notification" });
+    }
+  });
+
+  // User: Mark all notifications as read
+  app.post("/api/notifications/mark-all-read", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.claims.sub;
+      await storage.markAllNotificationsRead(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking all notifications read:", error);
+      res.status(500).json({ message: "Failed to update notifications" });
     }
   });
 
