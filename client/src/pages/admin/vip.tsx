@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { 
-  Crown, Edit, Star, Shield, Zap, Award, CheckCircle2
+  Mail, Edit, Send, Eye, CheckCircle2, FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -16,128 +17,117 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
-interface VipLevel {
+interface EmailTemplate {
   id: string;
   name: string;
-  icon: typeof Crown;
-  color: string;
-  minDeposit: number;
-  payout: number;
-  benefits: string[];
-  usersCount: number;
+  subject: string;
+  description: string;
+  enabled: boolean;
+  lastUpdated: string;
 }
 
-const mockVipLevels: VipLevel[] = [
+const defaultTemplates: EmailTemplate[] = [
   {
-    id: "bronze",
-    name: "Bronze",
-    icon: Award,
-    color: "text-amber-700",
-    minDeposit: 100,
-    payout: 80,
-    benefits: ["Basic trading features", "Standard withdrawal processing", "Email support"],
-    usersCount: 4521
+    id: "welcome",
+    name: "Welcome Email",
+    subject: "Welcome to Blue Way Trading!",
+    description: "Sent when a new user registers an account",
+    enabled: true,
+    lastUpdated: "2026-02-24",
   },
   {
-    id: "silver",
-    name: "Silver",
-    icon: Shield,
-    color: "text-gray-400",
-    minDeposit: 1000,
-    payout: 83,
-    benefits: ["All Bronze benefits", "Priority withdrawal", "Personal account manager"],
-    usersCount: 1823
+    id: "trade-opened",
+    name: "Trade Opened",
+    subject: "Trade Opened - {symbol}",
+    description: "Sent when a user or admin opens a new trade position",
+    enabled: true,
+    lastUpdated: "2026-02-24",
   },
   {
-    id: "gold",
-    name: "Gold",
-    icon: Star,
-    color: "text-yellow-500",
-    minDeposit: 5000,
-    payout: 87,
-    benefits: ["All Silver benefits", "Express withdrawal", "Risk-free trades"],
-    usersCount: 756
+    id: "trade-closed",
+    name: "Trade Closed",
+    subject: "Trade Closed - {symbol}",
+    description: "Sent when a trade position is closed with P&L summary",
+    enabled: true,
+    lastUpdated: "2026-02-24",
   },
   {
-    id: "platinum",
-    name: "Platinum",
-    icon: Zap,
-    color: "text-cyan-400",
-    minDeposit: 25000,
-    payout: 90,
-    benefits: ["All Gold benefits", "Instant withdrawals", "24/7 dedicated support"],
-    usersCount: 234
+    id: "balance-adjustment",
+    name: "Balance Adjustment",
+    subject: "Balance Updated - Blue Way Trading",
+    description: "Sent when an admin adjusts a user's account balance",
+    enabled: true,
+    lastUpdated: "2026-02-24",
   },
   {
-    id: "diamond",
-    name: "Diamond",
-    icon: Crown,
-    color: "text-purple-400",
-    minDeposit: 100000,
-    payout: 95,
-    benefits: ["All Platinum benefits", "No withdrawal limits", "Private wealth manager"],
-    usersCount: 45
-  }
+    id: "profit-adjustment",
+    name: "Profit Adjustment",
+    subject: "Profit Updated - Blue Way Trading",
+    description: "Sent when an admin adjusts a user's profit",
+    enabled: true,
+    lastUpdated: "2026-02-24",
+  },
 ];
 
-export default function AdminVip() {
-  const [levels, setLevels] = useState(mockVipLevels);
+export default function AdminEmailNotifications() {
+  const [templates, setTemplates] = useState(defaultTemplates);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedLevel, setSelectedLevel] = useState<VipLevel | null>(null);
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [formData, setFormData] = useState({
-    minDeposit: 0,
-    payout: 0,
+    subject: "",
+    enabled: true,
   });
 
-  const totalVipUsers = levels.reduce((sum, level) => sum + level.usersCount, 0);
+  const enabledCount = templates.filter(t => t.enabled).length;
 
-  const handleEdit = (level: VipLevel) => {
-    setSelectedLevel(level);
+  const handleEdit = (template: EmailTemplate) => {
+    setSelectedTemplate(template);
     setFormData({
-      minDeposit: level.minDeposit,
-      payout: level.payout,
+      subject: template.subject,
+      enabled: template.enabled,
     });
     setEditDialogOpen(true);
   };
 
+  const handlePreview = (template: EmailTemplate) => {
+    setSelectedTemplate(template);
+    setPreviewDialogOpen(true);
+  };
+
   const handleSave = () => {
-    if (selectedLevel) {
-      setLevels(prev => prev.map(l => 
-        l.id === selectedLevel.id 
-          ? { ...l, minDeposit: formData.minDeposit, payout: formData.payout }
-          : l
+    if (selectedTemplate) {
+      setTemplates(prev => prev.map(t => 
+        t.id === selectedTemplate.id 
+          ? { ...t, subject: formData.subject, enabled: formData.enabled, lastUpdated: new Date().toISOString().split("T")[0] }
+          : t
       ));
       setEditDialogOpen(false);
     }
   };
 
+  const handleToggle = (id: string) => {
+    setTemplates(prev => prev.map(t => 
+      t.id === id ? { ...t, enabled: !t.enabled } : t
+    ));
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">VIP Level Management</h2>
-        <p className="text-muted-foreground">Configure VIP tiers and benefits</p>
+        <h2 className="text-2xl font-bold" data-testid="text-email-notifications-title">Email Notifications</h2>
+        <p className="text-muted-foreground">Configure email notification templates and settings</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="glass-card p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-yellow-500/20 flex items-center justify-center">
-              <Crown className="w-5 h-5 text-yellow-500" />
+            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+              <Mail className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{totalVipUsers.toLocaleString()}</p>
-              <p className="text-sm text-muted-foreground">Total VIP Users</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="glass-card p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-              <Crown className="w-5 h-5 text-purple-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{levels.find(l => l.id === "diamond")?.usersCount}</p>
-              <p className="text-sm text-muted-foreground">Diamond Members</p>
+              <p className="text-2xl font-bold" data-testid="text-total-templates">{templates.length}</p>
+              <p className="text-sm text-muted-foreground">Total Templates</p>
             </div>
           </div>
         </Card>
@@ -147,65 +137,79 @@ export default function AdminVip() {
               <CheckCircle2 className="w-5 h-5 text-success" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{levels.length}</p>
-              <p className="text-sm text-muted-foreground">Active Tiers</p>
+              <p className="text-2xl font-bold" data-testid="text-enabled-templates">{enabledCount}</p>
+              <p className="text-sm text-muted-foreground">Active Templates</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="glass-card p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+              <Send className="w-5 h-5 text-purple-500" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Sender Address</p>
+              <p className="text-xs font-mono text-white/70 mt-1" data-testid="text-sender-address">noreply@bluewavetrading.live</p>
             </div>
           </div>
         </Card>
       </div>
 
-      <div className="space-y-4">
-        {levels.map((level) => (
+      <div className="space-y-3">
+        {templates.map((template) => (
           <Card 
-            key={level.id} 
-            className="glass-card p-4"
-            data-testid={`card-vip-level-${level.id}`}
+            key={template.id} 
+            className={cn("glass-card p-4 transition-opacity", !template.enabled && "opacity-50")}
+            data-testid={`card-email-template-${template.id}`}
           >
-            <div className="flex items-start gap-4">
-              <div className={cn(
-                "w-14 h-14 rounded-xl bg-background/50 flex items-center justify-center",
-                level.color
-              )}>
-                <level.icon className="w-7 h-7" />
+            <div className="flex items-center gap-4">
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5 text-primary" />
               </div>
               
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-lg font-bold">{level.name}</h3>
-                  <Badge className="text-xs bg-primary/20 text-primary">
-                    {level.usersCount.toLocaleString()} users
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-semibold">{template.name}</h3>
+                  <Badge 
+                    className={cn(
+                      "text-xs",
+                      template.enabled 
+                        ? "bg-success/20 text-success" 
+                        : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {template.enabled ? "Active" : "Disabled"}
                   </Badge>
                 </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-3">
-                  <div>
-                    <div className="text-muted-foreground">Min Deposit</div>
-                    <div className="font-semibold">${level.minDeposit.toLocaleString()}</div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Payout Rate</div>
-                    <div className="font-semibold text-success">{level.payout}%</div>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {level.benefits.map((benefit, i) => (
-                    <Badge key={i} variant="outline" className="text-xs">
-                      {benefit}
-                    </Badge>
-                  ))}
-                </div>
+                <p className="text-sm text-muted-foreground">{template.description}</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">
+                  Subject: <span className="text-white/50 font-mono">{template.subject}</span>
+                </p>
               </div>
 
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => handleEdit(level)}
-                data-testid={`button-edit-vip-${level.id}`}
-              >
-                <Edit className="w-4 h-4 mr-1" />
-                Edit
-              </Button>
+              <div className="flex items-center gap-2 shrink-0">
+                <Switch 
+                  checked={template.enabled}
+                  onCheckedChange={() => handleToggle(template.id)}
+                  data-testid={`switch-toggle-${template.id}`}
+                />
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => handlePreview(template)}
+                  data-testid={`button-preview-${template.id}`}
+                >
+                  <Eye className="w-4 h-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => handleEdit(template)}
+                  data-testid={`button-edit-${template.id}`}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </Card>
         ))}
@@ -215,44 +219,79 @@ export default function AdminVip() {
         <DialogContent className="glass-dark border-white/10">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {selectedLevel && (
-                <>
-                  <selectedLevel.icon className={cn("w-5 h-5", selectedLevel.color)} />
-                  Edit {selectedLevel.name} Level
-                </>
-              )}
+              <Mail className="w-5 h-5 text-primary" />
+              Edit {selectedTemplate?.name}
             </DialogTitle>
           </DialogHeader>
           <div className="py-4 space-y-4">
             <div>
-              <Label>Minimum Deposit ($)</Label>
+              <Label>Subject Line</Label>
               <Input 
-                type="number"
-                value={formData.minDeposit}
-                onChange={(e) => setFormData({ ...formData, minDeposit: parseInt(e.target.value) || 0 })}
+                value={formData.subject}
+                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                 className="mt-2"
-                data-testid="input-vip-min-deposit"
+                placeholder="Email subject..."
+                data-testid="input-email-subject"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Use {"{symbol}"}, {"{amount}"}, {"{name}"} as placeholders
+              </p>
             </div>
-            <div>
-              <Label>Payout Rate (%)</Label>
-              <Input 
-                type="number"
-                value={formData.payout}
-                onChange={(e) => setFormData({ ...formData, payout: parseInt(e.target.value) || 0 })}
-                className="mt-2"
-                min={0}
-                max={100}
-                data-testid="input-vip-payout"
+            <div className="flex items-center justify-between">
+              <Label>Enabled</Label>
+              <Switch
+                checked={formData.enabled}
+                onCheckedChange={(checked) => setFormData({ ...formData, enabled: checked })}
+                data-testid="switch-edit-enabled"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)} data-testid="button-cancel-edit">
               Cancel
             </Button>
-            <Button onClick={handleSave} data-testid="button-save-vip">
+            <Button onClick={handleSave} data-testid="button-save-template">
               Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+        <DialogContent className="glass-dark border-white/10 max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-primary" />
+              Preview: {selectedTemplate?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="rounded-xl overflow-hidden border border-white/10">
+              <div className="bg-gradient-to-r from-[#007AFF] to-[#5856D6] p-4 text-center">
+                <h3 className="text-white font-bold text-lg">Blue Way Trading</h3>
+              </div>
+              <div className="bg-[#1a1f2e] p-6">
+                <p className="text-white/80 text-sm font-semibold mb-2">
+                  Subject: {selectedTemplate?.subject}
+                </p>
+                <div className="bg-white/5 rounded-lg p-4 mt-3">
+                  <p className="text-white/60 text-sm">
+                    {selectedTemplate?.id === "welcome" && "Hello [Name], Your Blue Way Trading account has been successfully created. You're now ready to start trading across crypto, forex, stocks, and ETFs."}
+                    {selectedTemplate?.id === "trade-opened" && "A new trade has been opened on your account. Symbol: [symbol], Direction: [direction], Volume: [volume], Entry Price: [price]."}
+                    {selectedTemplate?.id === "trade-closed" && "A trade on your account has been closed. Symbol: [symbol], P&L: [pnl]. The result has been applied to your portfolio."}
+                    {selectedTemplate?.id === "balance-adjustment" && "Your account balance has been updated by an administrator. New Balance: [balance]."}
+                    {selectedTemplate?.id === "profit-adjustment" && "Your account profit has been adjusted by an administrator. Adjustment: [amount]."}
+                  </p>
+                </div>
+              </div>
+              <div className="bg-[#0d1117] p-3 text-center">
+                <p className="text-white/30 text-xs">Blue Way Trading - Trade Smarter</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewDialogOpen(false)} data-testid="button-close-preview">
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { 
   LayoutDashboard, Users, Shield, CreditCard, Wallet, 
-  Send, Newspaper, Crown, Settings, ArrowLeft, Menu,
+  Send, Newspaper, Settings, ArrowLeft, Menu,
   TrendingUp, TrendingDown, DollarSign, Activity, RefreshCw,
   Lock, Mail, LogOut, BarChart3, Brain, ChevronDown, History
 } from "lucide-react";
@@ -28,7 +28,7 @@ import AdminPaymentMethods from "./payment-methods";
 import AdminDeposits from "./deposits";
 import AdminWithdrawals from "./withdrawals";
 import AdminNews from "./news";
-import AdminVip from "./vip";
+import AdminEmailNotifications from "./vip";
 import TradeForUsers from "./trade-for-users";
 import AdminTradeLogic from "./trade-logic";
 import AdminOrderHistory from "./order-history";
@@ -55,7 +55,7 @@ const adminNavItems = [
   { id: "deposits", icon: Wallet, label: "Deposits" },
   { id: "withdrawals", icon: Send, label: "Withdrawals" },
   { id: "news", icon: Newspaper, label: "News" },
-  { id: "vip", icon: Crown, label: "VIP Levels" },
+  { id: "email-notifications", icon: Mail, label: "Email Notifications" },
 ];
 
 interface AdminStats {
@@ -440,8 +440,8 @@ export default function AdminDashboard() {
         return <AdminWithdrawals />;
       case "news":
         return <AdminNews />;
-      case "vip":
-        return <AdminVip />;
+      case "email-notifications":
+        return <AdminEmailNotifications />;
       case "all-orders":
         return <AdminAllOrders />;
       case "order-history":
