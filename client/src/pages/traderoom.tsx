@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { 
   Wallet, History, BarChart3, MessageCircle, Newspaper, 
   Settings, Plus, Clock, ChevronDown,
   ChevronLeft, ChevronRight, Minus,
-  Copy, X, Crown, Activity, CandlestickChart as CandlestickIcon, LineChart, AreaChart
+  Copy, X, Crown, Activity, CandlestickChart as CandlestickIcon, LineChart, AreaChart,
+  Bell, CheckCircle, AlertTriangle, XOctagon, Info
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -91,6 +92,8 @@ export default function TradeRoom() {
   });
   const [chartType, setChartType] = useState<ChartType>("candlestick");
   const [showConfetti, setShowConfetti] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (cryptoAssets.length > 0 && !selectedAsset) {
@@ -143,6 +146,68 @@ export default function TradeRoom() {
     },
     refetchInterval: 3000,
   });
+
+  interface NotificationItem {
+    id: string;
+    title: string;
+    message: string;
+    type: string;
+    read: boolean;
+    createdAt: string;
+  }
+
+  const { data: notifData, isLoading: notifLoading } = useQuery<{ notifications: NotificationItem[]; unreadCount: number }>({
+    queryKey: ["/api/notifications"],
+    refetchInterval: 30000,
+  });
+
+  const markReadMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("PATCH", `/api/notifications/${id}/read`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+
+  const markAllReadMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/notifications/mark-all-read");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    }
+    if (notifOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [notifOpen]);
+
+  const getNotifIcon = (type: string) => {
+    switch (type) {
+      case "success": return <CheckCircle className="w-4 h-4 text-green-400 shrink-0" />;
+      case "warning": return <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0" />;
+      case "error": return <XOctagon className="w-4 h-4 text-red-400 shrink-0" />;
+      default: return <Info className="w-4 h-4 text-blue-400 shrink-0" />;
+    }
+  };
+
+  const getNotifBorderColor = (type: string) => {
+    switch (type) {
+      case "success": return "border-l-green-400";
+      case "warning": return "border-l-yellow-400";
+      case "error": return "border-l-red-400";
+      default: return "border-l-blue-400";
+    }
+  };
 
   const balance = parseFloat(dashboardData?.portfolio?.balance || "10000");
 
@@ -515,6 +580,64 @@ export default function TradeRoom() {
           </div>
 
           <div className="ml-auto flex items-center gap-3">
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => setNotifOpen(!notifOpen)}
+                className="relative glass-light rounded-lg p-2 hover:bg-white/10 transition-colors"
+                data-testid="button-notification-bell"
+              >
+                <Bell className="w-5 h-5 text-muted-foreground" />
+                {(notifData?.unreadCount || 0) > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1" data-testid="badge-unread-count">
+                    {notifData!.unreadCount > 99 ? "99+" : notifData!.unreadCount}
+                  </span>
+                )}
+              </button>
+              {notifOpen && (
+                <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-xl border border-white/10 bg-gradient-to-br from-[#1a1f35]/98 to-[#0d1225]/98 backdrop-blur-xl shadow-2xl z-50 overflow-hidden" data-testid="dropdown-notifications">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                    <span className="text-sm font-semibold text-white">Notifications</span>
+                    {(notifData?.unreadCount || 0) > 0 && (
+                      <button
+                        onClick={() => markAllReadMutation.mutate()}
+                        className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                        data-testid="button-mark-all-read"
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-72 overflow-y-auto">
+                    {notifLoading ? (
+                      <div className="px-4 py-6 text-center text-sm text-muted-foreground">Loading...</div>
+                    ) : (!notifData?.notifications || notifData.notifications.length === 0) ? (
+                      <div className="px-4 py-6 text-center text-sm text-muted-foreground">No notifications</div>
+                    ) : (
+                      notifData.notifications.map((n) => (
+                        <div
+                          key={n.id}
+                          className={cn(
+                            "px-4 py-3 border-b border-white/5 flex items-start gap-3 cursor-pointer hover:bg-white/5 transition-colors border-l-4",
+                            getNotifBorderColor(n.type),
+                            !n.read && "bg-white/5"
+                          )}
+                          onClick={() => { if (!n.read) markReadMutation.mutate(n.id); }}
+                          data-testid={`notification-item-${n.id}`}
+                        >
+                          {getNotifIcon(n.type)}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-white">{n.title}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
+                            <p className="text-[10px] text-muted-foreground/60 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
+                          </div>
+                          {!n.read && <span className="w-2 h-2 rounded-full bg-blue-400 mt-1.5 shrink-0" />}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="glass-light rounded-lg px-3 py-2 flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Profit:</span>
               <span 

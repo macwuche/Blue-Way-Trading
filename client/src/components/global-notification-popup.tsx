@@ -29,7 +29,6 @@ export function GlobalNotificationPopup() {
   const [location] = useLocation();
   const [popupNotification, setPopupNotification] = useState<NotificationItem | null>(null);
   const shownInitialPopup = useRef(false);
-  const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isAdminPage = location.startsWith("/admin");
 
@@ -38,14 +37,6 @@ export function GlobalNotificationPopup() {
     refetchInterval: 30000,
     enabled: !!user && !isAdminPage,
   });
-
-  const showPopup = (notification: NotificationItem) => {
-    if (dismissTimerRef.current) {
-      clearTimeout(dismissTimerRef.current);
-    }
-    setPopupNotification(notification);
-    dismissTimerRef.current = setTimeout(() => setPopupNotification(null), 6000);
-  };
 
   useEffect(() => {
     if (!user || isAdminPage) return;
@@ -60,7 +51,7 @@ export function GlobalNotificationPopup() {
         }
         if (data.type === "notification") {
           queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-          showPopup(data.notification);
+          setPopupNotification(data.notification);
         }
       } catch {
       }
@@ -82,19 +73,11 @@ export function GlobalNotificationPopup() {
         if (lastShownId !== latestUnread.id) {
           shownInitialPopup.current = true;
           localStorage.setItem("lastShownNotifId", latestUnread.id);
-          showPopup(latestUnread);
+          setPopupNotification(latestUnread);
         }
       }
     }
   }, [notifData]);
-
-  useEffect(() => {
-    return () => {
-      if (dismissTimerRef.current) {
-        clearTimeout(dismissTimerRef.current);
-      }
-    };
-  }, []);
 
   if (!popupNotification || isAdminPage) return null;
 
@@ -117,10 +100,7 @@ export function GlobalNotificationPopup() {
           <p className="text-xs text-muted-foreground mt-1 line-clamp-3">{popupNotification.message}</p>
         </div>
         <button
-          onClick={() => {
-            if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
-            setPopupNotification(null);
-          }}
+          onClick={() => setPopupNotification(null)}
           className="text-muted-foreground hover:text-white transition-colors shrink-0"
           data-testid="button-close-popup"
         >
