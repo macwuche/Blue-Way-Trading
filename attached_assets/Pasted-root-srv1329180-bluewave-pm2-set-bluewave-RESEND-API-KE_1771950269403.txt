@@ -1,0 +1,31 @@
+root@srv1329180:~/bluewave# pm2 set bluewave:RESEND_API_KEY re_auojJdZb_K3c7Z8z2Bh2NG8taksf7imXr
+[PM2] Module bluewave restarted
+[PM2] Setting changed
+Module: bluewave
+$ pm2 set bluewave:RESEND_API_KEY re_auojJdZb_K3c7Z8z2Bh2NG8taksf7imXr
+root@srv1329180:~/bluewave# export RESEND_API_KEY=re_auojJdZb_K3c7Z8z2Bh2NG8taksf7imXr && pm2 restart bluewave --update-env
+[PM2] Applying action restartProcessId on app [bluewave](ids: [ 5 ])
+[PM2] [bluewave](5) ✓
+┌────┬───────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name              │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 5  │ bluewave          │ default     │ 1.0.0   │ cluster │ 320140   │ 0s     │ 19   │ online    │ 0%       │ 40.1mb   │ root     │ disabled │
+│ 0  │ crypto-trading    │ default     │ 1.0.0   │ fork    │ 319879   │ 16m    │ 13   │ online    │ 0%       │ 103.0mb  │ root     │ disabled │
+└────┴───────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+root@srv1329180:~/bluewave# pm2 logs bluewave --lines 10 --err
+[TAILING] Tailing last 10 lines for [bluewave] process (change the value with --lines option)
+/root/.pm2/logs/bluewave-error-5.log last 10 lines:
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+
+5|bluewave  | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave  | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5

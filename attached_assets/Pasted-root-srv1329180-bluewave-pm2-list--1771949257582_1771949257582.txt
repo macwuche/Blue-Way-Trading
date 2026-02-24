@@ -1,0 +1,410 @@
+root@srv1329180:~/bluewave# pm2 list
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 5  │ bluewave           │ cluster  │ 14   │ online    │ 0%       │ 77.6mb   │
+│ 0  │ crypto-trading     │ fork     │ 12   │ online    │ 0%       │ 95.6mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+root@srv1329180:~/bluewave# pm2 logs
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+/root/.pm2/pm2.log last 15 lines:
+PM2        | 2026-02-24T16:01:52: PM2 log: App [bluewave:5] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-24T16:01:52: PM2 log: pid=301593 msg=process killed
+PM2        | 2026-02-24T16:01:52: PM2 log: App [bluewave:5] starting in -cluster mode-
+PM2        | 2026-02-24T16:01:52: PM2 log: App [bluewave:5] online
+PM2        | 2026-02-24T16:04:31: PM2 log: Stopping app:crypto-trading id:0
+PM2        | 2026-02-24T16:04:31: PM2 log: App [crypto-trading:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-24T16:04:31: PM2 log: pid=319760 msg=process killed
+PM2        | 2026-02-24T16:04:31: PM2 log: App [crypto-trading:0] starting in -fork mode-
+PM2        | 2026-02-24T16:04:31: PM2 log: App [crypto-trading:0] online
+PM2        | 2026-02-24T16:04:31: PM2 log: Stopping app:bluewave id:5
+PM2        | 2026-02-24T16:04:31: PM2 log: App name:bluewave id:5 disconnected
+PM2        | 2026-02-24T16:04:31: PM2 log: App [bluewave:5] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-24T16:04:31: PM2 log: pid=319768 msg=process killed
+PM2        | 2026-02-24T16:04:31: PM2 log: App [bluewave:5] starting in -cluster mode-
+PM2        | 2026-02-24T16:04:31: PM2 log: App [bluewave:5] online
+
+/root/.pm2/logs/crypto-trading-error.log last 15 lines:
+0|crypto-t |   detail: 'Key (telegram_id)=(8522878099) already exists.',
+0|crypto-t |   hint: undefined,
+0|crypto-t |   position: undefined,
+0|crypto-t |   internalPosition: undefined,
+0|crypto-t |   internalQuery: undefined,
+0|crypto-t |   where: undefined,
+0|crypto-t |   schema: 'public',
+0|crypto-t |   table: 'users',
+0|crypto-t |   column: undefined,
+0|crypto-t |   dataType: undefined,
+0|crypto-t |   constraint: 'users_telegram_id_unique',
+0|crypto-t |   file: 'nbtinsert.c',
+0|crypto-t |   line: '666',
+0|crypto-t |   routine: '_bt_check_unique'
+0|crypto-t | }
+
+/root/.pm2/logs/bluewave-out-5.log last 15 lines:
+5|bluewave | olume24h":20918081,"marketCap":0,"type":"etf"},{"symbol":"VTI","name":"Vanguard Total Stock Market ETF","price":338.47,"change24h":2.01,"changePercent24h":0.597,"volume24h":1169212,"marketCap":0,"type":"etf"},{"symbol":"IWM","name":"iShares Russell 2000 ETF","price":263,"change24h":2.51,"changePercent24h":0.964,"volume24h":11732866,"marketCap":0,"type":"etf"},{"symbol":"GLD","name":"SPDR Gold Trust, SPDR Gold Shares","price":473.6629,"change24h":-7.62,"changePercent24h":-1.58,"volume24h":4988188,"marketCap":0,"type":"etf"},{"symbol":"BTC/USDT","name":"Bitcoin - United States dollar","price":64007.7,"change24h":-596,"changePercent24h":-0.923,"volume24h":19764.87761805,"marketCap":0,"type":"crypto"},{"symbol":"ETH/USDT","name":"Ethereum - United States dollar","price":1849.3,"change24h":-6.05,"changePercent24h":-0.326,"volume24h":177249.46249797,"marketCap":0,"type":"crypto"},{"symbol":"SOL/USDT","name":"Solana - United States dollar","price":77.29,"change24h":-0.53,"changePercent24h":-0.681,"volume24h":1314899.3004193504,"marketCap":0,"type":"crypto"},{"symbol":"XRP/USDT","name":"Ripple - United States dollar","price":1.3547,"change24h":0.0031,"changePercent24h":0.229,"volume24h":134284569.0921777,"marketCap":0,"type":"crypto"},{"symbol":"ADA/USDT","name":"Cardano - United States dollar","price":0.2601,"change24h":-0.002,"changePercent24h":-0.763,"volume24h":38169390.6780651,"marketCap":0,"type":"crypto"},{"symbol":"DOGE/USDT","name":"Dogecoin - United States dollar","price":0.09194,"change24h":-0.00058,"changePercent24h":-0.627,"volume24h":231541871.9916695,"marketCap":0,"type":"crypto"},{"symbol":"DOT/USDT","name":"Polkadot - United States dollar","price":1.249,"change24h":-0.015,"changePercent24h":-1.19,"volume24h":1125429.2504478043,"marketCap":0,"type":"crypto"},{"symbol":"EUR/USD","name":"Euro - United States dollar","price":1.17717,"change24h":-0.002,"changePercent24h":-0.17,"volume24h":129179,"marketCap":0,"type":"forex"},{"symbol":"GBP/USD","name":"Pound sterling - United States dollar","price":1.35145,"change24h":0.00205,"changePercent24h":0.152,"volume24h":154635,"marketCap":0,"type":"forex"},{"symbol":"USD/JPY","name":"United States dollar - Japanese yen","price":155.873,"change24h":1.217,"changePercent24h":0.787,"volume24h":219786,"marketCap":0,"type":"forex"},{"symbol":"USD/CHF","name":"United States dollar - Swiss franc","price":0.774725,"change24h":0.00056,"changePercent24h":0.0723,"volume24h":164746,"marketCap":0,"type":"forex"},{"symbol":"AUD/USD","name":"Australian dollar - United States dollar","price":0.70523,"change24h":-0.00067,"changePercent24h":-0.0949,"volume24h":142027,"marketCap":0,"type":"forex"}],"lastFetchTime":1771948880005,"stale":false}
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+
+/root/.pm2/logs/bluewave-error-5.log last 15 lines:
+5|bluewave |     at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:240:7)
+5|bluewave |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+5|bluewave |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+5|bluewave | You have triggered an unhandledRejection, you may have forgotten to catch a Promise rejection:
+5|bluewave | Error: Missing API key. Pass it to the constructor `new Resend("re_123")`
+5|bluewave |     at new Resend (/root/bluewave/node_modules/resend/dist/index.cjs:931:25)
+5|bluewave |     at Object.<anonymous> (/root/bluewave/dist/index.cjs:76:122224)
+5|bluewave |     at Module._compile (node:internal/modules/cjs/loader:1521:14)
+5|bluewave |     at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+5|bluewave |     at Module.load (node:internal/modules/cjs/loader:1266:32)
+5|bluewave |     at Module._load (node:internal/modules/cjs/loader:1091:12)
+5|bluewave |     at cjsLoader (node:internal/modules/esm/translators:298:15)
+5|bluewave |     at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:240:7)
+5|bluewave |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+5|bluewave |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+
+/root/.pm2/logs/crypto-trading-out.log last 15 lines:
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Starting trading engine (runs every 5 minutes)
+0|crypto-t | 4:01:54 PM [express] serving on port 5000
+0|crypto-t | [Bot Engine] Starting trading engine (runs every 5 minutes)
+0|crypto-t | 4:04:32 PM [express] serving on port 5000
+
+^C
+root@srv1329180:~/bluewave# pm2 logs
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+/root/.pm2/pm2.log last 15 lines:
+PM2        | 2026-02-24T16:01:52: PM2 log: App [bluewave:5] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-24T16:01:52: PM2 log: pid=301593 msg=process killed
+PM2        | 2026-02-24T16:01:52: PM2 log: App [bluewave:5] starting in -cluster mode-
+PM2        | 2026-02-24T16:01:52: PM2 log: App [bluewave:5] online
+PM2        | 2026-02-24T16:04:31: PM2 log: Stopping app:crypto-trading id:0
+PM2        | 2026-02-24T16:04:31: PM2 log: App [crypto-trading:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-24T16:04:31: PM2 log: pid=319760 msg=process killed
+PM2        | 2026-02-24T16:04:31: PM2 log: App [crypto-trading:0] starting in -fork mode-
+PM2        | 2026-02-24T16:04:31: PM2 log: App [crypto-trading:0] online
+PM2        | 2026-02-24T16:04:31: PM2 log: Stopping app:bluewave id:5
+PM2        | 2026-02-24T16:04:31: PM2 log: App name:bluewave id:5 disconnected
+PM2        | 2026-02-24T16:04:31: PM2 log: App [bluewave:5] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-24T16:04:31: PM2 log: pid=319768 msg=process killed
+PM2        | 2026-02-24T16:04:31: PM2 log: App [bluewave:5] starting in -cluster mode-
+PM2        | 2026-02-24T16:04:31: PM2 log: App [bluewave:5] online
+
+/root/.pm2/logs/crypto-trading-error.log last 15 lines:
+0|crypto-t |   detail: 'Key (telegram_id)=(8522878099) already exists.',
+0|crypto-t |   hint: undefined,
+0|crypto-t |   position: undefined,
+0|crypto-t |   internalPosition: undefined,
+0|crypto-t |   internalQuery: undefined,
+0|crypto-t |   where: undefined,
+0|crypto-t |   schema: 'public',
+0|crypto-t |   table: 'users',
+0|crypto-t |   column: undefined,
+0|crypto-t |   dataType: undefined,
+0|crypto-t |   constraint: 'users_telegram_id_unique',
+0|crypto-t |   file: 'nbtinsert.c',
+0|crypto-t |   line: '666',
+0|crypto-t |   routine: '_bt_check_unique'
+0|crypto-t | }
+
+/root/.pm2/logs/bluewave-out-5.log last 15 lines:
+5|bluewave | olume24h":20918081,"marketCap":0,"type":"etf"},{"symbol":"VTI","name":"Vanguard Total Stock Market ETF","price":338.47,"change24h":2.01,"changePercent24h":0.597,"volume24h":1169212,"marketCap":0,"type":"etf"},{"symbol":"IWM","name":"iShares Russell 2000 ETF","price":263,"change24h":2.51,"changePercent24h":0.964,"volume24h":11732866,"marketCap":0,"type":"etf"},{"symbol":"GLD","name":"SPDR Gold Trust, SPDR Gold Shares","price":473.6629,"change24h":-7.62,"changePercent24h":-1.58,"volume24h":4988188,"marketCap":0,"type":"etf"},{"symbol":"BTC/USDT","name":"Bitcoin - United States dollar","price":64007.7,"change24h":-596,"changePercent24h":-0.923,"volume24h":19764.87761805,"marketCap":0,"type":"crypto"},{"symbol":"ETH/USDT","name":"Ethereum - United States dollar","price":1849.3,"change24h":-6.05,"changePercent24h":-0.326,"volume24h":177249.46249797,"marketCap":0,"type":"crypto"},{"symbol":"SOL/USDT","name":"Solana - United States dollar","price":77.29,"change24h":-0.53,"changePercent24h":-0.681,"volume24h":1314899.3004193504,"marketCap":0,"type":"crypto"},{"symbol":"XRP/USDT","name":"Ripple - United States dollar","price":1.3547,"change24h":0.0031,"changePercent24h":0.229,"volume24h":134284569.0921777,"marketCap":0,"type":"crypto"},{"symbol":"ADA/USDT","name":"Cardano - United States dollar","price":0.2601,"change24h":-0.002,"changePercent24h":-0.763,"volume24h":38169390.6780651,"marketCap":0,"type":"crypto"},{"symbol":"DOGE/USDT","name":"Dogecoin - United States dollar","price":0.09194,"change24h":-0.00058,"changePercent24h":-0.627,"volume24h":231541871.9916695,"marketCap":0,"type":"crypto"},{"symbol":"DOT/USDT","name":"Polkadot - United States dollar","price":1.249,"change24h":-0.015,"changePercent24h":-1.19,"volume24h":1125429.2504478043,"marketCap":0,"type":"crypto"},{"symbol":"EUR/USD","name":"Euro - United States dollar","price":1.17717,"change24h":-0.002,"changePercent24h":-0.17,"volume24h":129179,"marketCap":0,"type":"forex"},{"symbol":"GBP/USD","name":"Pound sterling - United States dollar","price":1.35145,"change24h":0.00205,"changePercent24h":0.152,"volume24h":154635,"marketCap":0,"type":"forex"},{"symbol":"USD/JPY","name":"United States dollar - Japanese yen","price":155.873,"change24h":1.217,"changePercent24h":0.787,"volume24h":219786,"marketCap":0,"type":"forex"},{"symbol":"USD/CHF","name":"United States dollar - Swiss franc","price":0.774725,"change24h":0.00056,"changePercent24h":0.0723,"volume24h":164746,"marketCap":0,"type":"forex"},{"symbol":"AUD/USD","name":"Australian dollar - United States dollar","price":0.70523,"change24h":-0.00067,"changePercent24h":-0.0949,"volume24h":142027,"marketCap":0,"type":"forex"}],"lastFetchTime":1771948880005,"stale":false}
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+
+/root/.pm2/logs/bluewave-error-5.log last 15 lines:
+5|bluewave |     at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:240:7)
+5|bluewave |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+5|bluewave |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+5|bluewave | You have triggered an unhandledRejection, you may have forgotten to catch a Promise rejection:
+5|bluewave | Error: Missing API key. Pass it to the constructor `new Resend("re_123")`
+5|bluewave |     at new Resend (/root/bluewave/node_modules/resend/dist/index.cjs:931:25)
+5|bluewave |     at Object.<anonymous> (/root/bluewave/dist/index.cjs:76:122224)
+5|bluewave |     at Module._compile (node:internal/modules/cjs/loader:1521:14)
+5|bluewave |     at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+5|bluewave |     at Module.load (node:internal/modules/cjs/loader:1266:32)
+5|bluewave |     at Module._load (node:internal/modules/cjs/loader:1091:12)
+5|bluewave |     at cjsLoader (node:internal/modules/esm/translators:298:15)
+5|bluewave |     at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:240:7)
+5|bluewave |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+5|bluewave |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+
+/root/.pm2/logs/crypto-trading-out.log last 15 lines:
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Starting trading engine (runs every 5 minutes)
+0|crypto-t | 4:01:54 PM [express] serving on port 5000
+0|crypto-t | [Bot Engine] Starting trading engine (runs every 5 minutes)
+0|crypto-t | 4:04:32 PM [express] serving on port 5000
+
+^C
+root@srv1329180:~/bluewave# pm2 restart all
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0, 5 ])
+[PM2] [crypto-trading](0) ✓
+[PM2] [bluewave](5) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 5  │ bluewave           │ cluster  │ 15   │ online    │ 0%       │ 40.0mb   │
+│ 0  │ crypto-trading     │ fork     │ 13   │ online    │ 0%       │ 58.3mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+root@srv1329180:~/bluewave# pm2 logs --lines 50
+[TAILING] Tailing last 50 lines for [all] processes (change the value with --lines option)
+/root/.pm2/pm2.log last 50 lines:
+PM2        | 2026-02-23T15:24:40: PM2 log: App name:bluewave id:5 disconnected
+PM2        | 2026-02-23T15:24:40: PM2 log: App [bluewave:5] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-23T15:24:40: PM2 log: pid=300544 msg=process killed
+PM2        | 2026-02-23T15:24:40: PM2 log: App [bluewave:5] starting in -cluster mode-
+PM2        | 2026-02-23T15:24:40: PM2 log: App [bluewave:5] online
+PM2        | 2026-02-23T15:25:36: PM2 log: Stopping app:bluewave id:5
+PM2        | 2026-02-23T15:25:36: PM2 log: App name:bluewave id:5 disconnected
+PM2        | 2026-02-23T15:25:36: PM2 log: App [bluewave:5] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-23T15:25:36: PM2 log: pid=301113 msg=process killed
+PM2        | 2026-02-23T15:25:36: PM2 log: App [bluewave:5] starting in -cluster mode-
+PM2        | 2026-02-23T15:25:36: PM2 log: App [bluewave:5] online
+PM2        | 2026-02-23T15:32:25: PM2 log: Stopping app:bluewave id:5
+PM2        | 2026-02-23T15:32:25: PM2 log: App name:bluewave id:5 disconnected
+PM2        | 2026-02-23T15:32:25: PM2 log: App [bluewave:5] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-23T15:32:25: PM2 log: pid=301247 msg=process killed
+PM2        | 2026-02-23T15:32:25: PM2 log: App [bluewave:5] starting in -cluster mode-
+PM2        | 2026-02-23T15:32:25: PM2 log: App [bluewave:5] online
+PM2        | 2026-02-24T16:01:51: PM2 log: Stopping app:crypto-trading id:0
+PM2        | 2026-02-24T16:01:51: PM2 log: App [crypto-trading:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-24T16:01:52: PM2 log: pid=293069 msg=process killed
+PM2        | 2026-02-24T16:01:52: PM2 log: App [crypto-trading:0] starting in -fork mode-
+PM2        | 2026-02-24T16:01:52: PM2 log: App [crypto-trading:0] online
+PM2        | 2026-02-24T16:01:52: PM2 log: Stopping app:bluewave id:5
+PM2        | 2026-02-24T16:01:52: PM2 log: App name:bluewave id:5 disconnected
+PM2        | 2026-02-24T16:01:52: PM2 log: App [bluewave:5] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-24T16:01:52: PM2 log: pid=301593 msg=process killed
+PM2        | 2026-02-24T16:01:52: PM2 log: App [bluewave:5] starting in -cluster mode-
+PM2        | 2026-02-24T16:01:52: PM2 log: App [bluewave:5] online
+PM2        | 2026-02-24T16:04:31: PM2 log: Stopping app:crypto-trading id:0
+PM2        | 2026-02-24T16:04:31: PM2 log: App [crypto-trading:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-24T16:04:31: PM2 log: pid=319760 msg=process killed
+PM2        | 2026-02-24T16:04:31: PM2 log: App [crypto-trading:0] starting in -fork mode-
+PM2        | 2026-02-24T16:04:31: PM2 log: App [crypto-trading:0] online
+PM2        | 2026-02-24T16:04:31: PM2 log: Stopping app:bluewave id:5
+PM2        | 2026-02-24T16:04:31: PM2 log: App name:bluewave id:5 disconnected
+PM2        | 2026-02-24T16:04:31: PM2 log: App [bluewave:5] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-24T16:04:31: PM2 log: pid=319768 msg=process killed
+PM2        | 2026-02-24T16:04:31: PM2 log: App [bluewave:5] starting in -cluster mode-
+PM2        | 2026-02-24T16:04:31: PM2 log: App [bluewave:5] online
+PM2        | 2026-02-24T16:06:46: PM2 log: Stopping app:crypto-trading id:0
+PM2        | 2026-02-24T16:06:46: PM2 log: App [crypto-trading:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-24T16:06:46: PM2 log: pid=319807 msg=process killed
+PM2        | 2026-02-24T16:06:46: PM2 log: App [crypto-trading:0] starting in -fork mode-
+PM2        | 2026-02-24T16:06:46: PM2 log: App [crypto-trading:0] online
+PM2        | 2026-02-24T16:06:46: PM2 log: Stopping app:bluewave id:5
+PM2        | 2026-02-24T16:06:46: PM2 log: App name:bluewave id:5 disconnected
+PM2        | 2026-02-24T16:06:46: PM2 log: App [bluewave:5] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-24T16:06:46: PM2 log: pid=319819 msg=process killed
+PM2        | 2026-02-24T16:06:46: PM2 log: App [bluewave:5] starting in -cluster mode-
+PM2        | 2026-02-24T16:06:46: PM2 log: App [bluewave:5] online
+
+/root/.pm2/logs/crypto-trading-error.log last 50 lines:
+0|crypto-t |   routine: 'apply_typmod'
+0|crypto-t | }
+0|crypto-t | Create linked wallet type error: error: numeric field overflow
+0|crypto-t |     at /var/www/crypto-trading/node_modules/pg-pool/index.js:45:11
+0|crypto-t |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|crypto-t |     at async file:///var/www/crypto-trading/node_modules/drizzle-orm/node-postgres/session.js:83:22
+0|crypto-t |     at async DatabaseStorage.createLinkedWalletType (file:///var/www/crypto-trading/dist/index.js:1239:23)
+0|crypto-t |     at async file:///var/www/crypto-trading/dist/index.js:2336:26 {
+0|crypto-t |   length: 166,
+0|crypto-t |   severity: 'ERROR',
+0|crypto-t |   code: '22003',
+0|crypto-t |   detail: 'A field with precision 18, scale 8 must round to an absolute value less than 10^10.',
+0|crypto-t |   hint: undefined,
+0|crypto-t |   position: undefined,
+0|crypto-t |   internalPosition: undefined,
+0|crypto-t |   internalQuery: undefined,
+0|crypto-t |   where: undefined,
+0|crypto-t |   schema: undefined,
+0|crypto-t |   table: undefined,
+0|crypto-t |   column: undefined,
+0|crypto-t |   dataType: undefined,
+0|crypto-t |   constraint: undefined,
+0|crypto-t |   file: 'numeric.c',
+0|crypto-t |   line: '7980',
+0|crypto-t |   routine: 'apply_typmod'
+0|crypto-t | }
+0|crypto-t | User registration error: error: duplicate key value violates unique constraint "users_telegram_id_unique"
+0|crypto-t |     at /var/www/crypto-trading/node_modules/pg-pool/index.js:45:11
+0|crypto-t |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|crypto-t |     at async file:///var/www/crypto-trading/node_modules/drizzle-orm/node-postgres/session.js:83:22
+0|crypto-t |     at async DatabaseStorage.createUser (file:///var/www/crypto-trading/dist/index.js:603:20)
+0|crypto-t |     at async file:///var/www/crypto-trading/dist/index.js:1988:20 {
+0|crypto-t |   length: 226,
+0|crypto-t |   severity: 'ERROR',
+0|crypto-t |   code: '23505',
+0|crypto-t |   detail: 'Key (telegram_id)=(8522878099) already exists.',
+0|crypto-t |   hint: undefined,
+0|crypto-t |   position: undefined,
+0|crypto-t |   internalPosition: undefined,
+0|crypto-t |   internalQuery: undefined,
+0|crypto-t |   where: undefined,
+0|crypto-t |   schema: 'public',
+0|crypto-t |   table: 'users',
+0|crypto-t |   column: undefined,
+0|crypto-t |   dataType: undefined,
+0|crypto-t |   constraint: 'users_telegram_id_unique',
+0|crypto-t |   file: 'nbtinsert.c',
+0|crypto-t |   line: '666',
+0|crypto-t |   routine: '_bt_check_unique'
+0|crypto-t | }
+
+/root/.pm2/logs/bluewave-out-5.log last 50 lines:
+5|bluewave | ume24h":128883,"marketCap":0,"type":"forex"},{"symbol":"GBP/USD","name":"Pound sterling - United States dollar","price":1.35142,"change24h":0.00191,"changePercent24h":0.142,"volume24h":154352,"marketCap":0,"type":"forex"},{"symbol":"USD/JPY","name":"United States dollar - Japanese yen","price":155.919,"change24h":1.255,"changePercent24h":0.811,"volume24h":219412,"marketCap":0,"type":"forex"},{"symbol":"USD/CHF","name":"United States dollar - Swiss franc","price":0.7747,"change24h":0.00057,"changePercent24h":0.0736,"volume24h":164452,"marketCap":0,"type":"forex"},{"symbol":"AUD/USD","name":"Australian dollar - United States dollar","price":0.70523,"change24h":-0.00071,"changePercent24h":-0.101,"volume24h":141791,"marketCap":0,"type":"forex"}],"lastFetchTime":1771948815284,"stale":false}
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | 4:01:20 PM [express] GET /api/market-data 200 in 34ms :: {"assets":[{"symbol":"AAPL","name":"Apple Inc.","price":274.0143,"change24h":7.834,"changePercent24h":2.943,"volume24h":13727480,"marketCap":0,"type":"stock"},{"symbol":"GOOGL","name":"Alphabet Inc. Class A Common Stock","price":309.2677,"change24h":-2.22,"changePercent24h":-0.713,"volume24h":7502432,"marketCap":0,"type":"stock"},{"symbol":"MSFT","name":"Microsoft Corp","price":387.3473,"change24h":2.877,"changePercent24h":0.748,"volume24h":11325991,"marketCap":0,"type":"stock"},{"symbol":"AMZN","name":"Amazon.Com Inc","price":207.7864,"change24h":2.516,"changePercent24h":1.226,"volume24h":11294390,"marketCap":0,"type":"stock"},{"symbol":"NVDA","name":"Nvidia Corp","price":192.1286,"change24h":0.579,"changePercent24h":0.302,"volume24h":54849460,"marketCap":0,"type":"stock"},{"symbol":"TSLA","name":"Tesla, Inc. Common Stock","price":407.06,"change24h":7.23,"changePercent24h":1.808,"volume24h":17687006,"marketCap":0,"type":"stock"},{"symbol":"META","name":"Meta Platforms, Inc. Class A Common Stock","price":635.9232,"change24h":-1.33,"changePercent24h":-0.209,"volume24h":2908073,"marketCap":0,"type":"stock"},{"symbol":"SPY","name":"State Street SPDR S&P 500 ETF Trust","price":685.99,"change24h":3.6,"changePercent24h":0.528,"volume24h":22253630,"marketCap":0,"type":"etf"},{"symbol":"QQQ","name":"Invesco QQQ Trust, Series 1","price":607.3076,"change24h":5.898,"changePercent24h":0.981,"volume24h":20918081,"marketCap":0,"type":"etf"},{"symbol":"VTI","name":"Vanguard Total Stock Market ETF","price":338.47,"change24h":2.01,"changePercent24h":0.597,"volume24h":1169212,"marketCap":0,"type":"etf"},{"symbol":"IWM","name":"iShares Russell 2000 ETF","price":263,"change24h":2.51,"changePercent24h":0.964,"volume24h":11732866,"marketCap":0,"type":"etf"},{"symbol":"GLD","name":"SPDR Gold Trust, SPDR Gold Shares","price":473.6629,"change24h":-7.62,"changePercent24h":-1.58,"volume24h":4988188,"marketCap":0,"type":"etf"},{"symbol":"BTC/USDT","name":"Bitcoin - United States dollar","price":64007.7,"change24h":-596,"changePercent24h":-0.923,"volume24h":19764.87761805,"marketCap":0,"type":"crypto"},{"symbol":"ETH/USDT","name":"Ethereum - United States dollar","price":1849.3,"change24h":-6.05,"changePercent24h":-0.326,"volume24h":177249.46249797,"marketCap":0,"type":"crypto"},{"symbol":"SOL/USDT","name":"Solana - United States dollar","price":77.29,"change24h":-0.53,"changePercent24h":-0.681,"volume24h":1314899.3004193504,"marketCap":0,"type":"crypto"},{"symbol":"XRP/USDT","name":"Ripple - United States dollar","price":1.3547,"change24h":0.0031,"changePercent24h":0.229,"volume24h":134284569.0921777,"marketCap":0,"type":"crypto"},{"symbol":"ADA/USDT","name":"Cardano - United States dollar","price":0.2601,"change24h":-0.002,"changePercent24h":-0.763,"volume24h":38169390.6780651,"marketCap":0,"type":"crypto"},{"symbol":"DOGE/USDT","name":"Dogecoin - United States dollar","price":0.09194,"change24h":-0.00058,"changePercent24h":-0.627,"volume24h":231541871.9916695,"marketCap":0,"type":"crypto"},{"symbol":"DOT/USDT","name":"Polkadot - United States dollar","price":1.249,"change24h":-0.015,"changePercent24h":-1.19,"volume24h":1125429.2504478043,"marketCap":0,"type":"crypto"},{"symbol":"EUR/USD","name":"Euro - United States dollar","price":1.17717,"change24h":-0.002,"changePercent24h":-0.17,"volume24h":129179,"marketCap":0,"type":"forex"},{"symbol":"GBP/USD","name":"Pound sterling - United States dollar","price":1.35145,"change24h":0.00205,"changePercent24h":0.152,"volume24h":154635,"marketCap":0,"type":"forex"},{"symbol":"USD/JPY","name":"United States dollar - Japanese yen","price":155.873,"change24h":1.217,"changePercent24h":0.787,"volume24h":219786,"marketCap":0,"type":"forex"},{"symbol":"USD/CHF","name":"United States dollar - Swiss franc","price":0.774725,"change24h":0.00056,"changePercent24h":0.0723,"volume24h":164746,"marketCap":0,"type":"forex"},{"symbol":"AUD/USD","name":"Australian dollar - United States dollar","price":0.70523,"change24h":-0.00067,"changePercent24h":-0.0949,"volume24h":142027,"marketCap":0,"type":"forex"}],"lastFetchTime":1771948880005,"stale":false}
+5|bluewave | 4:01:20 PM [express] GET /api/market-data 304 in 5ms :: {"assets":[{"symbol":"AAPL","name":"Apple Inc.","price":274.0143,"change24h":7.834,"changePercent24h":2.943,"volume24h":13727480,"marketCap":0,"type":"stock"},{"symbol":"GOOGL","name":"Alphabet Inc. Class A Common Stock","price":309.2677,"change24h":-2.22,"changePercent24h":-0.713,"volume24h":7502432,"marketCap":0,"type":"stock"},{"symbol":"MSFT","name":"Microsoft Corp","price":387.3473,"change24h":2.877,"changePercent24h":0.748,"volume24h":11325991,"marketCap":0,"type":"stock"},{"symbol":"AMZN","name":"Amazon.Com Inc","price":207.7864,"change24h":2.516,"changePercent24h":1.226,"volume24h":11294390,"marketCap":0,"type":"stock"},{"symbol":"NVDA","name":"Nvidia Corp","price":192.1286,"change24h":0.579,"changePercent24h":0.302,"volume24h":54849460,"marketCap":0,"type":"stock"},{"symbol":"TSLA","name":"Tesla, Inc. Common Stock","price":407.06,"change24h":7.23,"changePercent24h":1.808,"volume24h":17687006,"marketCap":0,"type":"stock"},{"symbol":"META","name":"Meta Platforms, Inc. Class A Common Stock","price":635.9232,"change24h":-1.33,"changePercent24h":-0.209,"volume24h":2908073,"marketCap":0,"type":"stock"},{"symbol":"SPY","name":"State Street SPDR S&P 500 ETF Trust","price":685.99,"change24h":3.6,"changePercent24h":0.528,"volume24h":22253630,"marketCap":0,"type":"etf"},{"symbol":"QQQ","name":"Invesco QQQ Trust, Series 1","price":607.3076,"change24h":5.898,"changePercent24h":0.981,"volume24h":20918081,"marketCap":0,"type":"etf"},{"symbol":"VTI","name":"Vanguard Total Stock Market ETF","price":338.47,"change24h":2.01,"changePercent24h":0.597,"volume24h":1169212,"marketCap":0,"type":"etf"},{"symbol":"IWM","name":"iShares Russell 2000 ETF","price":263,"change24h":2.51,"changePercent24h":0.964,"volume24h":11732866,"marketCap":0,"type":"etf"},{"symbol":"GLD","name":"SPDR Gold Trust, SPDR Gold Shares","price":473.6629,"change24h":-7.62,"changePercent24h":-1.58,"volume24h":4988188,"marketCap":0,"type":"etf"},{"symbol":"BTC/USDT","name":"Bitcoin - United States dollar","price":64007.7,"change24h":-596,"changePercent24h":-0.923,"volume24h":19764.87761805,"marketCap":0,"type":"crypto"},{"symbol":"ETH/USDT","name":"Ethereum - United States dollar","price":1849.3,"change24h":-6.05,"changePercent24h":-0.326,"volume24h":177249.46249797,"marketCap":0,"type":"crypto"},{"symbol":"SOL/USDT","name":"Solana - United States dollar","price":77.29,"change24h":-0.53,"changePercent24h":-0.681,"volume24h":1314899.3004193504,"marketCap":0,"type":"crypto"},{"symbol":"XRP/USDT","name":"Ripple - United States dollar","price":1.3547,"change24h":0.0031,"changePercent24h":0.229,"volume24h":134284569.0921777,"marketCap":0,"type":"crypto"},{"symbol":"ADA/USDT","name":"Cardano - United States dollar","price":0.2601,"change24h":-0.002,"changePercent24h":-0.763,"volume24h":38169390.6780651,"marketCap":0,"type":"crypto"},{"symbol":"DOGE/USDT","name":"Dogecoin - United States dollar","price":0.09194,"change24h":-0.00058,"changePercent24h":-0.627,"volume24h":231541871.9916695,"marketCap":0,"type":"crypto"},{"symbol":"DOT/USDT","name":"Polkadot - United States dollar","price":1.249,"change24h":-0.015,"changePercent24h":-1.19,"volume24h":1125429.2504478043,"marketCap":0,"type":"crypto"},{"symbol":"EUR/USD","name":"Euro - United States dollar","price":1.17717,"change24h":-0.002,"changePercent24h":-0.17,"volume24h":129179,"marketCap":0,"type":"forex"},{"symbol":"GBP/USD","name":"Pound sterling - United States dollar","price":1.35145,"change24h":0.00205,"changePercent24h":0.152,"volume24h":154635,"marketCap":0,"type":"forex"},{"symbol":"USD/JPY","name":"United States dollar - Japanese yen","price":155.873,"change24h":1.217,"changePercent24h":0.787,"volume24h":219786,"marketCap":0,"type":"forex"},{"symbol":"USD/CHF","name":"United States dollar - Swiss franc","price":0.774725,"change24h":0.00056,"changePercent24h":0.0723,"volume24h":164746,"marketCap":0,"type":"forex"},{"symbol":"AUD/USD","name":"Australian dollar - United States dollar","price":0.70523,"change24h":-0.00067,"changePercent24h":-0.0949,"volume24h":142027,"marketCap":0,"type":"forex"}],"lastFetchTime":1771948880005,"stale":false}
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+
+/root/.pm2/logs/bluewave-error-5.log last 50 lines:
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | You have triggered an unhandledRejection, you may have forgotten to catch a Promise rejection:
+5|bluewave | Error: Missing API key. Pass it to the constructor `new Resend("re_123")`
+5|bluewave |     at new Resend (/root/bluewave/node_modules/resend/dist/index.cjs:931:25)
+5|bluewave |     at Object.<anonymous> (/root/bluewave/dist/index.cjs:76:122224)
+5|bluewave |     at Module._compile (node:internal/modules/cjs/loader:1521:14)
+5|bluewave |     at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+5|bluewave |     at Module.load (node:internal/modules/cjs/loader:1266:32)
+5|bluewave |     at Module._load (node:internal/modules/cjs/loader:1091:12)
+5|bluewave |     at cjsLoader (node:internal/modules/esm/translators:298:15)
+5|bluewave |     at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:240:7)
+5|bluewave |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+5|bluewave |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+5|bluewave | You have triggered an unhandledRejection, you may have forgotten to catch a Promise rejection:
+5|bluewave | Error: Missing API key. Pass it to the constructor `new Resend("re_123")`
+5|bluewave |     at new Resend (/root/bluewave/node_modules/resend/dist/index.cjs:931:25)
+5|bluewave |     at Object.<anonymous> (/root/bluewave/dist/index.cjs:76:122224)
+5|bluewave |     at Module._compile (node:internal/modules/cjs/loader:1521:14)
+5|bluewave |     at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+5|bluewave |     at Module.load (node:internal/modules/cjs/loader:1266:32)
+5|bluewave |     at Module._load (node:internal/modules/cjs/loader:1091:12)
+5|bluewave |     at cjsLoader (node:internal/modules/esm/translators:298:15)
+5|bluewave |     at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:240:7)
+5|bluewave |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+5|bluewave |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+5|bluewave | You have triggered an unhandledRejection, you may have forgotten to catch a Promise rejection:
+5|bluewave | Error: Missing API key. Pass it to the constructor `new Resend("re_123")`
+5|bluewave |     at new Resend (/root/bluewave/node_modules/resend/dist/index.cjs:931:25)
+5|bluewave |     at Object.<anonymous> (/root/bluewave/dist/index.cjs:76:122224)
+5|bluewave |     at Module._compile (node:internal/modules/cjs/loader:1521:14)
+5|bluewave |     at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+5|bluewave |     at Module.load (node:internal/modules/cjs/loader:1266:32)
+5|bluewave |     at Module._load (node:internal/modules/cjs/loader:1091:12)
+5|bluewave |     at cjsLoader (node:internal/modules/esm/translators:298:15)
+5|bluewave |     at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:240:7)
+5|bluewave |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+5|bluewave |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+
+/root/.pm2/logs/crypto-trading-out.log last 50 lines:
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | 2:45:39 PM [express] GET /api/settings 304 in 28ms :: {"id":1,"siteName":"Crypto Trading Platform","…
+0|crypto-t | 2:45:40 PM [express] POST /api/users/register 200 in 27ms :: {"id":34,"telegramId":"2070484532","use…
+0|crypto-t | 2:45:40 PM [express] POST /api/users/register 200 in 27ms :: {"id":34,"telegramId":"2070484532","use…
+0|crypto-t | 2:45:40 PM [express] GET /api/users/34/balance 304 in 18ms :: {"userId":34,"totalBalanceUsd":"18928.…
+0|crypto-t | 2:45:40 PM [express] GET /api/users/34/bots 304 in 17ms :: []
+0|crypto-t | 2:48:03 PM [express] GET /api/settings 304 in 11ms :: {"id":1,"siteName":"Crypto Trading Platform","…
+0|crypto-t | 2:48:04 PM [express] POST /api/users/register 200 in 11ms :: {"id":30,"telegramId":"5597279039","use…
+0|crypto-t | 2:48:04 PM [express] POST /api/users/register 200 in 10ms :: {"id":30,"telegramId":"5597279039","use…
+0|crypto-t | 2:48:04 PM [express] GET /api/users/30/balance 304 in 10ms :: {"userId":30,"totalBalanceUsd":"4083.0…
+0|crypto-t | 2:48:04 PM [express] GET /api/users/30/bots 304 in 29ms :: []
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Running trade processing...
+0|crypto-t | [Bot Engine] Processed 0 trades, 0 errors
+0|crypto-t | [Bot Engine] Starting trading engine (runs every 5 minutes)
+0|crypto-t | 4:01:54 PM [express] serving on port 5000
+0|crypto-t | [Bot Engine] Starting trading engine (runs every 5 minutes)
+0|crypto-t | 4:04:32 PM [express] serving on port 5000
+0|crypto-t | [Bot Engine] Starting trading engine (runs every 5 minutes)
+0|crypto-t | 4:06:47 PM [express] serving on port 5000
