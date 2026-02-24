@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import { Onboarding } from "@/components/onboarding";
+import { GlobalNotificationPopup } from "@/components/global-notification-popup";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import Dashboard from "@/pages/dashboard";
@@ -76,6 +77,7 @@ function AppRouter() {
 
   return (
     <>
+      <GlobalNotificationPopup />
       <Onboarding open={showOnboarding} onComplete={handleOnboardingComplete} />
       <Switch>
         <Route path="/" component={TradeRoom} />

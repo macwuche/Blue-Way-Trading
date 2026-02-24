@@ -77,7 +77,6 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [tradeCountdowns, setTradeCountdowns] = useState<Record<string, number>>({});
   const [notifOpen, setNotifOpen] = useState(false);
-  const [popupNotification, setPopupNotification] = useState<any>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
   interface NotificationItem {
@@ -124,64 +123,6 @@ export default function Dashboard() {
     queryKey: ["/api/user/active-trades"],
     refetchInterval: 5000, // Refresh every 5 seconds
   });
-
-  // SSE: Listen for real-time portfolio updates from admin
-  useEffect(() => {
-    if (!user) return;
-
-    const eventSource = new EventSource("/api/user/events");
-
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === "portfolio_update") {
-          queryClient.setQueryData<DashboardData>(["/api/dashboard"], (old) => {
-            if (!old) return old;
-            return {
-              ...old,
-              portfolio: {
-                ...old.portfolio,
-                balance: data.balance,
-                totalProfit: data.totalProfit,
-                totalProfitPercent: data.totalProfitPercent,
-              },
-            };
-          });
-        }
-        if (data.type === "notification") {
-          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-          setPopupNotification(data.notification);
-          setTimeout(() => setPopupNotification(null), 6000);
-        }
-      } catch {
-        // Ignore parse errors from keepalive comments
-      }
-    };
-
-    eventSource.onerror = () => {
-      // EventSource will auto-reconnect
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [user]);
-
-  const shownInitialPopup = useRef(false);
-  useEffect(() => {
-    if (notifData && notifData.unreadCount > 0 && !shownInitialPopup.current && !popupNotification) {
-      const latestUnread = notifData.notifications.find(n => !n.read);
-      if (latestUnread) {
-        const lastShownId = localStorage.getItem("lastShownNotifId");
-        if (lastShownId !== latestUnread.id) {
-          shownInitialPopup.current = true;
-          localStorage.setItem("lastShownNotifId", latestUnread.id);
-          setPopupNotification(latestUnread);
-          setTimeout(() => setPopupNotification(null), 6000);
-        }
-      }
-    }
-  }, [notifData]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -782,34 +723,6 @@ export default function Dashboard() {
         />
       )}
 
-      {popupNotification && (
-        <div
-          className={cn(
-            "fixed top-4 right-4 z-[100] w-80 sm:w-96 rounded-xl border border-white/10 shadow-2xl p-4 animate-in slide-in-from-right-full duration-300",
-            "bg-gradient-to-br from-[#1a1f35]/95 to-[#0d1225]/95 backdrop-blur-xl",
-            popupNotification.type === "success" ? "border-l-4 border-l-green-400" :
-            popupNotification.type === "warning" ? "border-l-4 border-l-yellow-400" :
-            popupNotification.type === "error" ? "border-l-4 border-l-red-400" :
-            "border-l-4 border-l-blue-400"
-          )}
-          data-testid="popup-notification"
-        >
-          <div className="flex items-start gap-3">
-            {getNotifIcon(popupNotification.type)}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white">{popupNotification.title}</p>
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-3">{popupNotification.message}</p>
-            </div>
-            <button
-              onClick={() => setPopupNotification(null)}
-              className="text-muted-foreground hover:text-white transition-colors shrink-0"
-              data-testid="button-close-popup"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
