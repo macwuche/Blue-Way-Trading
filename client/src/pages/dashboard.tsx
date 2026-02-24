@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import logoPath from "@assets/WhatsApp_Image_2026-01-22_at_7.2_(1)_1771943319406.png";
 import { 
   LayoutDashboard, TrendingUp, Wallet, History, Star, 
   LogOut, Menu, ChevronDown, Search, Bell, User, BarChart3,
@@ -264,10 +265,7 @@ export default function Dashboard() {
       )}>
         <div className="flex flex-col h-full">
           <div className="flex items-center gap-2 p-6 border-b border-border/30">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold">Blue Way Trading</span>
+            <img src={logoPath} alt="Blue Wave Trading" className="h-8 object-contain" data-testid="img-sidebar-logo" />
           </div>
 
           <nav className="flex-1 p-4">

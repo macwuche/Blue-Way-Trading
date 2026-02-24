@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import logoPath from "@assets/WhatsApp_Image_2026-01-22_at_7.2_(1)_1771943319406.png";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -67,14 +68,7 @@ export default function LoginPage() {
       <div className="w-full md:w-1/2 flex flex-col justify-center px-8 py-12 md:px-16 lg:px-24 bg-white dark:bg-[#0a0a0a] order-1 md:order-1 overflow-y-auto">
         {/* Mobile Logo - Above form */}
         <div className="md:hidden flex flex-col items-center mb-8">
-          <div className="flex items-center gap-1 text-4xl font-bold">
-            <span className="text-[#34C759]">s</span>
-            <span className="relative">
-              <span className="text-[#34C759]">▲</span>
-              <span className="absolute top-3 left-0 text-red-500 text-xs">▼</span>
-            </span>
-            <span className="text-[#1a1a1a] dark:text-white">le</span>
-          </div>
+          <img src={logoPath} alt="Blue Wave Trading" className="h-12 object-contain" data-testid="img-mobile-logo" />
         </div>
 
         <div className="max-w-md mx-auto w-full">
@@ -239,13 +233,8 @@ export default function LoginPage() {
 
         <div className="relative z-10 text-center max-w-lg">
           {/* Logo */}
-          <div className="hidden md:flex items-center justify-center gap-1 text-6xl font-bold mb-6">
-            <span className="text-[#34C759]">s</span>
-            <span className="relative">
-              <span className="text-[#34C759]">▲</span>
-              <span className="absolute top-4 left-0 text-red-500 text-lg">▼</span>
-            </span>
-            <span className="text-white">le</span>
+          <div className="hidden md:flex items-center justify-center mb-6">
+            <img src={logoPath} alt="Blue Wave Trading" className="h-16 object-contain" data-testid="img-desktop-logo" />
           </div>
 
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">

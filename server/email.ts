@@ -26,6 +26,8 @@ async function sendEmail(to: string, subject: string, html: string) {
   }
 }
 
+const LOGO_URL = "https://accessbluewave.site/logo.png";
+
 function baseTemplate(content: string) {
   return `
     <!DOCTYPE html>
@@ -37,7 +39,7 @@ function baseTemplate(content: string) {
     <body style="margin: 0; padding: 0; background-color: #0a0e1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
       <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; padding: 30px 0 20px;">
-          <h1 style="color: #007AFF; font-size: 24px; margin: 0; letter-spacing: 1px;">BLUE WAY TRADING</h1>
+          <img src="${LOGO_URL}" alt="Blue Wave Trading" style="height: 48px; max-width: 280px; object-fit: contain;" />
         </div>
         <div style="background: linear-gradient(135deg, #1a1f35 0%, #0d1225 100%); border-radius: 16px; padding: 32px; border: 1px solid rgba(255,255,255,0.08);">
           ${content}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
+import logoPath from "@assets/WhatsApp_Image_2026-01-22_at_7.2_(1)_1771943319406.png";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -282,8 +283,8 @@ function AdminLoginForm({ onLoginSuccess }: { onLoginSuccess: () => void }) {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#000000] via-[#0a0a0a] to-[#1c1e1e] p-4">
       <Card className="w-full max-w-md p-8 glass-card border-white/10">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-            <Shield className="w-8 h-8 text-primary" />
+          <div className="flex items-center justify-center mx-auto mb-4">
+            <img src={logoPath} alt="Blue Wave Trading" className="h-14 object-contain" data-testid="img-admin-login-logo" />
           </div>
           <h1 className="text-2xl font-bold text-white">Admin Login</h1>
           <p className="text-muted-foreground mt-2">
@@ -527,13 +528,7 @@ export default function AdminDashboard() {
       <aside className="hidden md:flex w-64 border-r border-white/10 flex-col glass-dark">
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center">
-              <Settings className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h1 className="font-bold">Blue Way Trading</h1>
-              <p className="text-xs text-muted-foreground">Admin Panel</p>
-            </div>
+            <img src={logoPath} alt="Blue Wave Trading" className="h-8 object-contain" data-testid="img-admin-sidebar-logo" />
           </div>
         </div>
         <ScrollArea className="flex-1">
@@ -565,13 +560,7 @@ export default function AdminDashboard() {
             <SheetContent side="left" className="glass-dark border-white/10 w-64 p-0">
               <div className="p-4 border-b border-white/10">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center">
-                    <Settings className="w-4 h-4 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="font-bold">Blue Way Trading</h1>
-                    <p className="text-xs text-muted-foreground">Admin Panel</p>
-                  </div>
+                  <img src={logoPath} alt="Blue Wave Trading" className="h-8 object-contain" data-testid="img-admin-mobile-logo" />
                 </div>
               </div>
               <NavContent />

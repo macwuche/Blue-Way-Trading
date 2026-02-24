@@ -1,4 +1,5 @@
-import { TrendingUp, Shield, Zap, Globe, BarChart3, ArrowRight } from "lucide-react";
+import { TrendingUp, Shield, Zap, Globe, ArrowRight } from "lucide-react";
+import logoPath from "@assets/WhatsApp_Image_2026-01-22_at_7.2_(1)_1771943319406.png";
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui/glass-card";
 import { AssetRow } from "@/components/asset-row";
@@ -43,10 +44,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold">Blue Way Trading</span>
+              <img src={logoPath} alt="Blue Wave Trading" className="h-8 object-contain" data-testid="img-header-logo" />
             </div>
             <a href="/api/login" data-testid="link-header-login">
               <Button variant="default" className="bg-gradient-to-r from-primary to-secondary">
@@ -160,10 +158,7 @@ export default function Landing() {
       <footer className="glass border-t border-border/30 py-8 px-4">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <BarChart3 className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-semibold">Blue Way Trading</span>
+            <img src={logoPath} alt="Blue Wave Trading" className="h-6 object-contain" data-testid="img-footer-logo" />
           </div>
           <p className="text-sm text-muted-foreground">
             Trading involves risk. This is a demo platform for educational purposes.
