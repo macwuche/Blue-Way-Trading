@@ -22,7 +22,7 @@ interface OnboardingStep {
 
 const onboardingSteps: OnboardingStep[] = [
   {
-    title: "Welcome to Blue Way Trading",
+    title: "Welcome to Bluewave Trading",
     description: "Your gateway to binary options trading. Trade cryptocurrencies, forex, stocks, and ETFs with ease.",
     icon: TrendingUp,
     color: "text-primary"
@@ -88,7 +88,7 @@ export function Onboarding({ open, onComplete }: OnboardingProps) {
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onComplete()}>
       <DialogContent className="glass-dark border-white/10 max-w-md p-0 overflow-hidden" aria-describedby={undefined}>
         <VisuallyHidden>
-          <DialogTitle>Welcome to Blue Way Trading</DialogTitle>
+          <DialogTitle>Welcome to Bluewave Trading</DialogTitle>
         </VisuallyHidden>
         {/* Skip button */}
         <button

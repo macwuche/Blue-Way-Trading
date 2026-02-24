@@ -578,6 +578,83 @@ export async function registerRoutes(
     }
   });
 
+  // Admin: Get all email templates
+  app.get("/api/admin/email-templates", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const DEFAULT_TEMPLATES = [
+        { id: "welcome", name: "Welcome Email", subject: "Welcome to Bluewave Trading!", description: "Sent when a new user registers an account", enabled: true },
+        { id: "trade-opened", name: "Trade Opened", subject: "Trade Opened - {symbol}", description: "Sent when a user or admin opens a new trade position", enabled: true },
+        { id: "trade-closed", name: "Trade Closed", subject: "Trade Closed - {symbol}", description: "Sent when a trade position is closed with P&L summary", enabled: true },
+        { id: "balance-adjustment", name: "Balance Adjustment", subject: "Balance Updated - Bluewave Trading", description: "Sent when an admin adjusts a user's account balance", enabled: true },
+        { id: "profit-adjustment", name: "Profit Adjustment", subject: "Profit Updated - Bluewave Trading", description: "Sent when an admin adjusts a user's profit", enabled: true },
+      ];
+      
+      let templates = await storage.getAllEmailTemplates();
+      
+      if (templates.length === 0) {
+        for (const t of DEFAULT_TEMPLATES) {
+          await storage.upsertEmailTemplate({ ...t, updatedAt: new Date() });
+        }
+        templates = await storage.getAllEmailTemplates();
+      }
+
+      const templateOrder = ["welcome", "trade-opened", "trade-closed", "balance-adjustment", "profit-adjustment"];
+      templates.sort((a, b) => templateOrder.indexOf(a.id) - templateOrder.indexOf(b.id));
+      
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching email templates:", error);
+      res.status(500).json({ message: "Failed to fetch email templates" });
+    }
+  });
+
+  // Admin: Update email template
+  app.put("/api/admin/email-templates/:id", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const schema = z.object({
+        subject: z.string().min(1, "Subject is required"),
+        enabled: z.boolean(),
+      });
+      const result = schema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: result.error.errors[0]?.message || "Invalid input" });
+      }
+
+      const existing = await storage.getEmailTemplateById(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      const updated = await storage.upsertEmailTemplate({
+        ...existing,
+        subject: result.data.subject,
+        enabled: result.data.enabled,
+        updatedAt: new Date(),
+      });
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating email template:", error);
+      res.status(500).json({ message: "Failed to update email template" });
+    }
+  });
+
+  // Admin: Toggle email template enabled/disabled
+  app.patch("/api/admin/email-templates/:id/toggle", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+    try {
+      const existing = await storage.getEmailTemplateById(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      
+      const updated = await storage.updateEmailTemplateEnabled(req.params.id, !existing.enabled);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error toggling email template:", error);
+      res.status(500).json({ message: "Failed to toggle email template" });
+    }
+  });
+
   // Get all admin trades (for All Admin Trades page)
   app.get("/api/admin/trades", isAuthenticated, isAdmin, async (req: any, res: Response) => {
     try {

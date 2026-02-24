@@ -1,4 +1,4 @@
--- Blue Way Trading - Database Setup Script
+-- Bluewave Trading - Database Setup Script
 -- Run this on the VPS: sudo -u postgres psql -d bluewave_db -f /root/bluewave/scripts/setup-db.sql
 
 -- Sessions table

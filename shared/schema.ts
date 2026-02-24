@@ -266,3 +266,16 @@ export const notifications = pgTable("notifications", {
 export type Notification = typeof notifications.$inferSelect;
 export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true, read: true });
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+export const emailTemplates = pgTable("email_templates", {
+  id: varchar("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  subject: varchar("subject", { length: 500 }).notNull(),
+  description: text("description").notNull(),
+  enabled: boolean("enabled").notNull().default(true),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type EmailTemplate = typeof emailTemplates.$inferSelect;
+export const insertEmailTemplateSchema = createInsertSchema(emailTemplates).omit({ updatedAt: true });
+export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;

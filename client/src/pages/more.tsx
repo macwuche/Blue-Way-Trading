@@ -186,7 +186,7 @@ export default function More() {
           </Card>
 
           <div className="text-center text-sm text-muted-foreground py-4" data-testid="text-app-version">
-            <p>Blue Way Trading v1.0.0</p>
+            <p>Bluewave Trading v1.0.0</p>
             <p className="text-xs mt-1">Made with care for traders</p>
           </div>
         </div>

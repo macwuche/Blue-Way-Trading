@@ -1,10 +1,11 @@
 import { Resend } from "resend";
 import * as fs from "fs";
 import * as path from "path";
+import { storage } from "./storage";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM_EMAIL = "Blue Way Trading <noreply@bluewavetrading.live>";
+const FROM_EMAIL = "Bluewave Trading <noreply@bluewavetrading.live>";
 
 let logoBase64: string | null = null;
 try {
@@ -66,13 +67,13 @@ function baseTemplate(content: string) {
     <body style="margin: 0; padding: 0; background-color: #0a0e1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
       <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; padding: 30px 0 20px;">
-          <img src="${LOGO_URL}" alt="Blue Wave Trading" style="height: 48px; max-width: 280px; object-fit: contain;" />
+          <img src="${LOGO_URL}" alt="Bluewave Trading" style="height: 48px; max-width: 280px; object-fit: contain;" />
         </div>
         <div style="background: linear-gradient(135deg, #1a1f35 0%, #0d1225 100%); border-radius: 16px; padding: 32px; border: 1px solid rgba(255,255,255,0.08);">
           ${content}
         </div>
         <div style="text-align: center; padding: 24px 0; color: #6b7280; font-size: 12px;">
-          <p style="margin: 0;">Blue Way Trading &copy; ${new Date().getFullYear()}</p>
+          <p style="margin: 0;">Bluewave Trading &copy; ${new Date().getFullYear()}</p>
           <p style="margin: 4px 0 0;">This is an automated notification. Please do not reply to this email.</p>
         </div>
       </div>
@@ -82,10 +83,14 @@ function baseTemplate(content: string) {
 }
 
 export async function sendWelcomeEmail(to: string, firstName: string) {
+  if (!(await storage.isEmailTemplateEnabled("welcome"))) {
+    console.log("[Email] Welcome email template is disabled, skipping");
+    return { success: true, skipped: true };
+  }
   const html = baseTemplate(`
     <h2 style="color: #ffffff; font-size: 22px; margin: 0 0 16px;">Welcome, ${firstName}!</h2>
     <p style="color: #d1d5db; font-size: 15px; line-height: 1.6; margin: 0 0 20px;">
-      Your Blue Way Trading account has been successfully created. You're now ready to start trading across crypto, forex, stocks, and ETFs.
+      Your Bluewave Trading account has been successfully created. You're now ready to start trading across crypto, forex, stocks, and ETFs.
     </p>
     <div style="background: rgba(0, 122, 255, 0.1); border-radius: 12px; padding: 20px; margin: 20px 0; border: 1px solid rgba(0, 122, 255, 0.2);">
       <p style="color: #60a5fa; font-size: 14px; margin: 0 0 8px; font-weight: 600;">Getting Started:</p>
@@ -100,7 +105,7 @@ export async function sendWelcomeEmail(to: string, firstName: string) {
     </p>
   `);
 
-  return sendEmail(to, "Welcome to Blue Way Trading", html);
+  return sendEmail(to, "Welcome to Bluewave Trading", html);
 }
 
 export async function sendTradeOpenedEmail(
@@ -117,6 +122,10 @@ export async function sendTradeOpenedEmail(
     takeProfit?: string;
   }
 ) {
+  if (!(await storage.isEmailTemplateEnabled("trade-opened"))) {
+    console.log("[Email] Trade opened email template is disabled, skipping");
+    return { success: true, skipped: true };
+  }
   const directionColor = data.direction === "buy" ? "#34C759" : "#FF3B30";
   const directionLabel = data.direction === "buy" ? "BUY (Long)" : "SELL (Short)";
 
@@ -178,6 +187,10 @@ export async function sendTradeClosedEmail(
     closeReason: string;
   }
 ) {
+  if (!(await storage.isEmailTemplateEnabled("trade-closed"))) {
+    console.log("[Email] Trade closed email template is disabled, skipping");
+    return { success: true, skipped: true };
+  }
   const pnl = parseFloat(data.realizedPnl);
   const isProfit = pnl >= 0;
   const pnlColor = isProfit ? "#34C759" : "#FF3B30";
@@ -243,6 +256,11 @@ export async function sendBalanceAdjustmentEmail(
     newBalance: string;
   }
 ) {
+  const templateId = data.type === "profit" ? "profit-adjustment" : "balance-adjustment";
+  if (!(await storage.isEmailTemplateEnabled(templateId))) {
+    console.log(`[Email] ${templateId} email template is disabled, skipping`);
+    return { success: true, skipped: true };
+  }
   const isPositive = data.amount >= 0;
   const amountColor = isPositive ? "#34C759" : "#FF3B30";
   const sign = isPositive ? "+" : "";

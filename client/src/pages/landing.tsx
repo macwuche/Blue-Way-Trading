@@ -44,7 +44,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
-              <img src={logoPath} alt="Blue Wave Trading" className="h-8 object-contain" data-testid="img-header-logo" />
+              <img src={logoPath} alt="Bluewave Trading" className="h-8 object-contain" data-testid="img-header-logo" />
             </div>
             <a href="/api/login" data-testid="link-header-login">
               <Button variant="default" className="bg-gradient-to-r from-primary to-secondary">
@@ -66,7 +66,7 @@ export default function Landing() {
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
                 Trade Smarter with{" "}
                 <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  Blue Way Trading
+                  Bluewave Trading
                 </span>
               </h1>
               <p className="text-lg sm:text-xl text-muted-foreground mb-8">
@@ -142,7 +142,7 @@ export default function Landing() {
                 Ready to Start Trading?
               </h2>
               <p className="text-lg text-muted-foreground mb-8">
-                Join thousands of traders on Blue Way Trading. Get started today.
+                Join thousands of traders on Bluewave Trading. Get started today.
               </p>
               <a href="/api/login" data-testid="link-cta-login">
                 <Button size="lg" className="h-14 px-8 text-lg bg-gradient-to-r from-primary to-secondary">
@@ -158,7 +158,7 @@ export default function Landing() {
       <footer className="glass border-t border-border/30 py-8 px-4">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src={logoPath} alt="Blue Wave Trading" className="h-6 object-contain" data-testid="img-footer-logo" />
+            <img src={logoPath} alt="Bluewave Trading" className="h-6 object-contain" data-testid="img-footer-logo" />
           </div>
           <p className="text-sm text-muted-foreground">
             Trading involves risk. This is a demo platform for educational purposes.

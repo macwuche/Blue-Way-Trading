@@ -293,7 +293,7 @@ export default function Dashboard() {
       )}>
         <div className="flex flex-col h-full">
           <div className="flex items-center gap-2 p-6 border-b border-border/30">
-            <img src={logoPath} alt="Blue Wave Trading" className="h-8 object-contain" data-testid="img-sidebar-logo" />
+            <img src={logoPath} alt="Bluewave Trading" className="h-8 object-contain" data-testid="img-sidebar-logo" />
           </div>
 
           <nav className="flex-1 p-4">

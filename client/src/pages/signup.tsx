@@ -79,7 +79,7 @@ export default function SignupPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/check"] });
       toast({
         title: "Account Created",
-        description: "Welcome to Blue Way Trading!",
+        description: "Welcome to Bluewave Trading!",
       });
       setLocation("/trade");
     },
@@ -102,7 +102,7 @@ export default function SignupPage() {
       <div className="w-full md:w-1/2 flex flex-col justify-center px-8 py-12 md:px-16 lg:px-24 bg-white dark:bg-[#0a0a0a] order-1 md:order-1 overflow-y-auto">
         {/* Mobile Logo - Above form */}
         <div className="md:hidden flex flex-col items-center mb-8">
-          <img src={logoPath} alt="Blue Wave Trading" className="h-12 object-contain" data-testid="img-mobile-logo" />
+          <img src={logoPath} alt="Bluewave Trading" className="h-12 object-contain" data-testid="img-mobile-logo" />
         </div>
 
         <div className="max-w-md mx-auto w-full">
@@ -351,7 +351,7 @@ export default function SignupPage() {
         <div className="relative z-10 text-center max-w-lg">
           {/* Logo */}
           <div className="hidden md:flex items-center justify-center mb-6">
-            <img src={logoPath} alt="Blue Wave Trading" className="h-16 object-contain" data-testid="img-desktop-logo" />
+            <img src={logoPath} alt="Bluewave Trading" className="h-16 object-contain" data-testid="img-desktop-logo" />
           </div>
 
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
@@ -359,7 +359,7 @@ export default function SignupPage() {
           </h2>
 
           <p className="text-white/80 text-sm md:text-base leading-relaxed">
-            Start your trading journey with Blue Way Trading. Get access to real-time market data,
+            Start your trading journey with Bluewave Trading. Get access to real-time market data,
             advanced trading tools, and a secure platform designed for both beginners and experts.
             Create your account today and take control of your financial future.
           </p>

@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { 
-  Mail, Edit, Send, Eye, CheckCircle2, FileText
+  Mail, Edit, Send, Eye, CheckCircle2, FileText, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -16,6 +17,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface EmailTemplate {
   id: string;
@@ -23,60 +26,47 @@ interface EmailTemplate {
   subject: string;
   description: string;
   enabled: boolean;
-  lastUpdated: string;
+  updatedAt: string;
 }
 
-const defaultTemplates: EmailTemplate[] = [
-  {
-    id: "welcome",
-    name: "Welcome Email",
-    subject: "Welcome to Blue Way Trading!",
-    description: "Sent when a new user registers an account",
-    enabled: true,
-    lastUpdated: "2026-02-24",
-  },
-  {
-    id: "trade-opened",
-    name: "Trade Opened",
-    subject: "Trade Opened - {symbol}",
-    description: "Sent when a user or admin opens a new trade position",
-    enabled: true,
-    lastUpdated: "2026-02-24",
-  },
-  {
-    id: "trade-closed",
-    name: "Trade Closed",
-    subject: "Trade Closed - {symbol}",
-    description: "Sent when a trade position is closed with P&L summary",
-    enabled: true,
-    lastUpdated: "2026-02-24",
-  },
-  {
-    id: "balance-adjustment",
-    name: "Balance Adjustment",
-    subject: "Balance Updated - Blue Way Trading",
-    description: "Sent when an admin adjusts a user's account balance",
-    enabled: true,
-    lastUpdated: "2026-02-24",
-  },
-  {
-    id: "profit-adjustment",
-    name: "Profit Adjustment",
-    subject: "Profit Updated - Blue Way Trading",
-    description: "Sent when an admin adjusts a user's profit",
-    enabled: true,
-    lastUpdated: "2026-02-24",
-  },
-];
-
 export default function AdminEmailNotifications() {
-  const [templates, setTemplates] = useState(defaultTemplates);
+  const { toast } = useToast();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [formData, setFormData] = useState({
     subject: "",
     enabled: true,
+  });
+
+  const { data: templates = [], isLoading } = useQuery<EmailTemplate[]>({
+    queryKey: ["/api/admin/email-templates"],
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, subject, enabled }: { id: string; subject: string; enabled: boolean }) => {
+      return apiRequest("PUT", `/api/admin/email-templates/${id}`, { subject, enabled });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/email-templates"] });
+      toast({ title: "Template Updated", description: "Email template saved successfully." });
+      setEditDialogOpen(false);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to save template.", variant: "destructive" });
+    },
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("PATCH", `/api/admin/email-templates/${id}/toggle`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/email-templates"] });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to toggle template.", variant: "destructive" });
+    },
   });
 
   const enabledCount = templates.filter(t => t.enabled).length;
@@ -97,20 +87,25 @@ export default function AdminEmailNotifications() {
 
   const handleSave = () => {
     if (selectedTemplate) {
-      setTemplates(prev => prev.map(t => 
-        t.id === selectedTemplate.id 
-          ? { ...t, subject: formData.subject, enabled: formData.enabled, lastUpdated: new Date().toISOString().split("T")[0] }
-          : t
-      ));
-      setEditDialogOpen(false);
+      updateMutation.mutate({
+        id: selectedTemplate.id,
+        subject: formData.subject,
+        enabled: formData.enabled,
+      });
     }
   };
 
   const handleToggle = (id: string) => {
-    setTemplates(prev => prev.map(t => 
-      t.id === id ? { ...t, enabled: !t.enabled } : t
-    ));
+    toggleMutation.mutate(id);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -191,6 +186,7 @@ export default function AdminEmailNotifications() {
                 <Switch 
                   checked={template.enabled}
                   onCheckedChange={() => handleToggle(template.id)}
+                  disabled={toggleMutation.isPending}
                   data-testid={`switch-toggle-${template.id}`}
                 />
                 <Button 
@@ -250,8 +246,15 @@ export default function AdminEmailNotifications() {
             <Button variant="outline" onClick={() => setEditDialogOpen(false)} data-testid="button-cancel-edit">
               Cancel
             </Button>
-            <Button onClick={handleSave} data-testid="button-save-template">
-              Save Changes
+            <Button onClick={handleSave} disabled={updateMutation.isPending} data-testid="button-save-template">
+              {updateMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -268,7 +271,7 @@ export default function AdminEmailNotifications() {
           <div className="py-4">
             <div className="rounded-xl overflow-hidden border border-white/10">
               <div className="bg-gradient-to-r from-[#007AFF] to-[#5856D6] p-4 text-center">
-                <h3 className="text-white font-bold text-lg">Blue Way Trading</h3>
+                <h3 className="text-white font-bold text-lg">Bluewave Trading</h3>
               </div>
               <div className="bg-[#1a1f2e] p-6">
                 <p className="text-white/80 text-sm font-semibold mb-2">
@@ -276,7 +279,7 @@ export default function AdminEmailNotifications() {
                 </p>
                 <div className="bg-white/5 rounded-lg p-4 mt-3">
                   <p className="text-white/60 text-sm">
-                    {selectedTemplate?.id === "welcome" && "Hello [Name], Your Blue Way Trading account has been successfully created. You're now ready to start trading across crypto, forex, stocks, and ETFs."}
+                    {selectedTemplate?.id === "welcome" && "Hello [Name], Your Bluewave Trading account has been successfully created. You're now ready to start trading across crypto, forex, stocks, and ETFs."}
                     {selectedTemplate?.id === "trade-opened" && "A new trade has been opened on your account. Symbol: [symbol], Direction: [direction], Volume: [volume], Entry Price: [price]."}
                     {selectedTemplate?.id === "trade-closed" && "A trade on your account has been closed. Symbol: [symbol], P&L: [pnl]. The result has been applied to your portfolio."}
                     {selectedTemplate?.id === "balance-adjustment" && "Your account balance has been updated by an administrator. New Balance: [balance]."}
@@ -285,7 +288,7 @@ export default function AdminEmailNotifications() {
                 </div>
               </div>
               <div className="bg-[#0d1117] p-3 text-center">
-                <p className="text-white/30 text-xs">Blue Way Trading - Trade Smarter</p>
+                <p className="text-white/30 text-xs">Bluewave Trading - Trade Smarter</p>
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { 
   portfolios, holdings, trades, watchlist, deposits, withdrawals,
-  users, adminTradeSessions, adminTradeSessionUsers, adminTrades, tradeLogic, globalTradeLogic, userPositions, notifications,
+  users, adminTradeSessions, adminTradeSessionUsers, adminTrades, tradeLogic, globalTradeLogic, userPositions, notifications, emailTemplates,
   type Portfolio, type InsertPortfolio,
   type Holding, type InsertHolding,
   type Trade, type InsertTrade,
@@ -11,7 +11,8 @@ import {
   type TradeLogic, type InsertTradeLogic,
   type GlobalTradeLogic, type InsertGlobalTradeLogic,
   type UserPosition, type InsertUserPosition,
-  type Notification, type InsertNotification
+  type Notification, type InsertNotification,
+  type EmailTemplate
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, or, sql } from "drizzle-orm";
@@ -104,6 +105,13 @@ export interface IStorage {
   getUnreadNotificationCount(userId: string): Promise<number>;
   markNotificationRead(id: string): Promise<Notification>;
   markAllNotificationsRead(userId: string): Promise<void>;
+
+  // Email Templates
+  getAllEmailTemplates(): Promise<EmailTemplate[]>;
+  getEmailTemplateById(id: string): Promise<EmailTemplate | undefined>;
+  upsertEmailTemplate(data: EmailTemplate): Promise<EmailTemplate>;
+  updateEmailTemplateEnabled(id: string, enabled: boolean): Promise<EmailTemplate>;
+  isEmailTemplateEnabled(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -801,6 +809,45 @@ export class DatabaseStorage implements IStorage {
     await db.update(notifications)
       .set({ read: true })
       .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
+  }
+
+  async getAllEmailTemplates(): Promise<EmailTemplate[]> {
+    return db.select().from(emailTemplates);
+  }
+
+  async getEmailTemplateById(id: string): Promise<EmailTemplate | undefined> {
+    const [template] = await db.select().from(emailTemplates).where(eq(emailTemplates.id, id));
+    return template;
+  }
+
+  async upsertEmailTemplate(data: EmailTemplate): Promise<EmailTemplate> {
+    const [template] = await db.insert(emailTemplates)
+      .values({ ...data, updatedAt: new Date() })
+      .onConflictDoUpdate({
+        target: emailTemplates.id,
+        set: { 
+          name: data.name,
+          subject: data.subject,
+          description: data.description,
+          enabled: data.enabled,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return template;
+  }
+
+  async updateEmailTemplateEnabled(id: string, enabled: boolean): Promise<EmailTemplate> {
+    const [template] = await db.update(emailTemplates)
+      .set({ enabled, updatedAt: new Date() })
+      .where(eq(emailTemplates.id, id))
+      .returning();
+    return template;
+  }
+
+  async isEmailTemplateEnabled(id: string): Promise<boolean> {
+    const template = await this.getEmailTemplateById(id);
+    return template ? template.enabled : true;
   }
 }
 

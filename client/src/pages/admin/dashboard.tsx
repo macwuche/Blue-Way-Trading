@@ -114,7 +114,7 @@ function DashboardOverview() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold mb-1">Dashboard Overview</h2>
-          <p className="text-sm text-muted-foreground">Welcome to the Blue Way Trading Admin Panel</p>
+          <p className="text-sm text-muted-foreground">Welcome to the Bluewave Trading Admin Panel</p>
         </div>
         <Button 
           variant="outline" 
@@ -284,11 +284,11 @@ function AdminLoginForm({ onLoginSuccess }: { onLoginSuccess: () => void }) {
       <Card className="w-full max-w-md p-8 glass-card border-white/10">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mx-auto mb-4">
-            <img src={logoPath} alt="Blue Wave Trading" className="h-14 object-contain" data-testid="img-admin-login-logo" />
+            <img src={logoPath} alt="Bluewave Trading" className="h-14 object-contain" data-testid="img-admin-login-logo" />
           </div>
           <h1 className="text-2xl font-bold text-white">Admin Login</h1>
           <p className="text-muted-foreground mt-2">
-            Blue Way Trading Admin Panel
+            Bluewave Trading Admin Panel
           </p>
         </div>
 
@@ -528,7 +528,7 @@ export default function AdminDashboard() {
       <aside className="hidden md:flex w-64 border-r border-white/10 flex-col glass-dark">
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <img src={logoPath} alt="Blue Wave Trading" className="h-8 object-contain" data-testid="img-admin-sidebar-logo" />
+            <img src={logoPath} alt="Bluewave Trading" className="h-8 object-contain" data-testid="img-admin-sidebar-logo" />
           </div>
         </div>
         <ScrollArea className="flex-1">
@@ -560,7 +560,7 @@ export default function AdminDashboard() {
             <SheetContent side="left" className="glass-dark border-white/10 w-64 p-0">
               <div className="p-4 border-b border-white/10">
                 <div className="flex items-center gap-2">
-                  <img src={logoPath} alt="Blue Wave Trading" className="h-8 object-contain" data-testid="img-admin-mobile-logo" />
+                  <img src={logoPath} alt="Bluewave Trading" className="h-8 object-contain" data-testid="img-admin-mobile-logo" />
                 </div>
               </div>
               <NavContent />

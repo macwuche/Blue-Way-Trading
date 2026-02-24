@@ -68,7 +68,7 @@ export default function LoginPage() {
       <div className="w-full md:w-1/2 flex flex-col justify-center px-8 py-12 md:px-16 lg:px-24 bg-white dark:bg-[#0a0a0a] order-1 md:order-1 overflow-y-auto">
         {/* Mobile Logo - Above form */}
         <div className="md:hidden flex flex-col items-center mb-8">
-          <img src={logoPath} alt="Blue Wave Trading" className="h-12 object-contain" data-testid="img-mobile-logo" />
+          <img src={logoPath} alt="Bluewave Trading" className="h-12 object-contain" data-testid="img-mobile-logo" />
         </div>
 
         <div className="max-w-md mx-auto w-full">
@@ -234,7 +234,7 @@ export default function LoginPage() {
         <div className="relative z-10 text-center max-w-lg">
           {/* Logo */}
           <div className="hidden md:flex items-center justify-center mb-6">
-            <img src={logoPath} alt="Blue Wave Trading" className="h-16 object-contain" data-testid="img-desktop-logo" />
+            <img src={logoPath} alt="Bluewave Trading" className="h-16 object-contain" data-testid="img-desktop-logo" />
           </div>
 
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
@@ -242,7 +242,7 @@ export default function LoginPage() {
           </h2>
 
           <p className="text-white/80 text-sm md:text-base leading-relaxed">
-            Enter the realm of Blue Way Trading, where cutting-edge blockchain technology meets
+            Enter the realm of Bluewave Trading, where cutting-edge blockchain technology meets
             seamless trading experiences. As the industry evolves amidst global regulatory
             developments, stay ahead with our secure, intuitive platform. Ready to make your mark in
             the dynamic world of cryptocurrency?

@@ -1,4 +1,4 @@
-# Blue Way Trading - VPS Deployment Guide
+# Bluewave Trading - VPS Deployment Guide
 
 ## Domain: accessbluewave.site
 ## Server: Ubuntu 24.04 LTS (76.13.139.24)
