@@ -2,6 +2,7 @@ import { storage } from "./storage";
 import { getAllAssetsFromCache } from "./massive-api";
 import { sendUserUpdate } from "./sse";
 import type { UserPosition, GlobalTradeLogic } from "@shared/schema";
+import { sendTradeClosedEmail } from "./email";
 
 let engineInterval: NodeJS.Timeout | null = null;
 
@@ -180,8 +181,7 @@ async function closePosition(position: UserPosition, exitPrice: number, pnl: num
     const newBalance = (currentBalance + tradeAmount + finalPnl).toFixed(2);
     const currentProfit = parseFloat(portfolio.totalProfit);
     const newProfit = (currentProfit + finalPnl).toFixed(2);
-    const initialBalance = 10000;
-    const profitPercent = (((parseFloat(newBalance) - initialBalance) / initialBalance) * 100).toFixed(2);
+    const profitPercent = parseFloat(newBalance) > 0 ? ((parseFloat(newProfit) / parseFloat(newBalance)) * 100).toFixed(2) : "0.00";
 
     await storage.updatePortfolioBalance(portfolio.id, newBalance, newProfit, profitPercent);
 
@@ -202,6 +202,19 @@ async function closePosition(position: UserPosition, exitPrice: number, pnl: num
       totalProfit: newProfit,
       totalProfitPercent: profitPercent,
     });
+
+    const user = await storage.getUserById(position.userId);
+    if (user?.email) {
+      sendTradeClosedEmail(user.email, user.firstName || "Trader", {
+        symbol: position.symbol,
+        direction: position.direction,
+        volume: position.volume,
+        entryPrice: position.entryPrice,
+        exitPrice: exitPrice.toFixed(8),
+        realizedPnl: totalPnl.toFixed(2),
+        closeReason,
+      }).catch(err => console.error("[Email] Trade closed email error:", err));
+    }
   }
 
   return closedPosition;

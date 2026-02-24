@@ -93,5 +93,13 @@ Preferred communication style: Simple, everyday language.
 - **Admin Triggers**: All admin balance/profit adjustment endpoints call `sendUserUpdate()` to push changes instantly
 - **Dashboard Listener**: `client/src/pages/dashboard.tsx` connects to SSE and updates React Query cache in real-time
 
+### Email Notifications
+- **Provider**: Resend (`server/email.ts`)
+- **Required Secret**: `RESEND_API_KEY`
+- **From Address**: Currently `onboarding@resend.dev` (switch to custom domain after DNS verification)
+- **Templates**: Welcome email, Trade opened, Trade closed (with P&L), Balance/Profit adjustment
+- **Triggers**: Registration (auth.ts), Position open/close (trading-engine.ts, routes.ts), Admin balance/profit adjustments (routes.ts)
+- **Non-blocking**: All email sends use `.catch()` to prevent failures from breaking core flows
+
 ### Session Management
 - **Explicit Session Save**: All login/register endpoints call `req.session.save()` before responding to ensure session data is persisted to PostgreSQL before the client can refresh

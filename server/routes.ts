@@ -8,6 +8,7 @@ import { getMarketData, getAllAssetsFromCache, startMarketDataRefresh } from "./
 import { fetchMarketNews } from "./marketaux-api";
 import { addSSEClient, sendUserUpdate } from "./sse";
 import { openPosition, manualClosePosition, cancelPendingOrder, startTradingEngine } from "./trading-engine";
+import { sendTradeOpenedEmail, sendBalanceAdjustmentEmail } from "./email";
 
 // Middleware to check if user is admin
 const isAdmin = async (req: any, res: Response, next: Function) => {
@@ -556,13 +557,22 @@ export async function registerRoutes(
       }
       const portfolio = await storage.adjustUserBalance(req.params.id, result.data.amount, result.data.operation);
 
-      // Send real-time update to the affected user
       sendUserUpdate(req.params.id, {
         type: "portfolio_update",
         balance: portfolio.balance,
         totalProfit: portfolio.totalProfit,
         totalProfitPercent: portfolio.totalProfitPercent,
       });
+
+      const user = await storage.getUserById(req.params.id);
+      if (user?.email) {
+        const adjustedAmount = result.data.operation === "add" ? result.data.amount : -result.data.amount;
+        sendBalanceAdjustmentEmail(user.email, user.firstName || "Trader", {
+          type: "balance",
+          amount: adjustedAmount,
+          newBalance: portfolio.balance,
+        }).catch(err => console.error("[Email] Balance adjustment email error:", err));
+      }
 
       res.json(portfolio);
     } catch (error) {
@@ -584,13 +594,22 @@ export async function registerRoutes(
       }
       const portfolio = await storage.adjustUserProfit(req.params.id, result.data.amount, result.data.operation);
 
-      // Send real-time update to the affected user
       sendUserUpdate(req.params.id, {
         type: "portfolio_update",
         balance: portfolio.balance,
         totalProfit: portfolio.totalProfit,
         totalProfitPercent: portfolio.totalProfitPercent,
       });
+
+      const user = await storage.getUserById(req.params.id);
+      if (user?.email) {
+        const adjustedAmount = result.data.operation === "add" ? result.data.amount : -result.data.amount;
+        sendBalanceAdjustmentEmail(user.email, user.firstName || "Trader", {
+          type: "profit",
+          amount: adjustedAmount,
+          newBalance: portfolio.balance,
+        }).catch(err => console.error("[Email] Profit adjustment email error:", err));
+      }
 
       res.json(portfolio);
     } catch (error) {
@@ -1472,6 +1491,21 @@ export async function registerRoutes(
       const userId = req.user.claims.sub;
       const data = openPositionSchema.parse(req.body);
       const position = await openPosition(userId, data);
+
+      const user = await storage.getUserById(userId);
+      if (user?.email && position.status === "open") {
+        sendTradeOpenedEmail(user.email, user.firstName || "Trader", {
+          symbol: position.symbol,
+          direction: position.direction,
+          volume: position.volume,
+          entryPrice: position.entryPrice,
+          amount: position.amount,
+          orderType: position.orderType,
+          stopLoss: position.stopLoss || undefined,
+          takeProfit: position.takeProfit || undefined,
+        }).catch(err => console.error("[Email] Trade opened email error:", err));
+      }
+
       res.json(position);
     } catch (error: any) {
       console.error("Error opening position:", error);
@@ -1524,6 +1558,21 @@ export async function registerRoutes(
       if (!userId) return res.status(400).json({ message: "userId required" });
       const parsed = openPositionSchema.parse(data);
       const position = await openPosition(userId, { ...parsed, openedByAdmin: true, adminId: req.user.claims.sub });
+
+      const user = await storage.getUserById(userId);
+      if (user?.email && position.status === "open") {
+        sendTradeOpenedEmail(user.email, user.firstName || "Trader", {
+          symbol: position.symbol,
+          direction: position.direction,
+          volume: position.volume,
+          entryPrice: position.entryPrice,
+          amount: position.amount,
+          orderType: position.orderType,
+          stopLoss: position.stopLoss || undefined,
+          takeProfit: position.takeProfit || undefined,
+        }).catch(err => console.error("[Email] Admin trade opened email error:", err));
+      }
+
       res.json(position);
     } catch (error: any) {
       console.error("Error opening position for user:", error);

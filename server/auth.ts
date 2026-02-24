@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { registerSchema, loginSchema } from "@shared/schema";
 import connectPgSimple from "connect-pg-simple";
 import { Pool } from "pg";
+import { sendWelcomeEmail } from "./email";
 
 // Extend express-session types
 declare module "express-session" {
@@ -97,13 +98,14 @@ export function registerCustomAuthRoutes(app: Express) {
         isAdmin: false,
       });
 
-      // Create portfolio for new user
       await storage.createPortfolio({
         userId: user.id,
-        balance: "10000.00",
+        balance: "0.00",
         totalProfit: "0.00",
         totalProfitPercent: "0.00",
       });
+
+      sendWelcomeEmail(email, firstName).catch(err => console.error("[Email] Welcome email error:", err));
 
       // Set session
       req.session.userId = user.id;
