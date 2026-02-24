@@ -21,9 +21,9 @@ export function addSSEClient(userId: string, res: Response) {
 
 export function sendUserUpdate(userId: string, data: Record<string, any>) {
   const event = `data: ${JSON.stringify(data)}\n\n`;
-  clients
-    .filter((c) => c.userId === userId)
-    .forEach((c) => {
+  const matchingClients = clients.filter((c) => c.userId === userId);
+  console.log(`[SSE] Sending update to user ${userId}: ${matchingClients.length} active connection(s), type=${data.type}`);
+  matchingClients.forEach((c) => {
       try {
         c.res.write(event);
       } catch {

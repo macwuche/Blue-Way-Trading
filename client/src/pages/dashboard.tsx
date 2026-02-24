@@ -167,6 +167,22 @@ export default function Dashboard() {
     };
   }, [user]);
 
+  const shownInitialPopup = useRef(false);
+  useEffect(() => {
+    if (notifData && notifData.unreadCount > 0 && !shownInitialPopup.current && !popupNotification) {
+      const latestUnread = notifData.notifications.find(n => !n.read);
+      if (latestUnread) {
+        const lastShownId = localStorage.getItem("lastShownNotifId");
+        if (lastShownId !== latestUnread.id) {
+          shownInitialPopup.current = true;
+          localStorage.setItem("lastShownNotifId", latestUnread.id);
+          setPopupNotification(latestUnread);
+          setTimeout(() => setPopupNotification(null), 6000);
+        }
+      }
+    }
+  }, [notifData]);
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {

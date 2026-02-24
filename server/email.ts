@@ -1,17 +1,44 @@
 import { Resend } from "resend";
+import * as fs from "fs";
+import * as path from "path";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM_EMAIL = "Blue Way Trading <noreply@bluewavetrading.live>";
 
+let logoBase64: string | null = null;
+try {
+  const logoPath = path.join(process.cwd(), "client", "public", "logo.png");
+  const logoBuffer = fs.readFileSync(logoPath);
+  logoBase64 = logoBuffer.toString("base64");
+  console.log("[Email] Logo loaded successfully for inline embedding");
+} catch (err) {
+  console.error("[Email] Could not load logo file:", err);
+}
+
+const LOGO_CID = "company-logo";
+
 async function sendEmail(to: string, subject: string, html: string) {
   try {
-    const { data, error } = await resend.emails.send({
+    const emailOptions: any = {
       from: FROM_EMAIL,
       to,
       subject,
       html,
-    });
+    };
+
+    if (logoBase64) {
+      emailOptions.attachments = [
+        {
+          filename: "logo.png",
+          content: logoBase64,
+          content_type: "image/png",
+          contentId: LOGO_CID,
+        },
+      ];
+    }
+
+    const { data, error } = await resend.emails.send(emailOptions);
 
     if (error) {
       console.error("[Email] Failed to send:", error);
@@ -26,7 +53,7 @@ async function sendEmail(to: string, subject: string, html: string) {
   }
 }
 
-const LOGO_URL = "https://accessbluewave.site/logo.png";
+const LOGO_URL = logoBase64 ? `cid:${LOGO_CID}` : "https://accessbluewave.site/logo.png";
 
 function baseTemplate(content: string) {
   return `

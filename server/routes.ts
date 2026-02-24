@@ -516,10 +516,15 @@ export async function registerRoutes(
         sentBy: req.user.claims.sub,
       });
 
+      console.log(`[Notification] Sending SSE notification to user ${user.id}: "${result.data.title}"`);
       sendUserUpdate(user.id, {
         type: "notification",
         notification: {
-          ...notification,
+          id: notification.id,
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          read: notification.read,
           createdAt: notification.createdAt?.toISOString(),
         },
       });
