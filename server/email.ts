@@ -2,7 +2,7 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM_EMAIL = "Blue Way Trading <onboarding@resend.dev>";
+const FROM_EMAIL = "Blue Way Trading <noreply@bluewavetrading.live>";
 
 async function sendEmail(to: string, subject: string, html: string) {
   try {
