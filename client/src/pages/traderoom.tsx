@@ -401,7 +401,7 @@ export default function TradeRoom() {
   }
 
   return (
-    <div className="h-screen flex flex-col md:flex-row bg-[#0a0a0a] overflow-hidden">
+    <div className="min-h-screen md:h-screen flex flex-col md:flex-row bg-[#0a0a0a] md:overflow-hidden">
       {/* Desktop Sidebar - Hidden on mobile */}
       <aside className="hidden md:flex w-16 border-r border-white/10 flex-col items-center py-4 glass-dark">
         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF9800] to-[#FF5722] flex items-center justify-center mb-6">
@@ -514,7 +514,7 @@ export default function TradeRoom() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 flex flex-col min-h-0 md:overflow-hidden">
         {/* Mobile Header */}
         <header className="flex items-center justify-between gap-2 px-3 h-14 border-b border-white/10 md:hidden">
           <Avatar className="w-8 h-8">
@@ -706,7 +706,7 @@ export default function TradeRoom() {
         </div>
 
         {/* Chart Area */}
-        <div className="flex-1 flex flex-col md:flex-row min-h-0">
+        <div className="flex-1 flex flex-col md:flex-row min-h-[50vh] md:min-h-0">
           <div className="flex-1 flex flex-col min-h-0">
             {/* Desktop Asset Selector */}
             <div className="hidden md:flex items-center gap-4 px-4 py-3 border-b border-white/10">
@@ -1425,26 +1425,28 @@ export default function TradeRoom() {
           </div>
         </div>
 
-        {/* Mobile Bottom Navigation */}
-        <nav className="md:hidden flex items-center justify-around border-t border-white/10 glass-dark py-2 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shrink-0">
-          {sidebarItems.slice(0, 5).map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setLocation(item.route)}
-              data-testid={`mobile-nav-${item.id}`}
-              className={cn(
-                "flex flex-col items-center gap-1 px-2 py-1 rounded-lg transition-all min-w-0",
-                item.id === "trade"
-                  ? "text-primary"
-                  : "text-muted-foreground"
-              )}
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="text-[10px] truncate">{item.label}</span>
-            </button>
-          ))}
-        </nav>
+        <div className="h-14 md:hidden shrink-0" />
       </div>
+
+      {/* Mobile Bottom Navigation - Fixed */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-white/10 glass-dark py-2 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        {sidebarItems.slice(0, 5).map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setLocation(item.route)}
+            data-testid={`mobile-nav-${item.id}`}
+            className={cn(
+              "flex flex-col items-center gap-1 px-2 py-1 rounded-lg transition-all min-w-0",
+              item.id === "trade"
+                ? "text-primary"
+                : "text-muted-foreground"
+            )}
+          >
+            <item.icon className="w-5 h-5" />
+            <span className="text-[10px] truncate">{item.label}</span>
+          </button>
+        ))}
+      </nav>
 
       <MarketModal
         open={marketModalOpen}
