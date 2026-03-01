@@ -87,6 +87,7 @@ export default function TradeRoom() {
   const [chartType, setChartType] = useState<ChartType>("candlestick");
   const [showConfetti, setShowConfetti] = useState(false);
   const [mobileTradeExpanded, setMobileTradeExpanded] = useState(false);
+  const [mobilePositionsExpanded, setMobilePositionsExpanded] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -1372,42 +1373,58 @@ export default function TradeRoom() {
               </Button>
             </div>
 
-            {/* Open Positions - Always Visible Below Buy/Sell */}
+            {/* Open Positions - Slide Up Toggle */}
             {hasActivePositions && (
-              <div className="space-y-1.5">
-                <div className="text-xs text-muted-foreground">Open Positions ({openPositions.length})</div>
-                {openPositions.slice(0, 3).map((pos) => {
-                  const pnl = parseFloat(pos.unrealizedPnl || "0") + parseFloat(pos.adminProfit || "0");
-                  return (
-                    <div key={pos.id} className={cn(
-                      "glass-light rounded-lg p-2 border",
-                      pos.direction === "buy" ? "border-[#2196F3]/30" : "border-destructive/30"
-                    )}>
-                      <div className="flex items-center justify-between">
-                        <span className={cn("text-xs font-semibold", pos.direction === "buy" ? "text-[#2196F3]" : "text-destructive")}>
-                          {pos.direction.toUpperCase()} {pos.symbol} - ${pos.amount}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span className={cn("text-xs font-bold", pnl >= 0 ? "text-success" : "text-destructive")}>
-                            {pnl >= 0 ? "+" : ""}${formatPrice(Math.abs(pnl))}
-                          </span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => closePositionMutation.mutate(pos.id)}
-                            data-testid={`button-close-position-mobile-${pos.id}`}
-                            className="h-5 px-1 text-[10px]"
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
+              <div>
+                <button
+                  onClick={() => setMobilePositionsExpanded(!mobilePositionsExpanded)}
+                  data-testid="button-toggle-positions-mobile"
+                  className="w-full flex items-center justify-center gap-1.5 py-1.5 text-muted-foreground"
+                >
+                  <ChevronUp className={cn("w-3.5 h-3.5 transition-transform duration-300", mobilePositionsExpanded && "rotate-180")} />
+                  <span className="text-xs">Open Positions ({openPositions.length})</span>
+                </button>
+                <div
+                  className={cn(
+                    "overflow-hidden transition-all duration-300 ease-in-out",
+                    mobilePositionsExpanded ? "max-h-[30vh] opacity-100" : "max-h-0 opacity-0"
+                  )}
+                >
+                  <div className="space-y-1.5 overflow-y-auto max-h-[30vh] pb-1">
+                    {openPositions.slice(0, 5).map((pos) => {
+                      const pnl = parseFloat(pos.unrealizedPnl || "0") + parseFloat(pos.adminProfit || "0");
+                      return (
+                        <div key={pos.id} className={cn(
+                          "glass-light rounded-lg p-2 border",
+                          pos.direction === "buy" ? "border-[#2196F3]/30" : "border-destructive/30"
+                        )}>
+                          <div className="flex items-center justify-between">
+                            <span className={cn("text-xs font-semibold", pos.direction === "buy" ? "text-[#2196F3]" : "text-destructive")}>
+                              {pos.direction.toUpperCase()} {pos.symbol} - ${pos.amount}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className={cn("text-xs font-bold", pnl >= 0 ? "text-success" : "text-destructive")}>
+                                {pnl >= 0 ? "+" : ""}${formatPrice(Math.abs(pnl))}
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => closePositionMutation.mutate(pos.id)}
+                                data-testid={`button-close-position-mobile-${pos.id}`}
+                                className="h-5 px-1 text-[10px]"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  );
-                })}
-                {openPositions.length > 3 && (
-                  <div className="text-[10px] text-center text-muted-foreground">+{openPositions.length - 3} more positions</div>
-                )}
+                      );
+                    })}
+                    {openPositions.length > 5 && (
+                      <div className="text-[10px] text-center text-muted-foreground">+{openPositions.length - 5} more positions</div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>
