@@ -102,7 +102,7 @@ Preferred communication style: Simple, everyday language.
 - **Non-blocking**: All email sends use `.catch()` to prevent failures from breaking core flows
 
 ### Asset Logos
-- **Logo Utility**: `client/src/lib/asset-logos.ts` maps symbols to CDN logo URLs (CoinGecko for crypto, Clearbit for stocks/ETFs, flagcdn for forex)
+- **Logo Utility**: `client/src/lib/asset-logos.ts` maps symbols to CDN logo URLs (CoinGecko for crypto, Parqet for stocks/ETFs, flagcdn for forex)
 - **AssetLogo Component**: `client/src/components/asset-logo.tsx` renders logos with graceful fallback to initials on image load failure
 - **Forex**: Shows overlapping base/quote country flags; separate error state per flag
 - **Type Normalization**: Handles variants like "stocks" → "stock" automatically
