@@ -351,7 +351,7 @@ export function CandlestickChart({ symbol, currentPrice, isPositive, className, 
   return (
     <div 
       ref={chartContainerRef} 
-      className={cn("w-full h-full min-h-[400px]", className)}
+      className={cn("w-full h-full", className)}
       data-testid="candlestick-chart"
     />
   );

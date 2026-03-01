@@ -395,7 +395,7 @@ export default function TradeRoom() {
   }
 
   return (
-    <div className="min-h-screen md:h-screen flex flex-col md:flex-row bg-[#0a0a0a] md:overflow-hidden">
+    <div className="h-[100dvh] md:h-screen flex flex-col md:flex-row bg-[#0a0a0a] overflow-hidden">
       {/* Desktop Sidebar - Hidden on mobile */}
       <aside className="hidden md:flex w-16 border-r border-white/10 flex-col items-center py-4 glass-dark">
         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF9800] to-[#FF5722] flex items-center justify-center mb-6">
@@ -510,7 +510,7 @@ export default function TradeRoom() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-0 md:overflow-hidden">
         {/* Mobile Header */}
-        <header className="flex items-center justify-between gap-2 px-3 h-14 border-b border-white/10 md:hidden">
+        <header className="flex items-center justify-between gap-2 px-3 h-14 border-b border-white/10 md:hidden shrink-0">
           <Avatar className="w-8 h-8">
             <AvatarImage src={user?.profileImageUrl || undefined} />
             <AvatarFallback className="bg-primary/20 text-primary text-xs">
@@ -659,7 +659,7 @@ export default function TradeRoom() {
         </header>
 
         {/* Mobile Asset Tabs */}
-        <div className="flex items-center gap-2 px-2 py-2 border-b border-white/10 overflow-x-auto md:hidden">
+        <div className="flex items-center gap-2 px-2 py-2 border-b border-white/10 overflow-x-auto md:hidden shrink-0">
           {openAssets.map((asset) => (
             <button
               key={asset.symbol}
@@ -696,7 +696,7 @@ export default function TradeRoom() {
         </div>
 
         {/* Chart Area */}
-        <div className="flex-1 flex flex-col md:flex-row min-h-[50vh] md:min-h-0">
+        <div className="flex-1 flex flex-col md:flex-row min-h-0">
           <div className="flex-1 flex flex-col min-h-0">
             {/* Desktop Asset Selector */}
             <div className="hidden md:flex items-center gap-4 px-4 py-3 border-b border-white/10">
@@ -717,7 +717,7 @@ export default function TradeRoom() {
             </div>
             
             {/* Mobile Chart Controls */}
-            <div className="md:hidden flex items-center justify-between px-2 py-1 border-b border-white/10">
+            <div className="md:hidden flex items-center justify-between px-2 py-1 border-b border-white/10 shrink-0">
               {/* Chart Type Toggle */}
               <div className="flex items-center gap-1">
                 <Button
