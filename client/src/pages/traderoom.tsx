@@ -833,7 +833,7 @@ export default function TradeRoom() {
             </div>
 
             {/* Chart */}
-            <div className="flex-1 relative p-2 min-h-[200px]">
+            <div className="flex-1 relative p-2 min-h-[120px] md:min-h-[200px]">
               <TradeNotificationContainer />
               {showConfetti && (
                 <div className="absolute inset-0 z-[60] pointer-events-none flex items-center justify-center">
@@ -1258,7 +1258,7 @@ export default function TradeRoom() {
         </div>
 
         {/* Mobile Trading Panel - Collapsible */}
-        <div className="md:hidden border-t border-white/10 glass-dark">
+        <div className="md:hidden border-t border-white/10 glass-dark shrink-0">
           {/* Expand/Collapse Handle */}
           <button
             onClick={() => setMobileTradeExpanded(!mobileTradeExpanded)}
@@ -1380,7 +1380,7 @@ export default function TradeRoom() {
           )}
 
           {/* Always Visible: Amount + Buy/Sell */}
-          <div className="px-3 pb-2 space-y-2">
+          <div className="px-3 pb-3 space-y-2">
             {/* Amount Input - Compact */}
             <div className="glass-light rounded-lg flex items-center justify-between h-10 px-3">
               <button 
@@ -1401,7 +1401,7 @@ export default function TradeRoom() {
             </div>
 
             {/* Sell/Buy Buttons Row */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 pb-1">
               <Button
                 onClick={() => handleTrade("sell")}
                 disabled={openPositionMutation.isPending}
@@ -1426,7 +1426,7 @@ export default function TradeRoom() {
         </div>
 
         {/* Mobile Bottom Navigation */}
-        <nav className="md:hidden flex items-center justify-around border-t border-white/10 glass-dark py-2 px-2">
+        <nav className="md:hidden flex items-center justify-around border-t border-white/10 glass-dark py-2 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shrink-0">
           {sidebarItems.slice(0, 5).map((item) => (
             <button
               key={item.id}
