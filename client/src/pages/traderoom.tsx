@@ -8,6 +8,7 @@ import {
   Copy, X, Crown, Activity, CandlestickChart as CandlestickIcon, LineChart, AreaChart,
   Bell, CheckCircle, AlertTriangle, XOctagon, Info, ChevronUp
 } from "lucide-react";
+import { AssetLogo } from "@/components/asset-logo";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Slider } from "@/components/ui/slider";
@@ -58,13 +59,6 @@ const sidebarItems = [
   { id: "more", icon: Settings, label: "More", route: "/more" },
 ];
 
-const getSymbolInitials = (symbol: string): string => {
-  if (symbol.includes("/")) {
-    const parts = symbol.split("/");
-    return parts[0].slice(0, 2);
-  }
-  return symbol.slice(0, 2);
-};
 
 export default function TradeRoom() {
   const { user } = useAuth();
@@ -554,9 +548,7 @@ export default function TradeRoom() {
                     : "text-muted-foreground hover-elevate"
                 )}
               >
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-xs text-white">
-                  {getSymbolInitials(asset.symbol)}
-                </div>
+                <AssetLogo symbol={asset.symbol} type={asset.type} size="sm" />
                 <span>{asset.symbol}</span>
                 <span className="text-xs opacity-70">{asset.type}</span>
                 {openAssets.length > 1 && (
@@ -680,9 +672,7 @@ export default function TradeRoom() {
                   : "glass-light text-muted-foreground"
               )}
             >
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-xs text-white">
-                {getSymbolInitials(asset.symbol)}
-              </div>
+              <AssetLogo symbol={asset.symbol} type={asset.type} size="sm" />
               <span>{asset.symbol}</span>
               {openAssets.length > 1 && (
                 <button
@@ -715,9 +705,7 @@ export default function TradeRoom() {
                 data-testid="button-change-asset"
                 className="flex items-center gap-2 hover-elevate rounded-lg px-3 py-2"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-sm text-white font-bold">
-                  {getSymbolInitials(selectedAsset.symbol)}
-                </div>
+                <AssetLogo symbol={selectedAsset.symbol} type={selectedAsset.type} size="md" />
                 <div>
                   <div className="font-semibold flex items-center gap-1">
                     {selectedAsset.symbol}

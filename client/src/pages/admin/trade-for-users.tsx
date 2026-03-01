@@ -7,6 +7,7 @@ import {
   ChevronDown, Activity, Minus, Copy, Wallet, User, RotateCcw, Eye, PlayCircle, AlertTriangle,
   CandlestickChart as CandlestickIcon, LineChart, AreaChart
 } from "lucide-react";
+import { AssetLogo } from "@/components/asset-logo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -97,13 +98,6 @@ interface BatchPositionIds {
   direction: string;
 }
 
-const getSymbolInitials = (symbol: string): string => {
-  if (symbol.includes("/")) {
-    const parts = symbol.split("/");
-    return parts[0].slice(0, 2);
-  }
-  return symbol.slice(0, 2);
-};
 
 const getAssetTypeColor = (assetType: string): string => {
   switch (assetType.toLowerCase()) {
@@ -1104,9 +1098,7 @@ export default function TradeForUsers() {
                         : "text-muted-foreground hover-elevate"
                     )}
                   >
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-xs text-white">
-                      {getSymbolInitials(asset.symbol)}
-                    </div>
+                    <AssetLogo symbol={asset.symbol} type={asset.type} size="sm" />
                     <span>{asset.symbol}</span>
                     <span className="text-xs opacity-70">{asset.type}</span>
                     {openAssets.length > 1 && (
@@ -1158,9 +1150,7 @@ export default function TradeForUsers() {
                     data-testid="button-change-asset"
                     className="flex items-center gap-2 hover-elevate rounded-lg px-3 py-2"
                   >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-sm text-white font-bold">
-                      {getSymbolInitials(selectedAsset.symbol)}
-                    </div>
+                    <AssetLogo symbol={selectedAsset.symbol} type={selectedAsset.type} size="md" />
                     <div>
                       <div className="font-semibold flex items-center gap-1">
                         {selectedAsset.symbol}
@@ -1768,12 +1758,7 @@ export default function TradeForUsers() {
                       key={`page-asset-${asset.symbol}-${index}`}
                       className="flex items-center gap-1.5 glass-light rounded-md px-2 py-0.5"
                     >
-                      <div className={cn(
-                        "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold",
-                        getAssetTypeColor(asset.assetType)
-                      )}>
-                        {getSymbolInitials(asset.symbol)}
-                      </div>
+                      <AssetLogo symbol={asset.symbol} type={asset.assetType} size="sm" className="w-5 h-5" />
                       <span className="text-xs font-medium">{asset.symbol}</span>
                     </div>
                   ))}
@@ -1962,12 +1947,7 @@ export default function TradeForUsers() {
                       className="flex items-center gap-2 glass-light rounded-lg px-3 py-1.5"
                       data-testid={`asset-badge-${asset.symbol}`}
                     >
-                      <div className={cn(
-                        "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
-                        getAssetTypeColor(asset.assetType)
-                      )}>
-                        {getSymbolInitials(asset.symbol)}
-                      </div>
+                      <AssetLogo symbol={asset.symbol} type={asset.assetType} size="sm" className="w-7 h-7" />
                       <div className="flex flex-col">
                         <span className="font-medium text-sm">{asset.symbol}</span>
                         <span className="text-[10px] text-muted-foreground">{asset.name}</span>
@@ -2146,12 +2126,7 @@ export default function TradeForUsers() {
                     key={`confirm-asset-${asset.symbol}-${index}`}
                     className="flex items-center gap-1.5 glass-light rounded-md px-2 py-1"
                   >
-                    <div className={cn(
-                      "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold",
-                      getAssetTypeColor(asset.assetType)
-                    )}>
-                      {getSymbolInitials(asset.symbol)}
-                    </div>
+                    <AssetLogo symbol={asset.symbol} type={asset.assetType} size="sm" className="w-5 h-5" />
                     <span className="text-xs font-medium">{asset.symbol}</span>
                   </div>
                 ))}

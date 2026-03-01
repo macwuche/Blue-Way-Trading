@@ -101,8 +101,15 @@ Preferred communication style: Simple, everyday language.
 - **Triggers**: Registration (auth.ts), Position open/close (trading-engine.ts, routes.ts), Admin balance/profit adjustments (routes.ts)
 - **Non-blocking**: All email sends use `.catch()` to prevent failures from breaking core flows
 
+### Asset Logos
+- **Logo Utility**: `client/src/lib/asset-logos.ts` maps symbols to CDN logo URLs (CoinGecko for crypto, Clearbit for stocks/ETFs, flagcdn for forex)
+- **AssetLogo Component**: `client/src/components/asset-logo.tsx` renders logos with graceful fallback to initials on image load failure
+- **Forex**: Shows overlapping base/quote country flags; separate error state per flag
+- **Type Normalization**: Handles variants like "stocks" → "stock" automatically
+- **Usage**: Replaces old `getSymbolInitials` circles in asset-row, traderoom, and admin trade-for-users
+
 ### Mobile UI
-- **Responsive TradeRoom**: Mobile trading panel is collapsible — shows only amount input + Buy/Sell buttons by default; SL/TP, slider, positions, and margin info expand via toggle (max-h-[40vh] scrollable)
+- **Responsive TradeRoom**: Mobile trading panel is collapsible — shows only amount input + Buy/Sell buttons by default; SL/TP, slider, positions, and margin info expand via toggle (max-h-[40vh] scrollable); page is scrollable on mobile (min-h-screen) with fixed bottom nav
 - **Bottom Navigation**: Reusable `MobileBottomNav` component (`client/src/components/mobile-bottom-nav.tsx`) added to all secondary pages (Portfolio, History, Support, News, VIP, Deposit, Withdrawal, Verification, More)
 - **Dashboard Sidebar**: Defaults closed on mobile (< 1024px), auto-adjusts on viewport resize, includes backdrop overlay when open
 - **Notification Dropdown**: Responsive width using `w-[calc(100vw-1rem)] sm:w-96` to prevent overflow on narrow screens

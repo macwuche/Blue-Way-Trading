@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { type Asset, formatPrice, formatPercent, generatePriceHistory } from "@/lib/market-data";
 import { MiniChart } from "./price-chart";
+import { AssetLogo } from "./asset-logo";
 import { cn } from "@/lib/utils";
 
 interface AssetRowProps {
@@ -17,21 +18,6 @@ export function AssetRow({ asset, onClick, showChart = true }: AssetRowProps) {
     return generatePriceHistory(asset.price, 12);
   }, [asset.price, asset.symbol]);
 
-  const typeColors: Record<string, string> = {
-    crypto: "bg-chart-1/20 text-chart-1",
-    forex: "bg-chart-2/20 text-chart-2",
-    stock: "bg-chart-3/20 text-chart-3",
-    etf: "bg-chart-5/20 text-chart-5",
-  };
-
-  const getSymbolInitials = (symbol: string): string => {
-    if (symbol.includes("/")) {
-      const parts = symbol.split("/");
-      return parts[0].slice(0, 2);
-    }
-    return symbol.slice(0, 2);
-  };
-
   return (
     <div
       onClick={onClick}
@@ -42,12 +28,7 @@ export function AssetRow({ asset, onClick, showChart = true }: AssetRowProps) {
       )}
     >
       <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div className={cn(
-          "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold",
-          typeColors[asset.type] || "bg-muted text-muted-foreground"
-        )}>
-          {getSymbolInitials(asset.symbol)}
-        </div>
+        <AssetLogo symbol={asset.symbol} type={asset.type} size="lg" />
         <div className="min-w-0">
           <p className="font-semibold text-foreground truncate">{asset.symbol}</p>
           <p className="text-sm text-muted-foreground truncate">{asset.name}</p>
