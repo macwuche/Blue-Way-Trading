@@ -513,12 +513,7 @@ export default function TradeRoom() {
       <div className="flex-1 flex flex-col min-h-0 md:overflow-hidden">
         {/* Mobile Header */}
         <header className="flex items-center justify-between gap-2 px-3 h-14 border-b border-white/10 md:hidden shrink-0">
-          <Avatar className="w-8 h-8">
-            <AvatarImage src={user?.profileImageUrl || undefined} />
-            <AvatarFallback className="bg-primary/20 text-primary text-xs">
-              {user?.firstName?.[0] || "U"}
-            </AvatarFallback>
-          </Avatar>
+          <img src="/logo.png" alt="Bluewave" className="w-8 h-8 rounded-lg object-contain" data-testid="img-bluewave-logo-mobile" />
           
           <div className="text-center">
             <div className="text-lg font-bold text-success" data-testid="text-balance-mobile">${formatPrice(balance)}</div>
