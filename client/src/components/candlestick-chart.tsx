@@ -171,10 +171,7 @@ export function CandlestickChart({ symbol, currentPrice, isPositive, className, 
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    const container = chartContainerRef.current;
-    const chart = createChart(container, {
-      width: container.clientWidth,
-      height: container.clientHeight,
+    const chart = createChart(chartContainerRef.current, {
       layout: {
         background: { color: "transparent" },
         textColor: "#98989D",
@@ -271,16 +268,13 @@ export function CandlestickChart({ symbol, currentPrice, isPositive, className, 
           width: chartContainerRef.current.clientWidth,
           height: chartContainerRef.current.clientHeight,
         });
-        chartRef.current.timeScale().fitContent();
       }
     };
 
-    const resizeObserver = new ResizeObserver(handleResize);
-    resizeObserver.observe(container);
     window.addEventListener("resize", handleResize);
+    handleResize();
 
     return () => {
-      resizeObserver.disconnect();
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
@@ -357,7 +351,7 @@ export function CandlestickChart({ symbol, currentPrice, isPositive, className, 
   return (
     <div 
       ref={chartContainerRef} 
-      className={cn("w-full h-full min-h-[250px] md:min-h-[400px] overflow-hidden", className)}
+      className={cn("w-full h-full min-h-[400px]", className)}
       data-testid="candlestick-chart"
     />
   );
