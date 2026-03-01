@@ -79,11 +79,11 @@ Preferred communication style: Simple, everyday language.
 - **Server-side Caching**: `server/massive-api.ts` fetches data every 5 seconds to prevent API overload
 - **API Endpoint**: `/api/market-data` serves cached prices to frontend clients
 - **Frontend Hook**: `client/src/hooks/use-market-data.ts` provides `useMarketData()` hook for components
-- **Supported Assets**:
-  - Stocks: AAPL, GOOGL, MSFT, AMZN, NVDA, TSLA, META
-  - ETFs: SPY, QQQ, VTI, IWM, GLD
-  - Crypto: BTC/USDT, ETH/USDT, SOL/USDT, XRP/USDT, ADA/USDT, DOGE/USDT, DOT/USDT
-  - Forex: EUR/USD, GBP/USD, USD/JPY, USD/CHF, AUD/USD
+- **Supported Assets** (53 total):
+  - Stocks (20): AAPL, GOOGL, MSFT, AMZN, NVDA, TSLA, META, AMD, INTC, NFLX, DIS, BA, JPM, V, MA, WMT, KO, XOM, PG, CRM
+  - ETFs (8): SPY, QQQ, VTI, IWM, GLD, DIA, ARKK, XLF
+  - Crypto (15): BTC/USDT, ETH/USDT, SOL/USDT, BNB/USDT, XRP/USDT, ADA/USDT, DOGE/USDT, DOT/USDT, LTC/USDT, AVAX/USDT, LINK/USDT, SHIB/USDT, TRX/USDT, ATOM/USDT, UNI/USDT
+  - Forex (10): EUR/USD, GBP/USD, USD/JPY, USD/CHF, AUD/USD, NZD/USD, USD/CAD, EUR/GBP, USD/SEK, USD/SGD
 - **Static Fallback**: `client/src/lib/market-data.ts` contains fallback static data when API unavailable
 - **Required Secret**: `MASSIVE_API_KEY` for API authentication
 

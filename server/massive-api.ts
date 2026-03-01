@@ -37,10 +37,23 @@ let cachedData: CachedMarketData = {
 
 let isFetching = false;
 
-const STOCK_TICKERS = ["AAPL", "GOOGL", "MSFT", "AMZN", "NVDA", "TSLA", "META"];
-const ETF_TICKERS = ["SPY", "QQQ", "VTI", "IWM", "GLD"];
-const CRYPTO_TICKERS = ["X:BTCUSD", "X:ETHUSD", "X:SOLUSD", "X:BNBUSD", "X:XRPUSD", "X:ADAUSD", "X:DOGEUSD", "X:DOTUSD"];
-const FOREX_TICKERS = ["C:EURUSD", "C:GBPUSD", "C:USDJPY", "C:USDCHF", "C:AUDUSD"];
+const STOCK_TICKERS = [
+  "AAPL", "GOOGL", "MSFT", "AMZN", "NVDA", "TSLA", "META",
+  "AMD", "INTC", "NFLX", "DIS", "BA", "JPM", "V", "MA",
+  "WMT", "KO", "XOM", "PG", "CRM",
+];
+const ETF_TICKERS = [
+  "SPY", "QQQ", "VTI", "IWM", "GLD",
+  "DIA", "ARKK", "XLF",
+];
+const CRYPTO_TICKERS = [
+  "X:BTCUSD", "X:ETHUSD", "X:SOLUSD", "X:BNBUSD", "X:XRPUSD", "X:ADAUSD", "X:DOGEUSD", "X:DOTUSD",
+  "X:LTCUSD", "X:AVAXUSD", "X:LINKUSD", "X:SHIBUSD", "X:TRXUSD", "X:ATOMUSD", "X:UNIUSD",
+];
+const FOREX_TICKERS = [
+  "C:EURUSD", "C:GBPUSD", "C:USDJPY", "C:USDCHF", "C:AUDUSD",
+  "C:NZDUSD", "C:USDCAD", "C:EURGBP", "C:USDSEK", "C:USDSGD",
+];
 
 function mapTickerToDisplaySymbol(ticker: string, type: string): string {
   if (type === "crypto") {
@@ -63,11 +76,27 @@ function mapTickerToName(ticker: string, type: string): string {
     "NVDA": "NVIDIA Corp.",
     "TSLA": "Tesla Inc.",
     "META": "Meta Platforms",
+    "AMD": "Advanced Micro Devices",
+    "INTC": "Intel Corp.",
+    "NFLX": "Netflix Inc.",
+    "DIS": "Walt Disney Co.",
+    "BA": "Boeing Co.",
+    "JPM": "JPMorgan Chase & Co.",
+    "V": "Visa Inc.",
+    "MA": "Mastercard Inc.",
+    "WMT": "Walmart Inc.",
+    "KO": "Coca-Cola Co.",
+    "XOM": "Exxon Mobil Corp.",
+    "PG": "Procter & Gamble Co.",
+    "CRM": "Salesforce Inc.",
     "SPY": "SPDR S&P 500 ETF",
     "QQQ": "Invesco QQQ Trust",
     "VTI": "Vanguard Total Stock Market",
     "IWM": "iShares Russell 2000",
     "GLD": "SPDR Gold Shares",
+    "DIA": "SPDR Dow Jones Industrial Avg ETF",
+    "ARKK": "ARK Innovation ETF",
+    "XLF": "Financial Select Sector SPDR Fund",
     "X:BTCUSD": "Bitcoin / Tether",
     "X:ETHUSD": "Ethereum / Tether",
     "X:SOLUSD": "Solana / Tether",
@@ -76,11 +105,23 @@ function mapTickerToName(ticker: string, type: string): string {
     "X:ADAUSD": "Cardano / Tether",
     "X:DOGEUSD": "Dogecoin / Tether",
     "X:DOTUSD": "Polkadot / Tether",
+    "X:LTCUSD": "Litecoin / Tether",
+    "X:AVAXUSD": "Avalanche / Tether",
+    "X:LINKUSD": "Chainlink / Tether",
+    "X:SHIBUSD": "Shiba Inu / Tether",
+    "X:TRXUSD": "TRON / Tether",
+    "X:ATOMUSD": "Cosmos / Tether",
+    "X:UNIUSD": "Uniswap / Tether",
     "C:EURUSD": "Euro / US Dollar",
     "C:GBPUSD": "British Pound / US Dollar",
     "C:USDJPY": "US Dollar / Japanese Yen",
     "C:USDCHF": "US Dollar / Swiss Franc",
     "C:AUDUSD": "Australian Dollar / US Dollar",
+    "C:NZDUSD": "New Zealand Dollar / US Dollar",
+    "C:USDCAD": "US Dollar / Canadian Dollar",
+    "C:EURGBP": "Euro / British Pound",
+    "C:USDSEK": "US Dollar / Swedish Krona",
+    "C:USDSGD": "US Dollar / Singapore Dollar",
   };
   return names[ticker] || ticker;
 }
