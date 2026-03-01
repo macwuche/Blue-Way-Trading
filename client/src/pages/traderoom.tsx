@@ -6,7 +6,7 @@ import {
   Settings, Plus, Clock, ChevronDown,
   ChevronLeft, ChevronRight, Minus,
   Copy, X, Crown, Activity, CandlestickChart as CandlestickIcon, LineChart, AreaChart,
-  Bell, CheckCircle, AlertTriangle, XOctagon, Info
+  Bell, CheckCircle, AlertTriangle, XOctagon, Info, ChevronUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -92,6 +92,7 @@ export default function TradeRoom() {
   });
   const [chartType, setChartType] = useState<ChartType>("candlestick");
   const [showConfetti, setShowConfetti] = useState(false);
+  const [mobileTradeExpanded, setMobileTradeExpanded] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -594,7 +595,7 @@ export default function TradeRoom() {
                 )}
               </button>
               {notifOpen && (
-                <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-xl border border-white/10 bg-gradient-to-br from-[#1a1f35]/98 to-[#0d1225]/98 backdrop-blur-xl shadow-2xl z-50 overflow-hidden" data-testid="dropdown-notifications">
+                <div className="absolute right-0 top-full mt-2 w-[calc(100vw-1rem)] sm:w-96 max-w-[calc(100vw-16px)] rounded-xl border border-white/10 bg-gradient-to-br from-[#1a1f35]/98 to-[#0d1225]/98 backdrop-blur-xl shadow-2xl z-50 overflow-hidden" data-testid="dropdown-notifications">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
                     <span className="text-sm font-semibold text-white">Notifications</span>
                     {(notifData?.unreadCount || 0) > 0 && (
@@ -1256,157 +1257,172 @@ export default function TradeRoom() {
           </div>
         </div>
 
-        {/* Mobile Trading Panel - Fixed at bottom */}
-        <div className="md:hidden border-t border-white/10 glass-dark p-3 space-y-3">
-          {/* Open Positions Mobile View */}
-          {hasActivePositions && (
-            <div className="space-y-1.5 max-h-[80px] overflow-y-auto">
-              {openPositions.slice(0, 2).map((pos) => {
-                const pnl = parseFloat(pos.unrealizedPnl || "0") + parseFloat(pos.adminProfit || "0");
-                return (
-                  <div key={pos.id} className={cn(
-                    "glass-light rounded-lg p-2 border",
-                    pos.direction === "buy" ? "border-[#2196F3]/30" : "border-destructive/30"
-                  )}>
-                    <div className="flex items-center justify-between">
-                      <span className={cn("text-xs font-semibold", pos.direction === "buy" ? "text-[#2196F3]" : "text-destructive")}>
-                        {pos.direction.toUpperCase()} {pos.symbol} - ${pos.amount}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className={cn("text-xs font-bold", pnl >= 0 ? "text-success" : "text-destructive")}>
-                          {pnl >= 0 ? "+" : ""}${formatPrice(Math.abs(pnl))}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => closePositionMutation.mutate(pos.id)}
-                          data-testid={`button-close-position-mobile-${pos.id}`}
-                          className="h-5 px-1 text-[10px]"
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
+        {/* Mobile Trading Panel - Collapsible */}
+        <div className="md:hidden border-t border-white/10 glass-dark">
+          {/* Expand/Collapse Handle */}
+          <button
+            onClick={() => setMobileTradeExpanded(!mobileTradeExpanded)}
+            data-testid="button-expand-trade-panel"
+            className="w-full flex items-center justify-center gap-1 py-1.5 text-muted-foreground"
+          >
+            <ChevronUp className={cn("w-4 h-4 transition-transform", mobileTradeExpanded && "rotate-180")} />
+            <span className="text-[10px] uppercase tracking-wider">{mobileTradeExpanded ? "Less" : "More"}</span>
+          </button>
+
+          {/* Expanded Section: Positions, SL/TP, Slider, Margin */}
+          {mobileTradeExpanded && (
+            <div className="px-3 pb-2 space-y-2 max-h-[40vh] overflow-y-auto">
+              {/* Open Positions Mobile View */}
+              {hasActivePositions && (
+                <div className="space-y-1.5">
+                  <div className="text-xs text-muted-foreground">Open Positions ({openPositions.length})</div>
+                  {openPositions.slice(0, 3).map((pos) => {
+                    const pnl = parseFloat(pos.unrealizedPnl || "0") + parseFloat(pos.adminProfit || "0");
+                    return (
+                      <div key={pos.id} className={cn(
+                        "glass-light rounded-lg p-2 border",
+                        pos.direction === "buy" ? "border-[#2196F3]/30" : "border-destructive/30"
+                      )}>
+                        <div className="flex items-center justify-between">
+                          <span className={cn("text-xs font-semibold", pos.direction === "buy" ? "text-[#2196F3]" : "text-destructive")}>
+                            {pos.direction.toUpperCase()} {pos.symbol} - ${pos.amount}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={cn("text-xs font-bold", pnl >= 0 ? "text-success" : "text-destructive")}>
+                              {pnl >= 0 ? "+" : ""}${formatPrice(Math.abs(pnl))}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => closePositionMutation.mutate(pos.id)}
+                              data-testid={`button-close-position-mobile-${pos.id}`}
+                              className="h-5 px-1 text-[10px]"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
                       </div>
+                    );
+                  })}
+                  {openPositions.length > 3 && (
+                    <div className="text-[10px] text-center text-muted-foreground">+{openPositions.length - 3} more positions</div>
+                  )}
+                </div>
+              )}
+
+              {/* SL/TP Row Mobile */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <div className="text-xs text-muted-foreground text-center mb-1">Stop Loss</div>
+                  <input
+                    type="number"
+                    value={stopLoss}
+                    onChange={(e) => setStopLoss(e.target.value)}
+                    placeholder="---"
+                    data-testid="input-stop-loss-mobile"
+                    className="glass-light rounded-lg w-full h-9 px-3 text-sm text-center bg-transparent outline-none placeholder:text-muted-foreground/50"
+                  />
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground text-center mb-1">Take Profit</div>
+                  <input
+                    type="number"
+                    value={takeProfit}
+                    onChange={(e) => setTakeProfit(e.target.value)}
+                    placeholder="---"
+                    data-testid="input-take-profit-mobile"
+                    className="glass-light rounded-lg w-full h-9 px-3 text-sm text-center bg-transparent outline-none placeholder:text-muted-foreground/50"
+                  />
+                </div>
+              </div>
+
+              {/* Amount Slider Mobile */}
+              <div className="px-1">
+                <Slider
+                  value={[amount]}
+                  onValueChange={handleSliderChange}
+                  min={1}
+                  max={Math.max(1, balance)}
+                  step={1}
+                  data-testid="slider-amount-mobile"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>$1</span>
+                  <span>Max: ${formatPrice(balance)}</span>
+                </div>
+              </div>
+
+              {/* Account Margin Section - Mobile */}
+              <div className="glass-light rounded-lg p-2">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <div className="text-[10px] text-muted-foreground">Equity</div>
+                    <div className={cn("text-xs font-semibold", totalUnrealizedPnl >= 0 ? "text-success" : "text-destructive")} data-testid="text-equity-mobile">
+                      ${formatPrice(equity)}
                     </div>
                   </div>
-                );
-              })}
-              {openPositions.length > 2 && (
-                <div className="text-[10px] text-center text-muted-foreground">+{openPositions.length - 2} more positions</div>
-              )}
+                  <div>
+                    <div className="text-[10px] text-muted-foreground">Orders Margin</div>
+                    <div className="text-xs font-semibold text-warning" data-testid="text-orders-margin-mobile">
+                      ${formatPrice(totalOrdersMargin)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-muted-foreground">Account Margin</div>
+                    <div className="text-xs font-semibold text-success" data-testid="text-account-margin-mobile">
+                      ${formatPrice(accountMargin)}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Amount Input */}
-          <div>
-            <div className="text-xs text-muted-foreground text-center mb-1">Amount ($)</div>
-            <div className="glass-light rounded-lg flex items-center justify-between h-12 px-3">
+          {/* Always Visible: Amount + Buy/Sell */}
+          <div className="px-3 pb-2 space-y-2">
+            {/* Amount Input - Compact */}
+            <div className="glass-light rounded-lg flex items-center justify-between h-10 px-3">
               <button 
                 onClick={() => setAmount(Math.max(1, amount - 10))}
                 data-testid="button-amount-minus"
                 className="text-muted-foreground"
               >
-                <Minus className="w-5 h-5" />
+                <Minus className="w-4 h-4" />
               </button>
-              <span className="text-lg font-semibold" data-testid="text-amount-mobile">{amount}</span>
+              <span className="text-sm font-semibold" data-testid="text-amount-mobile">${amount}</span>
               <button 
                 onClick={() => setAmount(Math.min(balance, amount + 10))}
                 data-testid="button-amount-plus"
                 className="text-muted-foreground"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4" />
               </button>
             </div>
-          </div>
 
-          {/* SL/TP Row Mobile */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <div className="text-xs text-muted-foreground text-center mb-1">Stop Loss</div>
-              <input
-                type="number"
-                value={stopLoss}
-                onChange={(e) => setStopLoss(e.target.value)}
-                placeholder="---"
-                data-testid="input-stop-loss-mobile"
-                className="glass-light rounded-lg w-full h-10 px-3 text-sm text-center bg-transparent outline-none placeholder:text-muted-foreground/50"
-              />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground text-center mb-1">Take Profit</div>
-              <input
-                type="number"
-                value={takeProfit}
-                onChange={(e) => setTakeProfit(e.target.value)}
-                placeholder="---"
-                data-testid="input-take-profit-mobile"
-                className="glass-light rounded-lg w-full h-10 px-3 text-sm text-center bg-transparent outline-none placeholder:text-muted-foreground/50"
-              />
+            {/* Sell/Buy Buttons Row */}
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                onClick={() => handleTrade("sell")}
+                disabled={openPositionMutation.isPending}
+                data-testid="button-sell-mobile"
+                className="h-12 bg-destructive hover:bg-destructive/90 text-white font-bold flex flex-col items-center justify-center gap-0"
+              >
+                <span className="text-sm font-mono">{selectedAsset ? formatPrice(selectedAsset.price * 0.9999) : "---"}</span>
+                <span className="text-[8px] uppercase tracking-wider opacity-80">Sell</span>
+              </Button>
+
+              <Button
+                onClick={() => handleTrade("buy")}
+                disabled={openPositionMutation.isPending}
+                data-testid="button-buy-mobile"
+                className="h-12 bg-[#2196F3] hover:bg-[#1976D2] text-white font-bold flex flex-col items-center justify-center gap-0"
+              >
+                <span className="text-sm font-mono">{selectedAsset ? formatPrice(selectedAsset.price * 1.0001) : "---"}</span>
+                <span className="text-[8px] uppercase tracking-wider opacity-80">Buy</span>
+              </Button>
             </div>
           </div>
-
-          {/* Amount Slider Mobile */}
-          <div className="px-1">
-            <Slider
-              value={[amount]}
-              onValueChange={handleSliderChange}
-              min={1}
-              max={Math.max(1, balance)}
-              step={1}
-              data-testid="slider-amount-mobile"
-            />
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>$1</span>
-              <span>Max: ${formatPrice(balance)}</span>
-            </div>
-          </div>
-
-          {/* Sell/Buy Buttons Row - MetaTrader Style */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              onClick={() => handleTrade("sell")}
-              disabled={openPositionMutation.isPending}
-              data-testid="button-sell-mobile"
-              className="h-14 bg-destructive hover:bg-destructive/90 text-white font-bold flex flex-col items-center justify-center gap-0.5"
-            >
-              <span className="text-base font-mono">{selectedAsset ? formatPrice(selectedAsset.price * 0.9999) : "---"}</span>
-              <span className="text-[9px] uppercase tracking-wider opacity-80">Sell by Market</span>
-            </Button>
-
-            <Button
-              onClick={() => handleTrade("buy")}
-              disabled={openPositionMutation.isPending}
-              data-testid="button-buy-mobile"
-              className="h-14 bg-[#2196F3] hover:bg-[#1976D2] text-white font-bold flex flex-col items-center justify-center gap-0.5"
-            >
-              <span className="text-base font-mono">{selectedAsset ? formatPrice(selectedAsset.price * 1.0001) : "---"}</span>
-              <span className="text-[9px] uppercase tracking-wider opacity-80">Buy by Market</span>
-            </Button>
-          </div>
-
-          {/* Account Margin Section - Mobile */}
-          <div className="glass-light rounded-lg p-2">
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div>
-                <div className="text-[10px] text-muted-foreground">Equity</div>
-                <div className={cn("text-xs font-semibold", totalUnrealizedPnl >= 0 ? "text-success" : "text-destructive")} data-testid="text-equity-mobile">
-                  ${formatPrice(equity)}
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] text-muted-foreground">Orders Margin</div>
-                <div className="text-xs font-semibold text-warning" data-testid="text-orders-margin-mobile">
-                  ${formatPrice(totalOrdersMargin)}
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] text-muted-foreground">Account Margin</div>
-                <div className="text-xs font-semibold text-success" data-testid="text-account-margin-mobile">
-                  ${formatPrice(accountMargin)}
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div>
 
         {/* Mobile Bottom Navigation */}

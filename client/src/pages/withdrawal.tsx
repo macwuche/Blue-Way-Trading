@@ -20,6 +20,7 @@ import {
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { SiPaypal, SiBitcoin, SiEthereum, SiTether } from "react-icons/si";
 
 type WithdrawalMethod = "btc" | "eth" | "usdt" | "paypal" | "bank";
@@ -359,6 +360,7 @@ export default function Withdrawal() {
           )}
         </div>
       </ScrollArea>
+      <MobileBottomNav />
     </div>
   );
 }

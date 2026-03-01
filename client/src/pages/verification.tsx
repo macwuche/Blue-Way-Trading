@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
 interface VerificationStep {
   id: string;
@@ -270,6 +271,7 @@ export default function Verification() {
           </Card>
         </div>
       </ScrollArea>
+      <MobileBottomNav />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { SiPaypal, SiBitcoin, SiEthereum, SiTether } from "react-icons/si";
 
 type PaymentMethod = "btc" | "eth" | "usdt" | "paypal" | "bank";
@@ -331,6 +332,7 @@ export default function Deposit() {
           )}
         </div>
       </ScrollArea>
+      <MobileBottomNav />
     </div>
   );
 }

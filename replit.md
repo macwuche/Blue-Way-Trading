@@ -101,5 +101,11 @@ Preferred communication style: Simple, everyday language.
 - **Triggers**: Registration (auth.ts), Position open/close (trading-engine.ts, routes.ts), Admin balance/profit adjustments (routes.ts)
 - **Non-blocking**: All email sends use `.catch()` to prevent failures from breaking core flows
 
+### Mobile UI
+- **Responsive TradeRoom**: Mobile trading panel is collapsible — shows only amount input + Buy/Sell buttons by default; SL/TP, slider, positions, and margin info expand via toggle (max-h-[40vh] scrollable)
+- **Bottom Navigation**: Reusable `MobileBottomNav` component (`client/src/components/mobile-bottom-nav.tsx`) added to all secondary pages (Portfolio, History, Support, News, VIP, Deposit, Withdrawal, Verification, More)
+- **Dashboard Sidebar**: Defaults closed on mobile (< 1024px), auto-adjusts on viewport resize, includes backdrop overlay when open
+- **Notification Dropdown**: Responsive width using `w-[calc(100vw-1rem)] sm:w-96` to prevent overflow on narrow screens
+
 ### Session Management
 - **Explicit Session Save**: All login/register endpoints call `req.session.save()` before responding to ensure session data is persisted to PostgreSQL before the client can refresh

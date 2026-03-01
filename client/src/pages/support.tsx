@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/accordion";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { useToast } from "@/hooks/use-toast";
 
 const faqCategories = [
@@ -351,6 +352,7 @@ export default function Support() {
           </section>
         </div>
       </div>
+      <MobileBottomNav />
     </div>
   );
 }

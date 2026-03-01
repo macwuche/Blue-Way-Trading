@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
 interface Holding {
   id: number;
@@ -195,6 +196,7 @@ export default function Portfolio() {
           </div>
         </div>
       </ScrollArea>
+      <MobileBottomNav />
     </div>
   );
 }

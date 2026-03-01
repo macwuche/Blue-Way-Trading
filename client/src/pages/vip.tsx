@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
 interface VipTier {
   id: string;
@@ -247,6 +248,7 @@ export default function Vip() {
           </Card>
         </div>
       </ScrollArea>
+      <MobileBottomNav />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
 interface SettingItem {
   id: string;
@@ -191,6 +192,7 @@ export default function More() {
           </div>
         </div>
       </ScrollArea>
+      <MobileBottomNav />
     </div>
   );
 }

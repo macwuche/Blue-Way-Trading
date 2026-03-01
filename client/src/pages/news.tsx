@@ -22,6 +22,7 @@ import {
 import { format, subDays, startOfDay } from "date-fns";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
 interface NewsArticle {
   uuid: string;
@@ -775,6 +776,7 @@ export default function NewsPage() {
           )}
         </DialogContent>
       </Dialog>
+      <MobileBottomNav />
     </div>
   );
 }

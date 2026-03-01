@@ -74,7 +74,9 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(cryptoAssets[0]);
   const [marketModalOpen, setMarketModalOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    return typeof window !== "undefined" ? window.innerWidth >= 1024 : false;
+  });
   const [tradeCountdowns, setTradeCountdowns] = useState<Record<string, number>>({});
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -123,6 +125,18 @@ export default function Dashboard() {
     queryKey: ["/api/user/active-trades"],
     refetchInterval: 5000, // Refresh every 5 seconds
   });
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -301,7 +315,10 @@ export default function Dashboard() {
               {navItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    if (window.innerWidth < 1024) setSidebarOpen(false);
+                  }}
                   data-testid={`nav-${item.id}`}
                   className={cn(
                     "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
@@ -346,6 +363,14 @@ export default function Dashboard() {
         </div>
       </aside>
 
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+          data-testid="sidebar-overlay"
+        />
+      )}
+
       <div className="flex-1 flex flex-col min-h-0">
         <header className="sticky top-0 z-30 glass border-b border-border/30">
           <div className="flex items-center justify-between gap-4 px-4 lg:px-6 h-16">
@@ -369,8 +394,8 @@ export default function Dashboard() {
                 data-testid="button-open-markets"
                 className="glass-light border-border/30"
               >
-                <Search className="w-4 h-4 mr-2" />
-                Search Markets
+                <Search className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Search Markets</span>
               </Button>
 
               <div className="relative" ref={notifRef}>
@@ -390,7 +415,7 @@ export default function Dashboard() {
                 </Button>
 
                 {notifOpen && (
-                  <div className="absolute right-0 top-12 w-80 sm:w-96 glass-dark border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden" data-testid="notification-dropdown">
+                  <div className="absolute right-0 top-12 w-[calc(100vw-1rem)] sm:w-96 max-w-[calc(100vw-16px)] glass-dark border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden" data-testid="notification-dropdown">
                     <div className="flex items-center justify-between p-3 border-b border-white/10">
                       <h3 className="font-semibold text-sm">Notifications</h3>
                       {(notifData?.unreadCount || 0) > 0 && (
