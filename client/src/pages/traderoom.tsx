@@ -1257,48 +1257,9 @@ export default function TradeRoom() {
             <span className="text-[10px] uppercase tracking-wider">{mobileTradeExpanded ? "Less" : "More"}</span>
           </button>
 
-          {/* Expanded Section: Positions, SL/TP, Slider, Margin */}
+          {/* Expanded Section: SL/TP, Slider, Margin */}
           {mobileTradeExpanded && (
             <div className="px-3 pb-2 space-y-2 max-h-[40vh] overflow-y-auto">
-              {/* Open Positions Mobile View */}
-              {hasActivePositions && (
-                <div className="space-y-1.5">
-                  <div className="text-xs text-muted-foreground">Open Positions ({openPositions.length})</div>
-                  {openPositions.slice(0, 3).map((pos) => {
-                    const pnl = parseFloat(pos.unrealizedPnl || "0") + parseFloat(pos.adminProfit || "0");
-                    return (
-                      <div key={pos.id} className={cn(
-                        "glass-light rounded-lg p-2 border",
-                        pos.direction === "buy" ? "border-[#2196F3]/30" : "border-destructive/30"
-                      )}>
-                        <div className="flex items-center justify-between">
-                          <span className={cn("text-xs font-semibold", pos.direction === "buy" ? "text-[#2196F3]" : "text-destructive")}>
-                            {pos.direction.toUpperCase()} {pos.symbol} - ${pos.amount}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <span className={cn("text-xs font-bold", pnl >= 0 ? "text-success" : "text-destructive")}>
-                              {pnl >= 0 ? "+" : ""}${formatPrice(Math.abs(pnl))}
-                            </span>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => closePositionMutation.mutate(pos.id)}
-                              data-testid={`button-close-position-mobile-${pos.id}`}
-                              className="h-5 px-1 text-[10px]"
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {openPositions.length > 3 && (
-                    <div className="text-[10px] text-center text-muted-foreground">+{openPositions.length - 3} more positions</div>
-                  )}
-                </div>
-              )}
-
               {/* SL/TP Row Mobile */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
@@ -1389,7 +1350,7 @@ export default function TradeRoom() {
             </div>
 
             {/* Sell/Buy Buttons Row */}
-            <div className="grid grid-cols-2 gap-2 pb-1">
+            <div className="grid grid-cols-2 gap-2">
               <Button
                 onClick={() => handleTrade("sell")}
                 disabled={openPositionMutation.isPending}
@@ -1410,6 +1371,45 @@ export default function TradeRoom() {
                 <span className="text-[8px] uppercase tracking-wider opacity-80">Buy</span>
               </Button>
             </div>
+
+            {/* Open Positions - Always Visible Below Buy/Sell */}
+            {hasActivePositions && (
+              <div className="space-y-1.5">
+                <div className="text-xs text-muted-foreground">Open Positions ({openPositions.length})</div>
+                {openPositions.slice(0, 3).map((pos) => {
+                  const pnl = parseFloat(pos.unrealizedPnl || "0") + parseFloat(pos.adminProfit || "0");
+                  return (
+                    <div key={pos.id} className={cn(
+                      "glass-light rounded-lg p-2 border",
+                      pos.direction === "buy" ? "border-[#2196F3]/30" : "border-destructive/30"
+                    )}>
+                      <div className="flex items-center justify-between">
+                        <span className={cn("text-xs font-semibold", pos.direction === "buy" ? "text-[#2196F3]" : "text-destructive")}>
+                          {pos.direction.toUpperCase()} {pos.symbol} - ${pos.amount}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={cn("text-xs font-bold", pnl >= 0 ? "text-success" : "text-destructive")}>
+                            {pnl >= 0 ? "+" : ""}${formatPrice(Math.abs(pnl))}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => closePositionMutation.mutate(pos.id)}
+                            data-testid={`button-close-position-mobile-${pos.id}`}
+                            className="h-5 px-1 text-[10px]"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {openPositions.length > 3 && (
+                  <div className="text-[10px] text-center text-muted-foreground">+{openPositions.length - 3} more positions</div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
