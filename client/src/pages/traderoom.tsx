@@ -1259,7 +1259,12 @@ export default function TradeRoom() {
           </button>
 
           {/* Expanded Section: SL/TP, Slider, Margin */}
-          {mobileTradeExpanded && (
+          <div
+            className={cn(
+              "overflow-hidden transition-all duration-150 ease-in-out",
+              mobileTradeExpanded ? "max-h-[40vh] opacity-100" : "max-h-0 opacity-0"
+            )}
+          >
             <div className="px-3 pb-2 space-y-2 max-h-[40vh] overflow-y-auto">
               {/* SL/TP Row Mobile */}
               <div className="grid grid-cols-2 gap-2">
@@ -1327,7 +1332,7 @@ export default function TradeRoom() {
                 </div>
               </div>
             </div>
-          )}
+          </div>
 
           {/* Always Visible: Amount + Buy/Sell */}
           <div className="px-3 pb-3 space-y-2">
@@ -1381,12 +1386,12 @@ export default function TradeRoom() {
                   data-testid="button-toggle-positions-mobile"
                   className="w-full flex items-center justify-center gap-1.5 py-1.5 text-muted-foreground"
                 >
-                  <ChevronUp className={cn("w-3.5 h-3.5 transition-transform duration-300", mobilePositionsExpanded && "rotate-180")} />
+                  <ChevronUp className={cn("w-3.5 h-3.5 transition-transform duration-150", mobilePositionsExpanded && "rotate-180")} />
                   <span className="text-xs">Open Positions ({openPositions.length})</span>
                 </button>
                 <div
                   className={cn(
-                    "overflow-hidden transition-all duration-300 ease-in-out",
+                    "overflow-hidden transition-all duration-150 ease-in-out",
                     mobilePositionsExpanded ? "max-h-[30vh] opacity-100" : "max-h-0 opacity-0"
                   )}
                 >
