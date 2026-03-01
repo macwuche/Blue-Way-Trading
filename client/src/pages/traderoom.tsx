@@ -88,6 +88,7 @@ export default function TradeRoom() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [mobileTradeExpanded, setMobileTradeExpanded] = useState(false);
   const [mobilePositionsExpanded, setMobilePositionsExpanded] = useState(false);
+  const positionsRef = useRef<HTMLDivElement>(null);
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -396,7 +397,7 @@ export default function TradeRoom() {
   }
 
   return (
-    <div className="h-[100dvh] md:h-screen flex flex-col md:flex-row bg-[#0a0a0a] overflow-hidden">
+    <div className="min-h-[100dvh] md:h-screen flex flex-col md:flex-row bg-[#0a0a0a] md:overflow-hidden">
       {/* Desktop Sidebar - Hidden on mobile */}
       <aside className="hidden md:flex w-16 border-r border-white/10 flex-col items-center py-4 glass-dark">
         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF9800] to-[#FF5722] flex items-center justify-center mb-6">
@@ -1378,25 +1379,26 @@ export default function TradeRoom() {
               </Button>
             </div>
 
-            {/* Open Positions - Slide Up Toggle */}
+            {/* Open Positions - Slide Down Toggle */}
             {hasActivePositions && (
-              <div>
+              <div ref={positionsRef}>
                 <button
-                  onClick={() => setMobilePositionsExpanded(!mobilePositionsExpanded)}
+                  onClick={() => {
+                    const next = !mobilePositionsExpanded;
+                    setMobilePositionsExpanded(next);
+                    if (next) {
+                      setTimeout(() => positionsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 160);
+                    }
+                  }}
                   data-testid="button-toggle-positions-mobile"
                   className="w-full flex items-center justify-center gap-1.5 py-1.5 text-muted-foreground"
                 >
-                  <ChevronUp className={cn("w-3.5 h-3.5 transition-transform duration-150", mobilePositionsExpanded && "rotate-180")} />
+                  <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-150", mobilePositionsExpanded && "rotate-180")} />
                   <span className="text-xs">Open Positions ({openPositions.length})</span>
                 </button>
-                <div
-                  className={cn(
-                    "overflow-hidden transition-all duration-150 ease-in-out",
-                    mobilePositionsExpanded ? "max-h-[30vh] opacity-100" : "max-h-0 opacity-0"
-                  )}
-                >
-                  <div className="space-y-1.5 overflow-y-auto max-h-[30vh] pb-1">
-                    {openPositions.slice(0, 5).map((pos) => {
+                {mobilePositionsExpanded && (
+                  <div className="space-y-1.5 px-1 pb-2">
+                    {openPositions.map((pos) => {
                       const pnl = parseFloat(pos.unrealizedPnl || "0") + parseFloat(pos.adminProfit || "0");
                       return (
                         <div key={pos.id} className={cn(
@@ -1425,11 +1427,8 @@ export default function TradeRoom() {
                         </div>
                       );
                     })}
-                    {openPositions.length > 5 && (
-                      <div className="text-[10px] text-center text-muted-foreground">+{openPositions.length - 5} more positions</div>
-                    )}
                   </div>
-                </div>
+                )}
               </div>
             )}
           </div>
