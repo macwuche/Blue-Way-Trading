@@ -698,7 +698,7 @@ export default function TradeRoom() {
         </div>
 
         {/* Chart Area */}
-        <div className="flex-1 flex flex-col md:flex-row min-h-0">
+        <div className="h-[50vh] md:flex-1 flex flex-col md:flex-row md:min-h-0">
           <div className="flex-1 flex flex-col min-h-0">
             {/* Desktop Asset Selector */}
             <div className="hidden md:flex items-center gap-4 px-4 py-3 border-b border-white/10">
