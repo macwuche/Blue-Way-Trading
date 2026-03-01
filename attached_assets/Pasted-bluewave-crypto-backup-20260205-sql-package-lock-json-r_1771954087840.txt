@@ -1,0 +1,149 @@
+bluewave  crypto_backup_20260205.sql  package-lock.json
+root@srv1329180:~# cd bluewave
+root@srv1329180:~/bluewave# git pull origin main
+remote: Enumerating objects: 80, done.
+remote: Counting objects: 100% (80/80), done.
+remote: Compressing objects: 100% (10/10), done.
+remote: Total 50 (delta 39), reused 50 (delta 39), pack-reused 0 (from 0)
+Unpacking objects: 100% (50/50), 948.85 KiB | 11.71 MiB/s, done.
+From https://github.com/macwuche/Blue-Way-Trading
+ * branch            main       -> FETCH_HEAD
+   626a64c..467a7c6  main       -> origin/main
+Updating 626a64c..467a7c6
+Fast-forward
+ VPS_DEPLOYMENT_GUIDE.md                                                                          |   2 +-
+ attached_assets/Pasted-root-srv1329180-bluewave-pm2-list--1771949257582_1771949257582.txt        | 410 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ attached_assets/Pasted-root-srv1329180-bluewave-pm2-logs-bluewave-lines-20-TAI_1771950920350.txt |  39 +++++++++++++
+ attached_assets/Pasted-root-srv1329180-bluewave-pm2-logs-bluewave-lines-30-err_1771949969500.txt |  33 +++++++++++
+ attached_assets/Pasted-root-srv1329180-bluewave-pm2-set-bluewave-RESEND-API-KE_1771950269403.txt |  31 ++++++++++
+ attached_assets/image_1771949095198.png                                                          | Bin 0 -> 216891 bytes
+ attached_assets/image_1771949873630.png                                                          | Bin 0 -> 216640 bytes
+ attached_assets/image_1771950562399.png                                                          | Bin 0 -> 272869 bytes
+ attached_assets/image_1771951139282.png                                                          | Bin 0 -> 324018 bytes
+ client/index.html                                                                                |   6 +-
+ client/src/App.tsx                                                                               |   2 +-
+ client/src/components/global-notification-popup.tsx                                              |  26 +--------
+ client/src/components/onboarding.tsx                                                             |   4 +-
+ client/src/pages/admin/dashboard.tsx                                                             |  10 ++--
+ client/src/pages/admin/vip.tsx                                                                   | 123 ++++++++++++++++++++--------------------
+ client/src/pages/dashboard.tsx                                                                   |   2 +-
+ client/src/pages/landing.tsx                                                                     |   8 +--
+ client/src/pages/login.tsx                                                                       |   6 +-
+ client/src/pages/more.tsx                                                                        |   2 +-
+ client/src/pages/news.tsx                                                                        |  16 +++---
+ client/src/pages/signup.tsx                                                                      |   8 +--
+ client/src/pages/traderoom.tsx                                                                   | 127 ++++++++++++++++++++++++++++++++++++++++-
+ replit.md                                                                                        |   4 +-
+ scripts/setup-db.sql                                                                             |   2 +-
+ server/email.ts                                                                                  |  28 ++++++++--
+ server/routes.ts                                                                                 |  77 +++++++++++++++++++++++++
+ server/storage.ts                                                                                |  51 ++++++++++++++++-
+ shared/schema.ts                                                                                 |  13 +++++
+ 28 files changed, 902 insertions(+), 128 deletions(-)
+ create mode 100644 attached_assets/Pasted-root-srv1329180-bluewave-pm2-list--1771949257582_1771949257582.txt
+ create mode 100644 attached_assets/Pasted-root-srv1329180-bluewave-pm2-logs-bluewave-lines-20-TAI_1771950920350.txt
+ create mode 100644 attached_assets/Pasted-root-srv1329180-bluewave-pm2-logs-bluewave-lines-30-err_1771949969500.txt
+ create mode 100644 attached_assets/Pasted-root-srv1329180-bluewave-pm2-set-bluewave-RESEND-API-KE_1771950269403.txt
+ create mode 100644 attached_assets/image_1771949095198.png
+ create mode 100644 attached_assets/image_1771949873630.png
+ create mode 100644 attached_assets/image_1771950562399.png
+ create mode 100644 attached_assets/image_1771951139282.png
+root@srv1329180:~/bluewave# npm install
+
+up to date, audited 511 packages in 3s
+
+71 packages are looking for funding
+  run `npm fund` for details
+
+7 vulnerabilities (1 moderate, 6 high)
+
+To address all issues, run:
+  npm audit fix
+
+Run `npm audit` for details.
+root@srv1329180:~/bluewave# npx drizzle-kit push --force
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/root/bluewave/drizzle.config.ts'
+Using 'pg' driver for database querying
+[✓] Pulling schema from database...
+[✓] Changes applied
+root@srv1329180:~/bluewave# npm run build
+
+> rest-express@1.0.0 build
+> tsx script/build.ts
+
+building client...
+vite v7.3.0 building client environment for production...
+transforming (5) ../node_modules/wouter/esm/index.js
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+✓ 3058 modules transformed.
+node_modules/lottie-web/build/player/lottie.js (14422:32): Use of eval in "node_modules/lottie-web/build/player/lottie.js" is strongly discouraged as it poses security risks and may cause issues with minification.
+../dist/public/index.html                                                                  1.31 kB │ gzip:   0.57 kB
+../dist/public/assets/WhatsApp_Image_2026-01-22_at_7.2_(1)_1771943319406-C6ztXHAO.png     38.94 kB
+../dist/public/assets/Audio_2026_02_22-1_1771787287153-DPnsC8Jx.mp3                      131.70 kB
+../dist/public/assets/GmbuHuHbRYpTPJt5_1768481770485-DL5FOx8Z.png                      2,291.07 kB
+../dist/public/assets/index-Co8B6Pap.css                                                 125.53 kB │ gzip:  19.28 kB
+../dist/public/assets/index-ioiSzQR5.js                                                2,343.41 kB │ gzip: 570.42 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 15.95s
+building server...
+
+  dist/index.cjs  1.1mb ⚠️
+
+⚡ Done in 272ms
+root@srv1329180:~/bluewave# pm2 restart bluewave
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [bluewave](ids: [ 5 ])
+[PM2] [bluewave](5) ✓
+┌────┬───────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name              │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 5  │ bluewave          │ default     │ 1.0.0   │ cluster │ 320908   │ 0s     │ 22   │ online    │ 0%       │ 41.3mb   │ root     │ disabled │
+│ 0  │ crypto-trading    │ default     │ 1.0.0   │ fork    │ 319879   │ 79m    │ 13   │ online    │ 0%       │ 105.6mb  │ root     │ disabled │
+└────┴───────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+root@srv1329180:~/bluewave# pm2 logs bluewave --lines 20
+[TAILING] Tailing last 20 lines for [bluewave] process (change the value with --lines option)
+/root/.pm2/logs/bluewave-error-5.log last 20 lines:
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave | [Massive API] Error for X:BNBUSD: NOT_FOUND
+
+/root/.pm2/logs/bluewave-out-5.log last 20 lines:
+5|bluewave | ume24h":27961220,"marketCap":0,"type":"stock"},{"symbol":"META","name":"Meta Platforms, Inc. Class A Common Stock","price":638.817,"change24h":1.567,"changePercent24h":0.246,"volume24h":4417675,"marketCap":0,"type":"stock"},{"symbol":"SPY","name":"State Street SPDR S&P 500 ETF Trust","price":687.275,"change24h":4.885,"changePercent24h":0.716,"volume24h":32505094,"marketCap":0,"type":"etf"},{"symbol":"QQQ","name":"Invesco QQQ Trust, Series 1","price":608.61,"change24h":7.2,"changePercent24h":1.197,"volume24h":30159337,"marketCap":0,"type":"etf"},{"symbol":"VTI","name":"Vanguard Total Stock Market ETF","price":339.035,"change24h":2.575,"changePercent24h":0.765,"volume24h":1958823,"marketCap":0,"type":"etf"},{"symbol":"IWM","name":"iShares Russell 2000 ETF","price":262.92,"change24h":2.43,"changePercent24h":0.933,"volume24h":17390273,"marketCap":0,"type":"etf"},{"symbol":"GLD","name":"SPDR Gold Trust, SPDR Gold Shares","price":473.8,"change24h":-7.48,"changePercent24h":-1.55,"volume24h":8002999,"marketCap":0,"type":"etf"},{"symbol":"BTC/USDT","name":"Bitcoin - United States dollar","price":64267,"change24h":-337,"changePercent24h":-0.522,"volume24h":22635.5181616,"marketCap":0,"type":"crypto"},{"symbol":"ETH/USDT","name":"Ethereum - United States dollar","price":1859.85,"change24h":4.5,"changePercent24h":0.243,"volume24h":212230.653101,"marketCap":0,"type":"crypto"},{"symbol":"SOL/USDT","name":"Solana - United States dollar","price":78.257,"change24h":0.437,"changePercent24h":0.562,"volume24h":1517263.642159498,"marketCap":0,"type":"crypto"},{"symbol":"XRP/USDT","name":"Ripple - United States dollar","price":1.3588,"change24h":0.0072,"changePercent24h":0.533,"volume24h":156865204.64809322,"marketCap":0,"type":"crypto"},{"symbol":"ADA/USDT","name":"Cardano - United States dollar","price":0.2616,"change24h":-0.0005,"changePercent24h":-0.191,"volume24h":43588817.785103,"marketCap":0,"type":"crypto"},{"symbol":"DOGE/USDT","name":"Dogecoin - United States dollar","price":0.09179,"change24h":-0.00073,"changePercent24h":-0.789,"volume24h":260940175.6816361,"marketCap":0,"type":"crypto"},{"symbol":"DOT/USDT","name":"Polkadot - United States dollar","price":1.252,"change24h":-0.012,"changePercent24h":-0.949,"volume24h":1212963.7139315377,"marketCap":0,"type":"crypto"},{"symbol":"EUR/USD","name":"Euro - United States dollar","price":1.17836,"change24h":-0.001,"changePercent24h":-0.0848,"volume24h":142976,"marketCap":0,"type":"forex"},{"symbol":"GBP/USD","name":"Pound sterling - United States dollar","price":1.35191,"change24h":0.00227,"changePercent24h":0.168,"volume24h":171905,"marketCap":0,"type":"forex"},{"symbol":"USD/JPY","name":"United States dollar - Japanese yen","price":155.731,"change24h":1.052,"changePercent24h":0.68,"volume24h":241833,"marketCap":0,"type":"forex"},{"symbol":"USD/CHF","name":"United States dollar - Swiss franc","price":0.7738,"change24h":-0.00035,"changePercent24h":-0.0452,"volume24h":181448,"marketCap":0,"type":"forex"},{"symbol":"AUD/USD","name":"Australian dollar - United States dollar","price":0.70668,"change24h":0.00071,"changePercent24h":0.101,"volume24h":158026,"marketCap":0,"type":"forex"}],"lastFetchTime":1771953975128,"stale":false}
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | 5:26:27 PM [express] GET /api/auth/user 304 in 3ms :: {"id":"1520bab1-c1d0-425e-a14c-74f4a3488533","email":"benmacwuche@gmail.com","firstName":"Mac","lastName":"Wuche","isAdmin":false,"profileImageUrl":null,"phone":"+2348140615640","country":"Nigeria","status":"active","vipLevel":"Bronze","isVerified":false}
+5|bluewave | [Email] Logo loaded successfully for inline embedding
+5|bluewave | [Massive API] Started market data refresh every 5s
+5|bluewave | [TradingEngine] Started with 2000ms interval
+5|bluewave | 5:26:29 PM [express] serving on port 5001
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+5|bluewave | [Massive API] Refreshed market data: 24 assets
+
+5|bluewave  | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave  | [Massive API] Refreshed market data: 24 assets
+5|bluewave  | [Massive API] Error for X:BNBUSD: NOT_FOUND
+5|bluewave  | [Massive API] Refreshed market data: 24 assets
