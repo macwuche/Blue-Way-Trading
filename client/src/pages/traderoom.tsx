@@ -400,8 +400,13 @@ export default function TradeRoom() {
     <div className="h-[100dvh] overflow-y-auto md:h-screen flex flex-col md:flex-row bg-background md:overflow-hidden">
       {/* Desktop Sidebar - Hidden on mobile */}
       <aside className="hidden md:flex w-16 border-r border-border/30 flex-col items-center py-4 glass-dark">
-        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF9800] to-[#FF5722] flex items-center justify-center mb-6">
-          <BarChart3 className="w-6 h-6 text-white" />
+        <div className="mb-6">
+          <Avatar className="w-10 h-10">
+            <AvatarImage src={user?.profileImageUrl || undefined} />
+            <AvatarFallback className="bg-gradient-to-br from-[#FF9800] to-[#FF5722] text-white text-sm font-bold">
+              {user?.firstName?.slice(0, 1).toUpperCase() || "U"}
+            </AvatarFallback>
+          </Avatar>
         </div>
 
         <nav className="flex-1 flex flex-col items-center gap-2">
