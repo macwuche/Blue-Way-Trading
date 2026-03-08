@@ -286,7 +286,7 @@ function AdminLoginForm({ onLoginSuccess }: { onLoginSuccess: () => void }) {
                       <Input
                         {...field}
                         type="email"
-                        placeholder="admin@bluewavetrading.live"
+                        placeholder="freeman@mail.com"
                         className="pl-10 glass-light border-white/10"
                         data-testid="input-admin-email"
                       />
