@@ -65,7 +65,7 @@ export default function LoginPage() {
   return (
     <div className="h-screen flex flex-col md:flex-row overflow-hidden">
       {/* Left Side - Login Form */}
-      <div className="w-full md:w-1/2 flex flex-col justify-center px-8 py-12 md:px-16 lg:px-24 bg-white dark:bg-[#0a0a0a] order-1 md:order-1 overflow-y-auto">
+      <div className="w-full md:w-1/2 flex flex-col justify-center px-8 py-12 md:px-16 lg:px-24 bg-background order-1 md:order-1 overflow-y-auto">
         {/* Mobile Logo - Above form */}
         <div className="md:hidden flex flex-col items-center mb-8">
           <img src={logoPath} alt="Bluewave Trading" className="h-12 object-contain" data-testid="img-mobile-logo" />
@@ -90,7 +90,7 @@ export default function LoginPage() {
                         type="email"
                         placeholder="support@bluewaytrading.com"
                         data-testid="input-email"
-                        className="h-12 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:border-[#34C759] focus:ring-[#34C759]"
+                        className="h-12 bg-muted/50 border-border focus:border-[#34C759] focus:ring-[#34C759]"
                       />
                     </FormControl>
                     <FormMessage />
@@ -110,7 +110,7 @@ export default function LoginPage() {
                         type="password"
                         placeholder="••••••••••••••••"
                         data-testid="input-password"
-                        className="h-12 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 focus:border-[#34C759] focus:ring-[#34C759]"
+                        className="h-12 bg-muted/50 border-border focus:border-[#34C759] focus:ring-[#34C759]"
                       />
                     </FormControl>
                     <FormMessage />
@@ -161,9 +161,9 @@ export default function LoginPage() {
           {/* Social Login Buttons */}
           <div className="mt-6">
             <div className="relative flex items-center justify-center my-4">
-              <div className="border-t border-gray-200 dark:border-gray-800 flex-grow" />
-              <span className="px-4 text-sm text-gray-500">or continue with</span>
-              <div className="border-t border-gray-200 dark:border-gray-800 flex-grow" />
+              <div className="border-t border-border flex-grow" />
+              <span className="px-4 text-sm text-muted-foreground">or continue with</span>
+              <div className="border-t border-border flex-grow" />
             </div>
 
             <div className="flex gap-4">
@@ -205,7 +205,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <p className="mt-8 text-center text-gray-600 dark:text-gray-400">
+          <p className="mt-8 text-center text-muted-foreground">
             Don't have an account?{" "}
             <button
               type="button"

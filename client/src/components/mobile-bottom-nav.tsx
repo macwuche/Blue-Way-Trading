@@ -19,7 +19,7 @@ export function MobileBottomNav({ activeTab }: { activeTab?: string }) {
   })?.id || "trade";
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-white/10 glass-dark py-2 px-2" data-testid="mobile-bottom-nav">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-border/30 glass-dark py-2 px-2" data-testid="mobile-bottom-nav">
       {navItems.map((item) => (
         <button
           key={item.id}

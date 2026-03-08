@@ -103,10 +103,10 @@ export function AssetInfoPanel({ asset, profitPercent, potentialProfit, classNam
   return (
     <div className={cn("glass-light rounded-lg overflow-hidden", className)}>
       <div className="relative">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border/30">
           <button 
             onClick={prevSlide}
-            className="p-1 hover:bg-white/10 rounded transition-colors"
+            className="p-1 hover:bg-foreground/10 rounded transition-colors"
             data-testid="button-asset-info-prev"
           >
             <ChevronLeft className="w-4 h-4 text-muted-foreground" />
@@ -118,7 +118,7 @@ export function AssetInfoPanel({ asset, profitPercent, potentialProfit, classNam
                 onClick={() => setCurrentSlide(idx)}
                 className={cn(
                   "w-2 h-2 rounded-full transition-colors",
-                  currentSlide === idx ? "bg-primary" : "bg-white/20"
+                  currentSlide === idx ? "bg-primary" : "bg-foreground/20"
                 )}
                 data-testid={`button-slide-${slide.id}`}
               />
@@ -126,7 +126,7 @@ export function AssetInfoPanel({ asset, profitPercent, potentialProfit, classNam
           </div>
           <button 
             onClick={nextSlide}
-            className="p-1 hover:bg-white/10 rounded transition-colors"
+            className="p-1 hover:bg-foreground/10 rounded transition-colors"
             data-testid="button-asset-info-next"
           >
             <ChevronRight className="w-4 h-4 text-muted-foreground" />
@@ -176,7 +176,7 @@ export function AssetInfoPanel({ asset, profitPercent, potentialProfit, classNam
               </div>
               
               {(profitPercent !== undefined && potentialProfit !== undefined) && (
-                <div className="pt-2 border-t border-white/10">
+                <div className="pt-2 border-t border-border/30">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Expected return</span>
                     <div className="text-right">

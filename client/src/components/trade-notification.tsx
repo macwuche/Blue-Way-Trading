@@ -105,7 +105,7 @@ function TradeNotificationPopup({ notification, onDismiss }: TradeNotificationPo
       data-testid="trade-notification"
       className={cn(
         "pointer-events-auto w-[360px] max-w-[90vw] rounded-xl border backdrop-blur-xl transition-all duration-500 ease-out overflow-hidden",
-        "bg-[#1a1a2e]/90",
+        "bg-card/90",
         colorScheme.border,
         `shadow-lg ${colorScheme.glow}`,
         phase === "enter" && "opacity-0 scale-90 translate-y-4",
@@ -123,17 +123,17 @@ function TradeNotificationPopup({ notification, onDismiss }: TradeNotificationPo
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
-              <h4 className="text-sm font-bold text-white tracking-wide">{notification.title}</h4>
+              <h4 className="text-sm font-bold text-foreground tracking-wide">{notification.title}</h4>
               <button
                 onClick={() => { setPhase("exit"); setTimeout(() => onDismiss(notification.id), 300); }}
-                className="flex-shrink-0 text-white/30 opacity-70 hover:opacity-100 transition-opacity"
+                className="flex-shrink-0 text-muted-foreground opacity-70 hover:opacity-100 transition-opacity"
                 data-testid="button-dismiss-notification"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             {notification.description && (
-              <p className="text-xs text-white/60 mt-1 leading-relaxed">{notification.description}</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{notification.description}</p>
             )}
             {notification.pnl !== undefined && (
               <div className={cn("mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold", notification.pnl >= 0 ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400")}>
@@ -145,7 +145,7 @@ function TradeNotificationPopup({ notification, onDismiss }: TradeNotificationPo
         </div>
       </div>
 
-      <div className="relative h-[3px] bg-white/5">
+      <div className="relative h-[3px] bg-foreground/5">
         <div
           className={cn("h-full rounded-full", colorScheme.bar)}
           style={{

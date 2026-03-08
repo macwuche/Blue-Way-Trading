@@ -86,14 +86,14 @@ export function Onboarding({ open, onComplete }: OnboardingProps) {
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onComplete()}>
-      <DialogContent className="glass-dark border-white/10 max-w-md p-0 overflow-hidden" aria-describedby={undefined}>
+      <DialogContent className="glass-dark border-border/30 max-w-md p-0 overflow-hidden" aria-describedby={undefined}>
         <VisuallyHidden>
           <DialogTitle>Welcome to Bluewave Trading</DialogTitle>
         </VisuallyHidden>
         {/* Skip button */}
         <button
           onClick={handleSkip}
-          className="absolute top-4 right-4 text-muted-foreground hover:text-white z-10"
+          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground z-10"
           data-testid="button-skip-onboarding"
         >
           <X className="w-5 h-5" />

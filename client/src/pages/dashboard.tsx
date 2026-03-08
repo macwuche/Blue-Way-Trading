@@ -365,7 +365,7 @@ export default function Dashboard() {
 
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-30 bg-foreground/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
           data-testid="sidebar-overlay"
         />
@@ -415,8 +415,8 @@ export default function Dashboard() {
                 </Button>
 
                 {notifOpen && (
-                  <div className="absolute right-0 top-12 w-[calc(100vw-1rem)] sm:w-96 max-w-[calc(100vw-16px)] glass-dark border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden" data-testid="notification-dropdown">
-                    <div className="flex items-center justify-between p-3 border-b border-white/10">
+                  <div className="absolute right-0 top-12 w-[calc(100vw-1rem)] sm:w-96 max-w-[calc(100vw-16px)] glass-dark border border-border/30 rounded-xl shadow-2xl z-50 overflow-hidden" data-testid="notification-dropdown">
+                    <div className="flex items-center justify-between p-3 border-b border-border/30">
                       <h3 className="font-semibold text-sm">Notifications</h3>
                       {(notifData?.unreadCount || 0) > 0 && (
                         <Button
@@ -433,14 +433,14 @@ export default function Dashboard() {
                     </div>
                     <ScrollArea className="max-h-80">
                       {notifData?.notifications && notifData.notifications.length > 0 ? (
-                        <div className="divide-y divide-white/5">
+                        <div className="divide-y divide-border/30">
                           {notifData.notifications.slice(0, 20).map((n) => (
                             <div
                               key={n.id}
                               className={cn(
                                 "p-3 cursor-pointer transition-colors border-l-2",
                                 getNotifBorderColor(n.type),
-                                n.read ? "opacity-60" : "bg-white/5"
+                                n.read ? "opacity-60" : "bg-foreground/5"
                               )}
                               onClick={() => {
                                 if (!n.read) markReadMutation.mutate(n.id);
@@ -743,7 +743,7 @@ export default function Dashboard() {
 
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-30 lg:hidden"
+          className="fixed inset-0 bg-foreground/50 z-30 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}

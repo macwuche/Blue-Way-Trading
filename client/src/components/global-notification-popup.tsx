@@ -84,24 +84,20 @@ export function GlobalNotificationPopup() {
   return (
     <div
       className={cn(
-        "fixed top-4 left-1/2 -translate-x-1/2 z-[200] w-[90vw] max-w-md rounded-xl border border-white/10 shadow-2xl p-4 animate-in slide-in-from-top-full duration-300",
-        "bg-gradient-to-br from-[#1a1f35]/95 to-[#0d1225]/95 backdrop-blur-xl",
-        popupNotification.type === "success" ? "border-l-4 border-l-green-400" :
-        popupNotification.type === "warning" ? "border-l-4 border-l-yellow-400" :
-        popupNotification.type === "error" ? "border-l-4 border-l-red-400" :
-        "border-l-4 border-l-blue-400"
+        "fixed top-4 left-1/2 -translate-x-1/2 z-[200] w-[90vw] max-w-md rounded-xl border border-border/30 shadow-2xl p-4 animate-in slide-in-from-top-full duration-300",
+        "bg-card/95 backdrop-blur-xl"
       )}
       data-testid="popup-notification"
     >
       <div className="flex items-start gap-3">
         {getNotifIcon(popupNotification.type)}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white">{popupNotification.title}</p>
+          <p className="text-sm font-semibold text-foreground">{popupNotification.title}</p>
           <p className="text-xs text-muted-foreground mt-1 line-clamp-3">{popupNotification.message}</p>
         </div>
         <button
           onClick={() => setPopupNotification(null)}
-          className="text-muted-foreground hover:text-white transition-colors shrink-0"
+          className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
           data-testid="button-close-popup"
         >
           <X className="w-4 h-4" />
