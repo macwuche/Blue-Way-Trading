@@ -113,7 +113,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Mobile UI
 - **Responsive TradeRoom**: Mobile trading panel is collapsible — shows only amount input + Buy/Sell buttons by default; SL/TP, slider, positions, and margin info expand via toggle (max-h-[40vh] scrollable); outer container uses `h-[100dvh] overflow-y-auto` on mobile for chart flex-1 sizing with scroll when positions expand
-- **Profile Settings Page**: `client/src/pages/profile-settings.tsx` at `/profile-settings`; users can edit profile picture URL and home address; read-only fields for name, email, phone, country
+- **Profile Settings Page**: `client/src/pages/profile-settings.tsx` at `/profile-settings`; users can upload profile picture (file upload via multer, saved to `uploads/` dir, served at `/uploads/filename`) and edit home address; read-only fields for name, email, phone, country
 - **Bottom Navigation**: Reusable `MobileBottomNav` component (`client/src/components/mobile-bottom-nav.tsx`) added to all secondary pages (Portfolio, History, Support, News, VIP, Deposit, Withdrawal, Verification, More)
 - **Dashboard Sidebar**: Defaults closed on mobile (< 1024px), auto-adjusts on viewport resize, includes backdrop overlay when open
 - **Notification Dropdown**: Responsive width using `w-[calc(100vw-1rem)] sm:w-96` to prevent overflow on narrow screens

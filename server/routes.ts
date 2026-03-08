@@ -9,6 +9,39 @@ import { fetchMarketNews } from "./marketaux-api";
 import { addSSEClient, sendUserUpdate } from "./sse";
 import { openPosition, manualClosePosition, cancelPendingOrder, startTradingEngine } from "./trading-engine";
 import { sendTradeOpenedEmail, sendBalanceAdjustmentEmail, sendCustomEmail } from "./email";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+const uploadsDir = path.resolve(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const avatarStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (req: any, file, cb) => {
+    const userId = (req.user?.claims?.sub || "unknown").replace(/[^a-zA-Z0-9_-]/g, "_");
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `avatar-${userId}-${Date.now()}${ext}`);
+  },
+});
+
+const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
+
+const avatarUpload = multer({
+  storage: avatarStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = [".jpg", ".jpeg", ".png", ".webp"];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.includes(ext) && allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only JPG, PNG, and WebP images are allowed"));
+    }
+  },
+});
 
 // Middleware to check if user is admin
 const isAdmin = async (req: any, res: Response, next: Function) => {
@@ -1614,6 +1647,35 @@ export async function registerRoutes(
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
+  });
+
+  app.post("/api/user/profile-picture", isAuthenticated, (req: any, res: Response) => {
+    avatarUpload.single("avatar")(req, res, async (err: any) => {
+      if (err) {
+        const message = err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
+          ? "File too large. Maximum size is 5MB."
+          : err.message || "Upload failed";
+        return res.status(400).json({ message });
+      }
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      try {
+        const userId = req.user.claims.sub;
+        const existingUser = await storage.getUserById(userId);
+        const oldImage = existingUser?.profileImageUrl;
+        const profileImageUrl = `/uploads/${req.file.filename}`;
+        const user = await storage.updateUserProfile(userId, { profileImageUrl });
+        if (oldImage?.startsWith("/uploads/")) {
+          const oldPath = path.join(uploadsDir, path.basename(oldImage));
+          fs.unlink(oldPath, () => {});
+        }
+        res.json(user);
+      } catch (error: any) {
+        fs.unlink(req.file.path, () => {});
+        res.status(500).json({ message: error.message });
+      }
+    });
   });
 
   app.get("/api/user/active-trades", isAuthenticated, async (req: any, res: Response) => {

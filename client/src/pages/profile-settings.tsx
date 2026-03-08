@@ -1,4 +1,4 @@
-import { ArrowLeft, Camera, MapPin, Mail, User as UserIcon, Phone, Globe } from "lucide-react";
+import { ArrowLeft, Camera, MapPin, Mail, User as UserIcon, Phone, Globe, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,26 +10,28 @@ import { useAuth } from "@/hooks/use-auth";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
 export default function ProfileSettings() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [address, setAddress] = useState(user?.address || "");
-  const [profileImageUrl, setProfileImageUrl] = useState(user?.profileImageUrl || "");
+  const [previewUrl, setPreviewUrl] = useState(user?.profileImageUrl || "");
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (user) {
       setAddress(user.address || "");
-      setProfileImageUrl(user.profileImageUrl || "");
+      setPreviewUrl(user.profileImageUrl || "");
     }
   }, [user]);
 
   const updateProfile = useMutation({
-    mutationFn: async (data: { profileImageUrl?: string; address?: string }) => {
+    mutationFn: async (data: { address?: string }) => {
       const res = await apiRequest("PATCH", "/api/user/profile", data);
       return res.json();
     },
@@ -42,8 +44,45 @@ export default function ProfileSettings() {
     },
   });
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const localPreview = URL.createObjectURL(file);
+    setPreviewUrl(localPreview);
+    setIsUploading(true);
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    try {
+      const res = await fetch("/api/user/profile-picture", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Upload failed");
+      }
+
+      const updatedUser = await res.json();
+      setPreviewUrl(updatedUser.profileImageUrl);
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      toast({ title: "Photo updated", description: "Your profile picture has been changed." });
+    } catch (error: any) {
+      setPreviewUrl(user?.profileImageUrl || "");
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    } finally {
+      setIsUploading(false);
+      URL.revokeObjectURL(localPreview);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const handleSave = () => {
-    updateProfile.mutate({ profileImageUrl, address });
+    updateProfile.mutate({ address });
   };
 
   return (
@@ -67,13 +106,37 @@ export default function ProfileSettings() {
           <Card className="glass-card p-6">
             <div className="flex flex-col items-center gap-4">
               <div className="relative">
-                <Avatar className="w-24 h-24">
-                  <AvatarImage src={profileImageUrl || undefined} />
-                  <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                    {user?.firstName?.slice(0, 1).toUpperCase() || "T"}{user?.lastName?.slice(0, 1).toUpperCase() || ""}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                  data-testid="input-avatar-file"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="relative group"
+                  disabled={isUploading}
+                  data-testid="button-change-avatar"
+                >
+                  <Avatar className="w-24 h-24">
+                    <AvatarImage src={previewUrl || undefined} />
+                    <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                      {user?.firstName?.slice(0, 1).toUpperCase() || "T"}{user?.lastName?.slice(0, 1).toUpperCase() || ""}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Upload className="w-6 h-6 text-white" />
+                  </div>
+                  {isUploading && (
+                    <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 text-white animate-spin" />
+                    </div>
+                  )}
+                </button>
+                <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center pointer-events-none">
                   <Camera className="w-4 h-4 text-white" />
                 </div>
               </div>
@@ -82,6 +145,7 @@ export default function ProfileSettings() {
                   {user?.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : "Trader"}
                 </h2>
                 <p className="text-sm text-muted-foreground">{user?.email}</p>
+                <p className="text-xs text-muted-foreground mt-1">Tap photo to change</p>
               </div>
             </div>
           </Card>
@@ -137,19 +201,8 @@ export default function ProfileSettings() {
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-sm font-medium text-muted-foreground px-1">Editable</h3>
+            <h3 className="text-sm font-medium text-muted-foreground px-1">Address</h3>
             <Card className="glass-card p-4 space-y-4">
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Camera className="w-4 h-4" /> Profile Picture URL
-                </Label>
-                <Input
-                  value={profileImageUrl}
-                  onChange={(e) => setProfileImageUrl(e.target.value)}
-                  placeholder="https://example.com/photo.jpg"
-                  data-testid="input-profile-image"
-                />
-              </div>
               <div className="space-y-2">
                 <Label className="text-sm text-muted-foreground flex items-center gap-2">
                   <MapPin className="w-4 h-4" /> Home Address
