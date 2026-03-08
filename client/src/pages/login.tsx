@@ -88,7 +88,7 @@ export default function LoginPage() {
                       <Input
                         {...field}
                         type="email"
-                        placeholder="support@bluewaytrading.com"
+                        placeholder="freeman@mail.com"
                         data-testid="input-email"
                         className="h-12 bg-muted/50 border-border focus:border-[#34C759] focus:ring-[#34C759]"
                       />
