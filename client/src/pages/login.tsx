@@ -73,7 +73,7 @@ export default function LoginPage() {
 
         <div className="max-w-md mx-auto w-full">
           <h1 className="text-2xl md:text-3xl font-bold text-[#34C759] mb-8">
-            Access Your Trading Hub
+            Access Your Trading Account
           </h1>
 
           <Form {...form}>
