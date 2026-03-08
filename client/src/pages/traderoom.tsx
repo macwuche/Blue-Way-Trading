@@ -397,7 +397,7 @@ export default function TradeRoom() {
   }
 
   return (
-    <div className="min-h-[100dvh] md:h-screen flex flex-col md:flex-row bg-[#0a0a0a] md:overflow-hidden">
+    <div className="h-[100dvh] overflow-y-auto md:h-screen flex flex-col md:flex-row bg-[#0a0a0a] md:overflow-hidden">
       {/* Desktop Sidebar - Hidden on mobile */}
       <aside className="hidden md:flex w-16 border-r border-white/10 flex-col items-center py-4 glass-dark">
         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF9800] to-[#FF5722] flex items-center justify-center mb-6">

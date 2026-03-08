@@ -48,7 +48,10 @@ Preferred communication style: Simple, everyday language.
 - Output: `dist/` directory with `index.cjs` (server) and `public/` (static assets)
 
 ### Design System
-- Dark theme with glassmorphism effects (backdrop-filter blur)
+- Dark/Light theme toggle via ThemeProvider (`client/src/components/theme-provider.tsx`)
+- Dark mode is default; persists to localStorage; toggled via `useTheme()` hook
+- CSS variables in `:root` (light) and `.dark` (dark) in `client/src/index.css`
+- Glassmorphism effects (backdrop-filter blur) in dark mode
 - Color palette: iOS blue (#007AFF), purple (#5856D6), green (#34C759), red (#FF3B30)
 - Typography: Inter/SF Pro Display fonts
 - Components use CSS custom properties for theming
@@ -109,7 +112,8 @@ Preferred communication style: Simple, everyday language.
 - **Usage**: Replaces old `getSymbolInitials` circles in asset-row, traderoom, and admin trade-for-users
 
 ### Mobile UI
-- **Responsive TradeRoom**: Mobile trading panel is collapsible — shows only amount input + Buy/Sell buttons by default; SL/TP, slider, positions, and margin info expand via toggle (max-h-[40vh] scrollable); page is scrollable on mobile (min-h-screen) with fixed bottom nav
+- **Responsive TradeRoom**: Mobile trading panel is collapsible — shows only amount input + Buy/Sell buttons by default; SL/TP, slider, positions, and margin info expand via toggle (max-h-[40vh] scrollable); outer container uses `h-[100dvh] overflow-y-auto` on mobile for chart flex-1 sizing with scroll when positions expand
+- **Profile Settings Page**: `client/src/pages/profile-settings.tsx` at `/profile-settings`; users can edit profile picture URL and home address; read-only fields for name, email, phone, country
 - **Bottom Navigation**: Reusable `MobileBottomNav` component (`client/src/components/mobile-bottom-nav.tsx`) added to all secondary pages (Portfolio, History, Support, News, VIP, Deposit, Withdrawal, Verification, More)
 - **Dashboard Sidebar**: Defaults closed on mobile (< 1024px), auto-adjusts on viewport resize, includes backdrop overlay when open
 - **Notification Dropdown**: Responsive width using `w-[calc(100vw-1rem)] sm:w-96` to prevent overflow on narrow screens

@@ -21,6 +21,7 @@ import Deposit from "@/pages/deposit";
 import Withdrawal from "@/pages/withdrawal";
 import Verification from "@/pages/verification";
 import More from "@/pages/more";
+import ProfileSettings from "@/pages/profile-settings";
 import AdminDashboard from "@/pages/admin/dashboard";
 import UserProfilePage from "@/pages/admin/user-profile";
 import AllAdminTradesPage from "@/pages/admin/all-trades";
@@ -93,6 +94,7 @@ function AppRouter() {
         <Route path="/withdrawal" component={Withdrawal} />
         <Route path="/verification" component={Verification} />
         <Route path="/more" component={More} />
+        <Route path="/profile-settings" component={ProfileSettings} />
         <Route path="/admin" component={AdminDashboard} />
         <Route path="/admin/trades" component={AllAdminTradesPage} />
         <Route path="/admin/users/:userId" component={UserProfilePage} />

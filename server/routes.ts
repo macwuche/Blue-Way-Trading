@@ -1591,6 +1591,31 @@ export async function registerRoutes(
   });
 
   // Get active trades for a specific user (for user dashboard notification)
+  app.patch("/api/user/profile", isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.claims.sub;
+      const schema = z.object({
+        profileImageUrl: z.string().optional(),
+        address: z.string().max(500).optional(),
+      });
+      const parsed = schema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Invalid input", errors: parsed.error.flatten() });
+      }
+      const { profileImageUrl, address } = parsed.data;
+      const updateData: { profileImageUrl?: string; address?: string } = {};
+      if (profileImageUrl !== undefined) updateData.profileImageUrl = profileImageUrl;
+      if (address !== undefined) updateData.address = address;
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ message: "No fields to update" });
+      }
+      const user = await storage.updateUserProfile(userId, updateData);
+      res.json(user);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.get("/api/user/active-trades", isAuthenticated, async (req: any, res: Response) => {
     try {
       const userId = req.user.claims.sub;

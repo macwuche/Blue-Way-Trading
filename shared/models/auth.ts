@@ -23,6 +23,7 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   phone: varchar("phone"),
   country: varchar("country", { length: 100 }),
+  address: varchar("address"),
   profileImageUrl: varchar("profile_image_url"),
   status: varchar("status", { length: 20 }).default("active"),
   vipLevel: varchar("vip_level", { length: 20 }).default("Bronze"),

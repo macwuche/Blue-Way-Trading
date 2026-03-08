@@ -48,6 +48,7 @@ export interface IStorage {
   updateUserVerification(id: string, isVerified: boolean): Promise<User>;
   updateUserVerificationField(id: string, field: 'emailVerified' | 'twoFactorEnabled' | 'kycVerified', value: boolean): Promise<User>;
   updateUserAdmin(id: string, isAdmin: boolean): Promise<User>;
+  updateUserProfile(id: string, data: { profileImageUrl?: string; address?: string }): Promise<User>;
   
   // Admin balance/profit management
   adjustUserBalance(userId: string, amount: number, operation: 'add' | 'subtract'): Promise<Portfolio>;
@@ -266,6 +267,15 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .update(users)
       .set({ isAdmin, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async updateUserProfile(id: string, data: { profileImageUrl?: string; address?: string }): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ ...data, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     return user;

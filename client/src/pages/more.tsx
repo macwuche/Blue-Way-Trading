@@ -1,7 +1,7 @@
 import { 
   Settings, ArrowLeft, User, Bell, Shield, 
-  HelpCircle, LogOut, Moon, Smartphone, Globe, 
-  CreditCard, FileText, Star, Wallet, Send, Crown, ChevronRight
+  HelpCircle, LogOut, Moon,
+  Wallet, Send, Crown, ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
@@ -37,7 +38,7 @@ const settingsSections = [
   {
     title: "Account",
     items: [
-      { id: "profile", icon: User, label: "Profile Settings", description: "Manage your account details", type: "link" as const },
+      { id: "profile", icon: User, label: "Profile Settings", description: "Manage your account details", type: "link" as const, route: "/profile-settings" },
       { id: "verification", icon: Shield, label: "Account Verification", description: "Verify your identity for higher limits", type: "link" as const, route: "/verification" },
       { id: "notifications", icon: Bell, label: "Notifications", description: "Configure alerts and updates", type: "toggle" as const, value: true },
     ]
@@ -46,16 +47,12 @@ const settingsSections = [
     title: "Preferences",
     items: [
       { id: "theme", icon: Moon, label: "Dark Mode", description: "Toggle dark/light theme", type: "toggle" as const, value: true },
-      { id: "language", icon: Globe, label: "Language", description: "English (US)", type: "link" as const },
-      { id: "sounds", icon: Smartphone, label: "Sound Effects", description: "Trading sounds and alerts", type: "toggle" as const, value: true },
     ]
   },
   {
     title: "Support",
     items: [
       { id: "help", icon: HelpCircle, label: "Help Center", description: "FAQs and guides", type: "link" as const, route: "/support" },
-      { id: "terms", icon: FileText, label: "Terms of Service", description: "Legal information", type: "link" as const },
-      { id: "rate", icon: Star, label: "Rate the App", description: "Share your feedback", type: "link" as const },
     ]
   }
 ];
@@ -63,6 +60,7 @@ const settingsSections = [
 export default function More() {
   const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
     try {
@@ -117,7 +115,7 @@ export default function More() {
                 </p>
                 <Badge className="mt-1 text-xs bg-success/20 text-success">Verified</Badge>
               </div>
-              <Button variant="outline" size="sm" data-testid="button-edit-profile">
+              <Button variant="outline" size="sm" onClick={() => setLocation("/profile-settings")} data-testid="button-edit-profile">
                 Edit
               </Button>
             </div>
@@ -155,7 +153,14 @@ export default function More() {
                         </div>
                       )}
                     </div>
-                    {item.type === "toggle" && (
+                    {item.type === "toggle" && item.id === "theme" && (
+                      <Switch 
+                        checked={theme === "dark"}
+                        onCheckedChange={toggleTheme}
+                        data-testid={`switch-${item.id}`}
+                      />
+                    )}
+                    {item.type === "toggle" && item.id !== "theme" && (
                       <Switch 
                         defaultChecked={item.value} 
                         data-testid={`switch-${item.id}`}
