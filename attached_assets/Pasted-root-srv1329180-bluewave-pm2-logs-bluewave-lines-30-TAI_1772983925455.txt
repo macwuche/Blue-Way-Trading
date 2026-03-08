@@ -1,0 +1,65 @@
+root@srv1329180:~/bluewave# pm2 logs bluewave --lines 30
+[TAILING] Tailing last 30 lines for [bluewave] process (change the value with --lines option)
+/root/.pm2/logs/bluewave-error-5.log last 30 lines:
+5|bluewave |   file: 'parse_relation.c',
+5|bluewave |   line: '3822',
+5|bluewave |   routine: 'errorMissingColumn'
+5|bluewave | }
+5|bluewave | Admin login error: column "address" does not exist
+5|bluewave | Error fetching user: error: column "address" does not exist
+5|bluewave |     at /root/bluewave/dist/index.cjs:64:13326
+5|bluewave |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+5|bluewave |     at async /root/bluewave/dist/index.cjs:78:107616
+5|bluewave |     at async Sh.getUserById (/root/bluewave/dist/index.cjs:78:112368)
+5|bluewave |     at async /root/bluewave/dist/index.cjs:226:4227 {
+5|bluewave |   length: 107,
+5|bluewave |   severity: 'ERROR',
+5|bluewave |   code: '42703',
+5|bluewave |   detail: undefined,
+5|bluewave |   hint: undefined,
+5|bluewave |   position: '82',
+5|bluewave |   internalPosition: undefined,
+5|bluewave |   internalQuery: undefined,
+5|bluewave |   where: undefined,
+5|bluewave |   schema: undefined,
+5|bluewave |   table: undefined,
+5|bluewave |   column: undefined,
+5|bluewave |   dataType: undefined,
+5|bluewave |   constraint: undefined,
+5|bluewave |   file: 'parse_relation.c',
+5|bluewave |   line: '3822',
+5|bluewave |   routine: 'errorMissingColumn'
+5|bluewave | }
+5|bluewave | Admin login error: column "address" does not exist
+
+/root/.pm2/logs/bluewave-out-5.log last 30 lines:
+5|bluewave | 3:29:57 PM [express] GET /api/auth/user 500 in 6ms :: {"message":"Failed to fetch user"}
+5|bluewave | 3:29:58 PM [express] GET /api/admin/auth 401 in 3ms :: {"isAdmin":false,"message":"Not authenticated"}
+5|bluewave | 3:29:58 PM [express] GET /api/auth/user 500 in 7ms :: {"message":"Failed to fetch user"}
+5|bluewave | 3:29:58 PM [express] GET /api/admin/auth 401 in 3ms :: {"isAdmin":false,"message":"Not authenticated"}
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | 3:30:06 PM [express] POST /api/admin/login 500 in 7ms :: {"message":"Failed to login"}
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | 3:30:35 PM [express] GET /api/auth/user 500 in 14ms :: {"message":"Failed to fetch user"}
+5|bluewave | 3:30:35 PM [express] GET /api/admin/auth 401 in 3ms :: {"isAdmin":false,"message":"Not authenticated"}
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | 3:30:56 PM [express] POST /api/admin/login 500 in 14ms :: {"message":"Failed to login"}
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets
+5|bluewave | [Massive API] Refreshed market data: 53 assets

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -309,6 +309,7 @@ export default function AdminUsers() {
                     <td className="p-3 sm:p-4">
                       <div className="flex items-center gap-2 sm:gap-3">
                         <Avatar className="w-8 h-8 sm:w-10 sm:h-10">
+                          <AvatarImage src={user.profileImageUrl || undefined} />
                           <AvatarFallback className="bg-primary/10 text-primary text-xs sm:text-sm">
                             {getInitials(user)}
                           </AvatarFallback>
@@ -505,6 +506,7 @@ export default function AdminUsers() {
             <div className="space-y-4 py-4">
               <div className="flex items-center gap-4">
                 <Avatar className="w-16 h-16">
+                  <AvatarImage src={selectedUser.profileImageUrl || undefined} />
                   <AvatarFallback className="bg-primary/10 text-primary text-xl">
                     {getInitials(selectedUser)}
                   </AvatarFallback>
