@@ -233,30 +233,10 @@ function AdminLoginForm({ onLoginSuccess }: { onLoginSuccess: () => void }) {
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginFormData) => {
-      // First, log out any existing session to avoid conflicts
-      try {
-        await apiRequest("POST", "/api/auth/logout", {});
-      } catch (e) {
-        // Ignore logout errors - user might not be logged in
-      }
-      
-      const response = await apiRequest("POST", "/api/auth/login", data);
+      const response = await apiRequest("POST", "/api/admin/login", data);
       return response.json();
     },
     onSuccess: async (data) => {
-      if (!data.user?.isAdmin) {
-        toast({
-          title: "Access Denied",
-          description: "You don't have admin privileges",
-          variant: "destructive",
-        });
-        await apiRequest("POST", "/api/auth/logout", {});
-        return;
-      }
-      
-      // Set user data directly in cache
-      queryClient.setQueryData(["/api/auth/user"], data.user);
-      queryClient.setQueryData(["/api/auth/check"], { authenticated: true, user: data.user });
       queryClient.setQueryData(["/api/admin/auth"], { isAdmin: true, user: data.user });
       
       toast({
@@ -384,8 +364,8 @@ export default function AdminDashboard() {
   const isAuthenticated = adminLoggedIn || adminAuth?.isAdmin;
 
   const handleLogout = async () => {
-    await apiRequest("POST", "/api/auth/logout", {});
-    queryClient.clear();
+    await apiRequest("POST", "/api/admin/logout", {});
+    queryClient.removeQueries({ queryKey: ["/api/admin/auth"] });
     setAdminLoggedIn(false);
     toast({
       title: "Logged Out",

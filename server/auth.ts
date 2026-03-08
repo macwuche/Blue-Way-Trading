@@ -19,6 +19,13 @@ declare module "express-session" {
       isAdmin: boolean | null;
       profileImageUrl: string | null;
     };
+    adminId?: string;
+    adminUser?: {
+      id: string;
+      email: string;
+      firstName: string | null;
+      lastName: string | null;
+    };
   }
 }
 
@@ -331,6 +338,70 @@ export function registerCustomAuthRoutes(app: Express) {
     res.json({
       authenticated: !!req.session.userId,
       user: req.session.user || null,
+    });
+  });
+
+  app.post("/api/admin/login", async (req: Request, res: Response) => {
+    try {
+      const result = loginSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Validation failed", errors: result.error.errors });
+      }
+
+      const { email, password } = result.data;
+      const user = await storage.getUserByEmail(email);
+      if (!user || !user.password) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      if (!user.isAdmin) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const isValid = await bcrypt.compare(password, user.password);
+      if (!isValid) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      req.session.adminId = user.id;
+      req.session.adminUser = {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      };
+
+      req.session.save((err) => {
+        if (err) {
+          console.error("Admin session save error:", err);
+          return res.status(500).json({ message: "Failed to save session" });
+        }
+        res.json({
+          success: true,
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            isAdmin: true,
+          },
+        });
+      });
+    } catch (error: any) {
+      console.error("Admin login error:", error?.message || error);
+      res.status(500).json({ message: "Failed to login" });
+    }
+  });
+
+  app.post("/api/admin/logout", (req: Request, res: Response) => {
+    delete req.session.adminId;
+    delete req.session.adminUser;
+    req.session.save((err) => {
+      if (err) {
+        console.error("Admin logout error:", err);
+        return res.status(500).json({ message: "Failed to logout" });
+      }
+      res.json({ success: true });
     });
   });
 }

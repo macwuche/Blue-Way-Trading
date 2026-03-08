@@ -44,14 +44,16 @@ const avatarUpload = multer({
 });
 
 // Middleware to check if user is admin
-const isAdmin = async (req: any, res: Response, next: Function) => {
-  if (!req.user?.claims?.sub) {
+const isAdminAuthenticated = async (req: any, res: Response, next: Function) => {
+  const adminId = req.session?.adminId;
+  if (!adminId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-  const user = await storage.getUserById(req.user.claims.sub);
+  const user = await storage.getUserById(adminId);
   if (!user?.isAdmin) {
     return res.status(403).json({ message: "Admin access required" });
   }
+  req.adminUser = user;
   next();
 };
 
@@ -357,18 +359,13 @@ export async function registerRoutes(
 
   // ========== ADMIN ROUTES ==========
   
-  // Admin authentication check
   app.get("/api/admin/auth", async (req: any, res: Response) => {
     try {
-      // Check if user is authenticated via session
-      if (!req.user) {
+      const adminId = req.session?.adminId;
+      if (!adminId) {
         return res.status(401).json({ isAdmin: false, message: "Not authenticated" });
       }
-      const userId = req.user.claims?.sub || req.user.id;
-      if (!userId) {
-        return res.status(401).json({ isAdmin: false, message: "Not authenticated" });
-      }
-      const user = await storage.getUserById(userId);
+      const user = await storage.getUserById(adminId);
       if (!user || !user.isAdmin) {
         return res.status(403).json({ isAdmin: false, message: "Not authorized" });
       }
@@ -380,7 +377,7 @@ export async function registerRoutes(
   });
   
   // Admin stats/dashboard
-  app.get("/api/admin/stats", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/stats", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const stats = await storage.getAdminStats();
       res.json(stats);
@@ -391,7 +388,7 @@ export async function registerRoutes(
   });
 
   // Get all users (with optional search)
-  app.get("/api/admin/users", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/users", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const search = req.query.search as string | undefined;
       const users = await storage.getAllUsers(search);
@@ -416,7 +413,7 @@ export async function registerRoutes(
   });
 
   // Get single user details
-  app.get("/api/admin/users/:id", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/users/:id", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const user = await storage.getUserById(req.params.id);
       if (!user) {
@@ -443,7 +440,7 @@ export async function registerRoutes(
   });
 
   // Get user profile with full details (for profile page)
-  app.get("/api/admin/users/:id/profile", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/users/:id/profile", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const user = await storage.getUserById(req.params.id);
       if (!user) {
@@ -492,7 +489,7 @@ export async function registerRoutes(
   });
 
   // Admin: Send custom email to user
-  app.post("/api/admin/users/:id/send-email", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.post("/api/admin/users/:id/send-email", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const schema = z.object({
         subject: z.string().min(1, "Subject is required"),
@@ -524,7 +521,7 @@ export async function registerRoutes(
   });
 
   // Admin: Send push notification to user
-  app.post("/api/admin/users/:id/send-notification", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.post("/api/admin/users/:id/send-notification", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const schema = z.object({
         title: z.string().min(1, "Title is required"),
@@ -546,7 +543,7 @@ export async function registerRoutes(
         title: result.data.title,
         message: result.data.message,
         type: result.data.type,
-        sentBy: req.user.claims.sub,
+        sentBy: req.adminUser.id,
       });
 
       console.log(`[Notification] Sending SSE notification to user ${user.id}: "${result.data.title}"`);
@@ -612,7 +609,7 @@ export async function registerRoutes(
   });
 
   // Admin: Get all email templates
-  app.get("/api/admin/email-templates", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/email-templates", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const DEFAULT_TEMPLATES = [
         { id: "welcome", name: "Welcome Email", subject: "Welcome to Bluewave Trading!", description: "Sent when a new user registers an account", enabled: true },
@@ -642,7 +639,7 @@ export async function registerRoutes(
   });
 
   // Admin: Update email template
-  app.put("/api/admin/email-templates/:id", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.put("/api/admin/email-templates/:id", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const schema = z.object({
         subject: z.string().min(1, "Subject is required"),
@@ -673,7 +670,7 @@ export async function registerRoutes(
   });
 
   // Admin: Toggle email template enabled/disabled
-  app.patch("/api/admin/email-templates/:id/toggle", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.patch("/api/admin/email-templates/:id/toggle", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const existing = await storage.getEmailTemplateById(req.params.id);
       if (!existing) {
@@ -689,7 +686,7 @@ export async function registerRoutes(
   });
 
   // Get all admin trades (for All Admin Trades page)
-  app.get("/api/admin/trades", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/trades", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const allAdminTrades = await storage.getAdminTrades();
       res.json(allAdminTrades.map(t => ({
@@ -705,7 +702,7 @@ export async function registerRoutes(
   });
 
   // Update user status (active/suspended/pending)
-  app.patch("/api/admin/users/:id/status", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.patch("/api/admin/users/:id/status", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const schema = z.object({ status: z.enum(["active", "suspended", "pending"]) });
       const result = schema.safeParse(req.body);
@@ -721,7 +718,7 @@ export async function registerRoutes(
   });
 
   // Update user VIP level
-  app.patch("/api/admin/users/:id/vip", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.patch("/api/admin/users/:id/vip", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const schema = z.object({ 
         vipLevel: z.enum(["Bronze", "Silver", "Gold", "Platinum", "Diamond"]),
@@ -740,7 +737,7 @@ export async function registerRoutes(
   });
 
   // Verify/unverify user
-  app.patch("/api/admin/users/:id/verify", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.patch("/api/admin/users/:id/verify", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const schema = z.object({ isVerified: z.boolean() });
       const result = schema.safeParse(req.body);
@@ -756,7 +753,7 @@ export async function registerRoutes(
   });
 
   // Update user verification fields (emailVerified, twoFactorEnabled, kycVerified)
-  app.patch("/api/admin/users/:id/verification", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.patch("/api/admin/users/:id/verification", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const schema = z.object({ 
         field: z.enum(["emailVerified", "twoFactorEnabled", "kycVerified"]),
@@ -775,7 +772,7 @@ export async function registerRoutes(
   });
 
   // Adjust user balance
-  app.post("/api/admin/users/:id/balance", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.post("/api/admin/users/:id/balance", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const schema = z.object({ 
         amount: z.number().positive(),
@@ -812,7 +809,7 @@ export async function registerRoutes(
   });
 
   // Adjust user profit
-  app.post("/api/admin/users/:id/profit", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.post("/api/admin/users/:id/profit", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const schema = z.object({ 
         amount: z.number().positive(),
@@ -849,7 +846,7 @@ export async function registerRoutes(
   });
 
   // Admin trade for user
-  app.post("/api/admin/trade-for-user", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.post("/api/admin/trade-for-user", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const schema = z.object({
         userId: z.string(),
@@ -978,7 +975,7 @@ export async function registerRoutes(
   // ============ DEPOSIT ROUTES ============
   
   // Get all deposits (admin)
-  app.get("/api/admin/deposits", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/deposits", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const { status, userId } = req.query;
       const filters: { status?: string; userId?: string } = {};
@@ -1052,10 +1049,10 @@ export async function registerRoutes(
   });
 
   // Approve/Reject deposit (admin)
-  app.patch("/api/admin/deposits/:id", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.patch("/api/admin/deposits/:id", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const { id } = req.params;
-      const adminId = req.user.claims.sub;
+      const adminId = req.adminUser.id;
       const schema = z.object({
         status: z.enum(["confirmed", "rejected"]),
       });
@@ -1081,7 +1078,7 @@ export async function registerRoutes(
   // ============ WITHDRAWAL ROUTES ============
   
   // Get all withdrawals (admin)
-  app.get("/api/admin/withdrawals", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/withdrawals", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const { status, userId } = req.query;
       const filters: { status?: string; userId?: string } = {};
@@ -1161,10 +1158,10 @@ export async function registerRoutes(
   });
 
   // Approve/Reject withdrawal (admin)
-  app.patch("/api/admin/withdrawals/:id", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.patch("/api/admin/withdrawals/:id", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const { id } = req.params;
-      const adminId = req.user.claims.sub;
+      const adminId = req.adminUser.id;
       const schema = z.object({
         status: z.enum(["approved", "completed", "rejected"]),
         rejectionReason: z.string().optional(),
@@ -1196,7 +1193,7 @@ export async function registerRoutes(
   // ============ ADMIN TRADE SESSIONS ============
 
   // Get users with balance (for selection)
-  app.get("/api/admin/users-with-balance", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/users-with-balance", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const users = await storage.getUsersWithBalance();
       res.json(users.map(u => ({
@@ -1211,9 +1208,9 @@ export async function registerRoutes(
   });
 
   // Create admin trade session
-  app.post("/api/admin/trade-sessions", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.post("/api/admin/trade-sessions", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
-      const adminId = req.user.claims.sub;
+      const adminId = req.adminUser.id;
       const schema = z.object({
         users: z.array(z.object({
           userId: z.string(),
@@ -1242,9 +1239,9 @@ export async function registerRoutes(
   });
 
   // Get admin trade sessions
-  app.get("/api/admin/trade-sessions", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/trade-sessions", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
-      const adminId = req.user.claims.sub;
+      const adminId = req.adminUser.id;
       const sessions = await storage.getActiveAdminTradeSessions(adminId);
       
       const sessionsWithUsers = await Promise.all(sessions.map(async (s) => {
@@ -1264,7 +1261,7 @@ export async function registerRoutes(
   });
 
   // Get single session with users
-  app.get("/api/admin/trade-sessions/:id", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/trade-sessions/:id", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const session = await storage.getAdminTradeSession(req.params.id);
       if (!session) {
@@ -1283,7 +1280,7 @@ export async function registerRoutes(
   });
 
   // Close trade session
-  app.patch("/api/admin/trade-sessions/:id/close", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.patch("/api/admin/trade-sessions/:id/close", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const session = await storage.closeAdminTradeSession(req.params.id);
       res.json({
@@ -1298,9 +1295,9 @@ export async function registerRoutes(
   });
 
   // Execute batch trade for session users (supports multi-asset with individual durations)
-  app.post("/api/admin/trade-sessions/:id/trade", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.post("/api/admin/trade-sessions/:id/trade", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
-      const adminId = req.user.claims.sub;
+      const adminId = req.adminUser.id;
       const sessionId = req.params.id;
       
       // Schema for single asset trade (legacy support)
@@ -1433,7 +1430,7 @@ export async function registerRoutes(
   });
 
   // Complete trades when countdown expires
-  app.post("/api/admin/trades/complete", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.post("/api/admin/trades/complete", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const schema = z.object({
         tradeIds: z.array(z.string()),
@@ -1466,9 +1463,9 @@ export async function registerRoutes(
   });
 
   // Get admin trades history
-  app.get("/api/admin/trades-history", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/trades-history", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
-      const adminId = req.user.claims.sub;
+      const adminId = req.adminUser.id;
       const { status } = req.query;
       
       const trades = await storage.getAdminTrades({ 
@@ -1489,7 +1486,7 @@ export async function registerRoutes(
   });
 
   // Add profit to users (legacy endpoint)
-  app.post("/api/admin/trade-sessions/:id/add-profit", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.post("/api/admin/trade-sessions/:id/add-profit", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const sessionId = req.params.id;
       const schema = z.object({
@@ -1529,9 +1526,9 @@ export async function registerRoutes(
   });
 
   // Get trades awaiting profit (completed but profit not yet added)
-  app.get("/api/admin/trades/awaiting-profit", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/trades/awaiting-profit", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
-      const adminId = req.user.claims.sub;
+      const adminId = req.adminUser.id;
       const { sessionId, durationGroup } = req.query;
       
       const trades = await storage.getAdminTrades({ 
@@ -1561,7 +1558,7 @@ export async function registerRoutes(
   });
 
   // Add profit to specific trades (new endpoint for popup flow)
-  app.post("/api/admin/trades/add-profit", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.post("/api/admin/trades/add-profit", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const schema = z.object({
         tradeIds: z.array(z.string()),
@@ -1703,7 +1700,7 @@ export async function registerRoutes(
   });
 
   // ========= Trade Logic Routes =========
-  app.get("/api/admin/trade-logic", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/trade-logic", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const allLogic = await storage.getAllTradeLogic();
       res.json(allLogic);
@@ -1713,7 +1710,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/admin/trade-logic/:userId", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/trade-logic/:userId", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const logic = await storage.getTradeLogicByUserId(req.params.userId);
       if (!logic) {
@@ -1734,7 +1731,7 @@ export async function registerRoutes(
     message: "Win trades + Loss trades must equal Total trades",
   });
 
-  app.post("/api/admin/trade-logic", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.post("/api/admin/trade-logic", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const parsed = tradeLogicBodySchema.safeParse(req.body);
       if (!parsed.success) {
@@ -1748,7 +1745,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/admin/trade-logic/:id/reset", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.patch("/api/admin/trade-logic/:id/reset", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const logic = await storage.resetTradeLogicCounters(req.params.id);
       res.json(logic);
@@ -1758,7 +1755,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/admin/trade-logic/:id", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.delete("/api/admin/trade-logic/:id", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       await storage.deleteTradeLogic(req.params.id);
       res.json({ message: "Trade logic deleted" });
@@ -1836,12 +1833,12 @@ export async function registerRoutes(
   });
 
   // Admin: open position for a user
-  app.post("/api/admin/positions/open", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.post("/api/admin/positions/open", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const { userId, ...data } = req.body;
       if (!userId) return res.status(400).json({ message: "userId required" });
       const parsed = openPositionSchema.parse(data);
-      const position = await openPosition(userId, { ...parsed, openedByAdmin: true, adminId: req.user.claims.sub });
+      const position = await openPosition(userId, { ...parsed, openedByAdmin: true, adminId: req.adminUser.id });
 
       const user = await storage.getUserById(userId);
       if (user?.email && position.status === "open") {
@@ -1865,7 +1862,7 @@ export async function registerRoutes(
   });
 
   // Admin: close position for a user
-  app.post("/api/admin/positions/:id/close", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.post("/api/admin/positions/:id/close", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const closed = await manualClosePosition(req.params.id);
       res.json(closed);
@@ -1876,7 +1873,7 @@ export async function registerRoutes(
   });
 
   // Admin: add profit to a specific position and user's portfolio
-  app.post("/api/admin/positions/:id/add-profit", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.post("/api/admin/positions/:id/add-profit", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const schema = z.object({
         amount: z.number(),
@@ -1922,7 +1919,7 @@ export async function registerRoutes(
   });
 
   // Admin: get all open positions across all users
-  app.get("/api/admin/positions-open", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/positions-open", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const positions = await storage.getAllOpenPositions();
       const pendingPositions = await storage.getAllPendingPositions();
@@ -1942,7 +1939,7 @@ export async function registerRoutes(
   });
 
   // Admin: get all closed positions across all users
-  app.get("/api/admin/positions-closed", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/positions-closed", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const positions = await storage.getAllClosedPositions();
       const allUsers = await storage.getAllUsers();
@@ -1961,7 +1958,7 @@ export async function registerRoutes(
   });
 
   // Admin: get positions for a specific user
-  app.get("/api/admin/positions/:userId", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/positions/:userId", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const positions = await storage.getUserPositions(req.params.userId, req.query.status as string | undefined);
       res.json(positions);
@@ -1973,7 +1970,7 @@ export async function registerRoutes(
 
   // ===== GLOBAL TRADE LOGIC =====
 
-  app.get("/api/admin/global-trade-logic", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.get("/api/admin/global-trade-logic", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       let logic = await storage.getGlobalTradeLogic();
       if (!logic) {
@@ -1986,7 +1983,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/admin/global-trade-logic", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.post("/api/admin/global-trade-logic", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const { totalTrades, winTrades, lossTrades, slTpMode, active } = req.body;
       const logic = await storage.upsertGlobalTradeLogic({
@@ -1999,7 +1996,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/admin/global-trade-logic/reset", isAuthenticated, isAdmin, async (req: any, res: Response) => {
+  app.post("/api/admin/global-trade-logic/reset", isAdminAuthenticated, async (req: any, res: Response) => {
     try {
       const logic = await storage.resetGlobalTradeLogicCounters();
       res.json(logic);

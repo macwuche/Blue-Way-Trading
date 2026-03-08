@@ -63,8 +63,10 @@ Preferred communication style: Simple, everyday language.
 - **Drizzle ORM**: Type-safe database queries and schema management
 
 ### Authentication
-- **Replit Auth**: OpenID Connect provider via `ISSUER_URL` (defaults to replit.com/oidc)
-- **Required Secrets**: `SESSION_SECRET`, `REPL_ID` for session management
+- **User Auth**: Email/password login via `POST /api/auth/login`, sets `req.session.userId`
+- **Admin Auth**: Separate admin login via `POST /api/admin/login`, sets `req.session.adminId` (does NOT set userId — sessions are fully isolated)
+- **Admin Middleware**: `isAdminAuthenticated` checks `req.session.adminId` and sets `req.adminUser`; admin routes use `req.adminUser.id` for admin identity
+- **Required Secrets**: `SESSION_SECRET` for session management
 
 ### UI Libraries
 - **Radix UI**: Accessible component primitives (dialogs, dropdowns, tabs, etc.)
