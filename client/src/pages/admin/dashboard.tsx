@@ -280,7 +280,7 @@ function AdminLoginForm({ onLoginSuccess }: { onLoginSuccess: () => void }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#000000] via-[#0a0a0a] to-[#1c1e1e] p-4">
+    <div className="dark min-h-screen flex items-center justify-center bg-gradient-to-br from-[#000000] via-[#0a0a0a] to-[#1c1e1e] p-4">
       <Card className="w-full max-w-md p-8 glass-card border-white/10">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mx-auto mb-4">
@@ -407,7 +407,7 @@ export default function AdminDashboard() {
   // Show loading while checking auth
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#000000] via-[#0a0a0a] to-[#1c1e1e]">
+      <div className="dark min-h-screen flex items-center justify-center bg-gradient-to-br from-[#000000] via-[#0a0a0a] to-[#1c1e1e]">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center animate-pulse-subtle">
             <Shield className="w-7 h-7 text-white" />
@@ -523,7 +523,7 @@ export default function AdminDashboard() {
   );
 
   return (
-    <div className="h-screen bg-gradient-to-b from-background to-background/95 flex overflow-hidden">
+    <div className="dark h-screen bg-gradient-to-b from-background to-background/95 flex overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 border-r border-white/10 flex-col glass-dark">
         <div className="p-4 border-b border-white/10">
