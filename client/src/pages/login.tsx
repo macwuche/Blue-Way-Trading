@@ -63,9 +63,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col md:flex-row overflow-hidden">
+    <div className="min-h-screen flex flex-col md:flex-row md:h-screen md:overflow-hidden">
       {/* Left Side - Login Form */}
-      <div className="w-full md:w-1/2 flex flex-col justify-center px-8 py-12 md:px-16 lg:px-24 bg-background order-1 md:order-1 overflow-y-auto">
+      <div className="w-full md:w-1/2 flex flex-col justify-center px-8 py-12 md:px-16 lg:px-24 bg-background order-1 md:order-1 md:overflow-y-auto">
         {/* Mobile Logo - Above form */}
         <div className="md:hidden flex flex-col items-center mb-8">
           <img src={logoPath} alt="Bluewave Trading" className="h-12 object-contain" data-testid="img-mobile-logo" />
