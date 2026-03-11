@@ -99,19 +99,19 @@ export default function SignupPage() {
   return (
     <div className="h-screen flex flex-col md:flex-row overflow-hidden">
       {/* Left Side - Signup Form */}
-      <div className="w-full md:w-1/2 flex flex-col justify-center px-8 py-12 md:px-16 lg:px-24 bg-background order-1 md:order-1 overflow-y-auto">
+      <div className="w-full md:w-1/2 flex flex-col justify-center px-8 py-8 md:px-16 md:py-4 lg:px-24 bg-background order-1 md:order-1 overflow-y-auto">
         {/* Mobile Logo - Above form */}
         <div className="md:hidden flex flex-col items-center mb-8">
           <img src={logoPath} alt="Bluewave Trading" className="h-12 object-contain" data-testid="img-mobile-logo" />
         </div>
 
         <div className="max-w-md mx-auto w-full">
-          <h1 className="text-2xl md:text-3xl font-bold text-[#34C759] mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#34C759] mb-4 md:mb-3">
             Create Your Account
           </h1>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 md:space-y-3">
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -124,7 +124,7 @@ export default function SignupPage() {
                           {...field}
                           placeholder="John"
                           data-testid="input-firstname"
-                          className="h-12 bg-muted/50 border-border focus:border-[#34C759] focus:ring-[#34C759]"
+                          className="h-12 md:h-10 bg-muted/50 border-border focus:border-[#34C759] focus:ring-[#34C759]"
                         />
                       </FormControl>
                       <FormMessage />
@@ -143,7 +143,7 @@ export default function SignupPage() {
                           {...field}
                           placeholder="Doe"
                           data-testid="input-lastname"
-                          className="h-12 bg-muted/50 border-border focus:border-[#34C759] focus:ring-[#34C759]"
+                          className="h-12 md:h-10 bg-muted/50 border-border focus:border-[#34C759] focus:ring-[#34C759]"
                         />
                       </FormControl>
                       <FormMessage />
@@ -164,7 +164,7 @@ export default function SignupPage() {
                         type="email"
                         placeholder="freeman@mail.com"
                         data-testid="input-email"
-                        className="h-12 bg-muted/50 border-border focus:border-[#34C759] focus:ring-[#34C759]"
+                        className="h-12 md:h-10 bg-muted/50 border-border focus:border-[#34C759] focus:ring-[#34C759]"
                       />
                     </FormControl>
                     <FormMessage />
@@ -184,7 +184,7 @@ export default function SignupPage() {
                         type="tel"
                         placeholder="+1 234 567 8900"
                         data-testid="input-phone"
-                        className="h-12 bg-muted/50 border-border focus:border-[#34C759] focus:ring-[#34C759]"
+                        className="h-12 md:h-10 bg-muted/50 border-border focus:border-[#34C759] focus:ring-[#34C759]"
                       />
                     </FormControl>
                     <FormMessage />
@@ -202,7 +202,7 @@ export default function SignupPage() {
                       <FormControl>
                         <SelectTrigger 
                           data-testid="select-country"
-                          className="h-12 bg-muted/50 border-border focus:border-[#34C759] focus:ring-[#34C759]"
+                          className="h-12 md:h-10 bg-muted/50 border-border focus:border-[#34C759] focus:ring-[#34C759]"
                         >
                           <SelectValue placeholder="Select your country" />
                         </SelectTrigger>
@@ -236,7 +236,7 @@ export default function SignupPage() {
                         type="password"
                         placeholder="••••••••"
                         data-testid="input-password"
-                        className="h-12 bg-muted/50 border-border focus:border-[#34C759] focus:ring-[#34C759]"
+                        className="h-12 md:h-10 bg-muted/50 border-border focus:border-[#34C759] focus:ring-[#34C759]"
                       />
                     </FormControl>
                     <FormMessage />
@@ -256,7 +256,7 @@ export default function SignupPage() {
                         type="password"
                         placeholder="••••••••"
                         data-testid="input-confirm-password"
-                        className="h-12 bg-muted/50 border-border focus:border-[#34C759] focus:ring-[#34C759]"
+                        className="h-12 md:h-10 bg-muted/50 border-border focus:border-[#34C759] focus:ring-[#34C759]"
                       />
                     </FormControl>
                     <FormMessage />
@@ -268,7 +268,7 @@ export default function SignupPage() {
                 type="submit"
                 disabled={signupMutation.isPending}
                 data-testid="button-signup"
-                className="w-full h-12 bg-[#34C759] hover:bg-[#2db84e] text-white font-semibold text-lg rounded-full"
+                className="w-full h-12 md:h-10 bg-[#34C759] hover:bg-[#2db84e] text-white font-semibold text-lg rounded-full"
               >
                 {signupMutation.isPending ? "Creating Account..." : "Sign Up"}
               </Button>
@@ -276,8 +276,8 @@ export default function SignupPage() {
           </Form>
 
           {/* Social Login Buttons */}
-          <div className="mt-6">
-            <div className="relative flex items-center justify-center my-4">
+          <div className="mt-4 md:mt-3">
+            <div className="relative flex items-center justify-center my-3 md:my-2">
               <div className="border-t border-border flex-grow" />
               <span className="px-4 text-sm text-muted-foreground">or sign up with</span>
               <div className="border-t border-border flex-grow" />
@@ -291,7 +291,7 @@ export default function SignupPage() {
                     variant="outline"
                     disabled
                     data-testid="button-google-signup"
-                    className="flex-1 h-12 gap-2 opacity-60 cursor-not-allowed"
+                    className="flex-1 h-12 md:h-10 gap-2 opacity-60 cursor-not-allowed"
                   >
                     <SiGoogle className="w-5 h-5 text-red-500" />
                     <span>Google</span>
@@ -309,7 +309,7 @@ export default function SignupPage() {
                     variant="outline"
                     disabled
                     data-testid="button-facebook-signup"
-                    className="flex-1 h-12 gap-2 opacity-60 cursor-not-allowed"
+                    className="flex-1 h-12 md:h-10 gap-2 opacity-60 cursor-not-allowed"
                   >
                     <SiFacebook className="w-5 h-5 text-blue-600" />
                     <span>Facebook</span>
@@ -322,7 +322,7 @@ export default function SignupPage() {
             </div>
           </div>
 
-          <p className="mt-8 text-center text-muted-foreground">
+          <p className="mt-4 md:mt-3 text-center text-muted-foreground">
             Already have an account?{" "}
             <button
               type="button"
